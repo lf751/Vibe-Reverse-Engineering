@@ -894,6 +894,20 @@ namespace comp
 		ImGui_ImplWin32_Init(shared::globals::main_window);
 		g_game_wndproc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(shared::globals::main_window, GWLP_WNDPROC, LONG_PTR(wnd_proc_hk)));
 
+		// JPOG uses tinputdxinterface.dll (Toshi engine input abstraction), which bypasses
+		// both DirectInput vtable hooks and WndProc window messages. Poll F4 directly.
+		CreateThread(nullptr, 0, [](LPVOID) -> DWORD {
+			bool was_down = false;
+			while (true) {
+				const bool is_down = (GetAsyncKeyState(VK_F4) & 0x8000) != 0;
+				if (is_down && !was_down)
+					shared::globals::imgui_menu_open = !shared::globals::imgui_menu_open;
+				was_down = is_down;
+				Sleep(16);
+			}
+			return 0;
+		}, nullptr, 0, nullptr);
+
 		// ---
 		m_initialized = true;
 		shared::common::log("ImGui", "Module initialized.", shared::common::LOG_TYPE::LOG_TYPE_DEFAULT, false);

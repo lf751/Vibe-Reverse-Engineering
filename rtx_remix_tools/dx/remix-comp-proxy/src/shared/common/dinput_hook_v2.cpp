@@ -235,8 +235,8 @@ namespace shared::common
 				break;
 
 			case 256:
-				//di->updateKeyState(static_cast<LPBYTE>(lpvData)); // game sends keyboard input via window messages so no need
-				//di->KeyboardDeviceStateUsed = true;
+				di->updateKeyState(static_cast<LPBYTE>(lpvData));
+				di->KeyboardDeviceStateUsed = true;
 
 				if (!shared::globals::imgui_wants_text_input) {
 					do_not_clear = true;

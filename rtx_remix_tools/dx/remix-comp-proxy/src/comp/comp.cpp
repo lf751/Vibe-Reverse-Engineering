@@ -8,9 +8,7 @@
 #include "shared/common/remix_api.hpp"
 #include "shared/common/config.hpp"
 
-// see comment in main()
-//#include "shared/common/dinput_hook_v1.hpp"
-//#include "shared/common/dinput_hook_v2.hpp"
+#include "shared/common/dinput_hook_v2.hpp"
 
 namespace comp
 {
@@ -103,9 +101,7 @@ namespace comp
 		if (cfg.skinning.enabled)
 			shared::common::loader::module_loader::register_module(std::make_unique<skinning>());
 
-		// #Step 3: hook dinput if your game uses direct input (for ImGui) - ONLY USE ONE
-		//shared::common::loader::module_loader::register_module(std::make_unique<shared::common::dinput_v1>()); // v1: might cause issues with the Alt+X menu
-		//shared::common::loader::module_loader::register_module(std::make_unique<shared::common::dinput_v2>()); // v2: better but might need further tweaks
+		shared::common::loader::module_loader::register_module(std::make_unique<shared::common::dinput_v2>());
 
 		MH_EnableHook(MH_ALL_HOOKS);
 	}
