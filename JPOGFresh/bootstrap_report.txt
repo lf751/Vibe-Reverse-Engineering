@@ -1,0 +1,14 @@
+Bootstrap Report
+================
+
+Binary: D:\Games\JPOGHD\Jurassic Park Operation Genesis HD Edition\simjp.exe
+Compiler: msvc (confidence: 70%)
+
+Signature DB matches: 10
+RTTI classes found: 0
+Imports cataloged: 1108
+Error strings seeded: 576
+Propagated labels: 484
+Functions identified: 1070
+KB entries written: 1070
+

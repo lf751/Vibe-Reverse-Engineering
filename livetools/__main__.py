@@ -128,7 +128,10 @@ def _spawn_daemon(target: str, *, spawn: bool = False) -> None:
             resp = client.send_command({"cmd": "status"})
             print(client.format_status_line(resp))
             print(f"Attached to {target}.")
-            client.DAEMON_LOG.unlink(missing_ok=True)
+            try:
+                client.DAEMON_LOG.unlink(missing_ok=True)
+            except OSError:
+                pass
             return
         time.sleep(0.3)
 
@@ -140,7 +143,10 @@ def _spawn_daemon(target: str, *, spawn: bool = False) -> None:
         pass
     if log_text:
         print(f"[error] Daemon log:\n{log_text}", file=sys.stderr)
-    client.DAEMON_LOG.unlink(missing_ok=True)
+    try:
+        client.DAEMON_LOG.unlink(missing_ok=True)
+    except OSError:
+        pass
     sys.exit(1)
 
 
