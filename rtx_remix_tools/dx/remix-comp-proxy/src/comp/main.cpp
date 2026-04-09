@@ -11,7 +11,7 @@ namespace comp
 	std::unordered_set<HWND> wnd_class_list;
 
 	// #Step 1: Start the game and copy the class name from the console window and put it in here:
-	#define WINDOW_CLASS_NAME "YOUR_WINDOW_CLASS_NAME" // Eg: "GameFrame"
+	#define WINDOW_CLASS_NAME "TRenderD3DInterface"
 
 	BOOL CALLBACK enum_windows_proc(HWND hwnd, LPARAM lParam)
 	{

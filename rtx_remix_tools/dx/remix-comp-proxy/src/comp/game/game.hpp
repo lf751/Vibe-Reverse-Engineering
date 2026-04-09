@@ -3,34 +3,21 @@
 
 namespace comp::game
 {
-	// --------------
-	// game variables
+	// JPOG: TRenderContext* captured from SetRenderMatrices hook.
+	// +0x8C = WorldViewMatrix (camera view, world→view) — should be D3DTS_VIEW.
+	// +0x4C = ModelViewMatrix (View × Model combined) — baked into D3DTS_WORLD by the game.
+	// Fix: VIEW = WorldView, WORLD = inverse(WorldView) × ModelView (model-only transform).
+	extern void* g_render_ctx;
 
-	//extern DWORD* d3d_dev_sample_addr;
-	
-	//inline IDirect3DDevice9* get_d3d_device() {
-	//	return reinterpret_cast<IDirect3DDevice9*>(*d3d_dev_sample_addr);
-	//}
+	// Installs the SetRenderMatrices hook in TRenderD3DInterface.dll.
+	// Must be called after the game DLLs are loaded (from renderer::renderer()).
+	// Called from SetVertexShaderConstantF: captures c17-c20 (ModelView, column-major).
+	extern void on_set_vs_constant_f(UINT start_reg, const float* data, UINT count);
 
-	extern some_struct_containing_matrices* vp;
+	// Called pre-draw: sets D3DTS_WORLD = MV * inv(View) so Remix places replacements correctly.
+	extern void inject_world_pre_draw(IDirect3DDevice9* dev);
 
-
-	// --------------
-	// game functions
-
-	//typedef	void (__cdecl* SampleTemplate_t)(uint32_t arg1, uint32_t arg2);
-	//	extern SampleTemplate_t SampleTemplate;
-
-
-	// --------------
-	// game asm offsets
-
-	//extern uint32_t retn_addr__func1;
-	//extern uint32_t nop_addr__func2;
-	//extern uint32_t retn_addr__pre_draw_something;
-	//extern uint32_t hk_addr__post_draw_something;
-
-	// ---
+	extern void install_render_hooks();
 
 	extern void init_game_addresses();
 }

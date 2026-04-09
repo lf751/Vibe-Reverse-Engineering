@@ -1,10 +1,17 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash(git checkout:*)",
       "Bash(git branch:*)",
       "Bash(git rebase:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cmd /c \"build.bat release 2>&1\")",
+      "Bash(cmd /c build.bat release)",
+      "Read(//tmp/**)",
+      "Bash(powershell -Command \"cmd /c 'build.bat release' | Tee-Object -FilePath C:/tmp/build_result.txt; Get-Content C:/tmp/build_result.txt | Select-Object -Last 40\")",
+      "Bash(powershell -Command \"Set-Location 'D:\\\\\\\\Unity\\\\\\\\Vibe-Reverse-Engineering_JPOGFresh\\\\\\\\rtx_remix_tools\\\\\\\\dx\\\\\\\\remix-comp-proxy'; cmd /c 'build.bat release'\")",
+      "Bash(cmd.exe /c \"cd /d D:\\\\\\\\Unity\\\\\\\\Vibe-Reverse-Engineering_JPOGFresh\\\\\\\\rtx_remix_tools\\\\\\\\dx\\\\\\\\remix-comp-proxy && build.bat release\")"
     ]
   }
 }

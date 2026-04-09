@@ -1,0 +1,165 @@
+/*
+ * JPOG View Matrix Fix — ASI Plugin
+ *
+ * Hooks TRenderContextD3D::SetRenderMatrices in TRenderD3DInterface.dll.
+ * The engine normally calls SetTransform(VIEW, IDENTITY) and bakes the
+ * camera into VS constants. This hook passes the real camera View matrix
+ * (from render context + 0x8C) so RTX Remix knows the camera orientation
+ * and position.
+ *
+ * Loaded by dxwrapper from the plugins/ folder.
+ *
+ * RE discoveries (Toshi engine, TRenderContext struct):
+ *   +0x08  = flags
+ *   +0x4C  = ModelViewMatrix (per-object MV, column-vector convention)
+ *   +0x8C  = WorldViewMatrix (camera View — world-to-view transform)
+ *   +0x10C = ViewWorldMatrix (inv(View), lazy-computed)
+ *   +0x484 = ProjectionMatrix
+ *
+ * SetRenderMatrices is at RVA 0x7180 in TRenderD3DInterface.dll.
+ * It's a __thiscall method with ECX = TRenderContextD3D*.
+ * The D3D8 device is at *(*(this+4) + 0x178).
+ * D3D8 SetTransform is at vtable offset 0x94.
+ */
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+/* ---- No-CRT memcpy ---- */
+#pragma function(memcpy)
+void * __cdecl memcpy(void *dst, const void *src, unsigned int n) {
+    unsigned char *d = (unsigned char *)dst;
+    const unsigned char *s = (const unsigned char *)src;
+    while (n--) *d++ = *s++;
+    return dst;
+}
+
+/* ---- Offsets (from RE) ---- */
+#define RCTX_OFF_WORLDVIEW   0x8C   /* Camera View matrix (4x4 float) */
+#define RCTX_OFF_PROJECTION  0x484  /* Projection matrix (4x4 float) */
+#define RCTX_OFF_IFACE       0x4    /* Pointer to render interface/state */
+#define IFACE_OFF_DEVICE     0x178  /* D3D8 device pointer */
+#define D3D8_VT_SETTRANSFORM 0x94   /* D3D8 IDirect3DDevice8::SetTransform */
+
+#define D3DTS_VIEW       2
+#define D3DTS_PROJECTION 3
+
+static const float s_identity[16] = {
+    1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1
+};
+
+static float g_lastRealView[16] = {
+    1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1
+};
+static int g_hasLastRealView = 0;
+
+/* ---- Hook RVAs ---- */
+#define TRenderD3DInterface_SetRenderMatrices_RVA      0x7180
+
+/* ---- Replacement for TRenderContextD3D::SetRenderMatrices ---- */
+
+static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
+    typedef int (__stdcall *FnSetTransform)(void*, int, void*);
+
+    void **ppIface;
+    void *device;
+    void **vtbl;
+    FnSetTransform fnST;
+    float *viewMatrix;
+    float *projMatrix;
+    float txRow, tyRow, tzRow;
+    float txCol, tyCol, tzCol;
+    float tRow2, tCol2;
+    int hasCameraTranslation;
+    void *viewToSend;
+
+    /* Navigate to D3D8 device: *(*(this+4) + 0x178) */
+    ppIface = *(void**)((char*)thisPtr + RCTX_OFF_IFACE);
+    device  = *(void**)((char*)ppIface + IFACE_OFF_DEVICE);
+    vtbl    = *(void***)device;
+    fnST    = (FnSetTransform)vtbl[D3D8_VT_SETTRANSFORM / 4];
+
+    /* Real camera View matrix from render context */
+    viewMatrix = (float*)((char*)thisPtr + RCTX_OFF_WORLDVIEW);
+    projMatrix = (float*)((char*)thisPtr + RCTX_OFF_PROJECTION);
+
+    txRow = viewMatrix[12]; tyRow = viewMatrix[13]; tzRow = viewMatrix[14];
+    txCol = viewMatrix[3];  tyCol = viewMatrix[7];  tzCol = viewMatrix[11];
+    tRow2 = txRow*txRow + tyRow*tyRow + tzRow*tzRow;
+    tCol2 = txCol*txCol + tyCol*tyCol + tzCol*tzCol;
+    hasCameraTranslation = (tRow2 > 1.0f || tCol2 > 1.0f);
+
+    if (hasCameraTranslation) {
+        memcpy(g_lastRealView, viewMatrix, sizeof(g_lastRealView));
+        g_hasLastRealView = 1;
+        viewToSend = (void*)viewMatrix;
+    } else if (g_hasLastRealView) {
+        viewToSend = (void*)g_lastRealView;
+    } else {
+        viewToSend = (void*)s_identity;
+    }
+
+    /* SetTransform(VIEW, realView) — replaces the identity the engine sends */
+    fnST(device, D3DTS_VIEW, viewToSend);
+
+    /* SetTransform(PROJECTION, proj) — same as original */
+    fnST(device, D3DTS_PROJECTION, projMatrix);
+}
+
+/* ---- Inline hook installation ---- */
+
+static void InstallJump(HMODULE hMod, DWORD rva, void *pHook) {
+    BYTE *pTarget;
+    DWORD oldProt;
+    int rel;
+
+    pTarget = (BYTE*)hMod + rva;
+
+    /* Write 5-byte JMP rel32 at function entry */
+    VirtualProtect(pTarget, 5, PAGE_EXECUTE_READWRITE, &oldProt);
+    pTarget[0] = 0xE9;
+    rel = (int)((BYTE*)pHook - pTarget - 5);
+    memcpy(pTarget + 1, &rel, 4);
+    VirtualProtect(pTarget, 5, oldProt, &oldProt);
+}
+
+static void InstallRenderHooks(HMODULE hMod) {
+    InstallJump(hMod, TRenderD3DInterface_SetRenderMatrices_RVA,
+        (void*)Hook_SetRenderMatrices);
+}
+
+/* ---- Delayed init thread (waits for TRenderD3DInterface.dll) ---- */
+
+static DWORD WINAPI InitThread(LPVOID param) {
+    HMODULE hRenderD3D;
+    int i;
+
+    for (i = 0; i < 300; i++) {  /* 30 seconds max */
+        hRenderD3D = GetModuleHandleA("TRenderD3DInterface.dll");
+        if (hRenderD3D) {
+            InstallRenderHooks(hRenderD3D);
+            return 0;
+        }
+        Sleep(100);
+    }
+    return 1;
+}
+
+/* ---- DLL entry point ---- */
+
+BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
+    (void)reserved;
+    if (reason == DLL_PROCESS_ATTACH) {
+        DisableThreadLibraryCalls(hDll);
+        CreateThread(NULL, 0, InitThread, NULL, 0, NULL);
+    }
+    return TRUE;
+}
+
+int _fltused = 0;

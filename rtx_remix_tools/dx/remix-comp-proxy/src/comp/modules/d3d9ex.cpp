@@ -9,6 +9,7 @@
 #include "diagnostics.hpp"
 #include "skinning.hpp"
 #include "shared/common/shader_cache.hpp"
+#include "../game/game.hpp"
 
 using comp::tracer;
 #include "tracer_dispatch.inc"
@@ -323,6 +324,81 @@ namespace comp
 	HRESULT d3d9ex::D3D9Device::SetTransform(D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix)
 	{
 		TRACE_IF_ACTIVE(trace_SetTransform, State, pMatrix);
+
+		// JPOG camera-unbaking: the game (and terrain ASI) bake the camera into every matrix.
+		// We normalise to VIEW=WorldView + WORLD=model-only before handing off to RTX Remix,
+		// so replacement assets land at the correct world-space positions and Remix never sees
+		// VIEW jump around (which triggers camera cuts → clear → null-BLAS crash).
+		//
+		// Two cases handled here:
+		//
+		//  D3DTS_WORLD  — game sets WORLD = W × V (non-terrain objects).
+		//                 Unbake: model = (W × V) × V⁻¹ = W.
+		//                 Skip identity (terrain ASI already corrected terrain WORLD).
+		//
+		//  D3DTS_VIEW   — terrain ASI sets VIEW = TerrainModel × V.
+		//                 Unbake: terrain_model = (TM × V) × V⁻¹ = TM, then override
+		//                 VIEW = WorldView and WORLD = terrain_model so Remix sees a
+		//                 stable camera every frame.
+		//                 Skip when pMatrix already IS WorldView (our own hook's call).
+		if (comp::game::g_render_ctx != nullptr && pMatrix != nullptr)
+		{
+			const D3DXMATRIX* world_view = reinterpret_cast<const D3DXMATRIX*>(
+				static_cast<char*>(comp::game::g_render_ctx) + 0x8C);
+
+			if (State == D3DTS_WORLD)
+			{
+				const D3DMATRIX& m = *pMatrix;
+				const bool is_identity =
+					m._11 == 1.f && m._12 == 0.f && m._13 == 0.f && m._14 == 0.f &&
+					m._21 == 0.f && m._22 == 1.f && m._23 == 0.f && m._24 == 0.f &&
+					m._31 == 0.f && m._32 == 0.f && m._33 == 1.f && m._34 == 0.f &&
+					m._41 == 0.f && m._42 == 0.f && m._43 == 0.f && m._44 == 1.f;
+
+				if (!is_identity)
+				{
+					D3DXMATRIX view_inv;
+					if (D3DXMatrixInverse(&view_inv, nullptr, world_view))
+					{
+						D3DXMATRIX model_only;
+						D3DXMatrixMultiply(&model_only,
+							reinterpret_cast<const D3DXMATRIX*>(pMatrix), &view_inv);
+						return m_pIDirect3DDevice9->SetTransform(D3DTS_WORLD, &model_only);
+					}
+				}
+			}
+			else if (State == D3DTS_VIEW)
+			{
+				// Block identity VIEW from reaching Remix. Other engine code paths besides
+				// SetRenderMatrices send identity VIEW; if Remix sees it the camera resets
+				// to origin and triggers a camera-cut clear() which crashes with replacement assets.
+				const D3DMATRIX& v = *pMatrix;
+				const bool is_identity =
+					v._11 == 1.f && v._12 == 0.f && v._13 == 0.f && v._14 == 0.f &&
+					v._21 == 0.f && v._22 == 1.f && v._23 == 0.f && v._24 == 0.f &&
+					v._31 == 0.f && v._32 == 0.f && v._33 == 1.f && v._34 == 0.f &&
+					v._41 == 0.f && v._42 == 0.f && v._43 == 0.f && v._44 == 1.f;
+				if (is_identity)
+					return D3D_OK;
+
+				// If the caller is passing exactly WorldView (our hook's value), let it through.
+				if (memcmp(pMatrix, world_view, sizeof(D3DMATRIX)) != 0)
+				{
+					// Terrain ASI: VIEW = TerrainModel x V.  Unbake to terrain_model = pMatrix x V^-1.
+					D3DXMATRIX view_inv;
+					if (D3DXMatrixInverse(&view_inv, nullptr, world_view))
+					{
+						D3DXMATRIX terrain_model;
+						D3DXMatrixMultiply(&terrain_model,
+							reinterpret_cast<const D3DXMATRIX*>(pMatrix), &view_inv);
+						// Stabilise VIEW to the pure camera matrix and set WORLD to the terrain piece.
+						m_pIDirect3DDevice9->SetTransform(D3DTS_VIEW, world_view);
+						return m_pIDirect3DDevice9->SetTransform(D3DTS_WORLD, &terrain_model);
+					}
+				}
+			}
+		}
+
 		return m_pIDirect3DDevice9->SetTransform(State, pMatrix);
 	}
 
@@ -648,6 +724,7 @@ namespace comp
 		TRACE_IF_ACTIVE(trace_SetVertexShaderConstantF, StartRegister, pConstantData, Vector4fCount);
 		shared::common::ffp_state::get().on_set_vs_const_f(StartRegister, pConstantData, Vector4fCount);
 		if (auto* d = diagnostics::get()) d->on_set_vs_const_f(StartRegister, pConstantData, Vector4fCount);
+		if (pConstantData) comp::game::on_set_vs_constant_f(StartRegister, pConstantData, Vector4fCount);
 		return m_pIDirect3DDevice9->SetVertexShaderConstantF(StartRegister, pConstantData, Vector4fCount);
 	}
 

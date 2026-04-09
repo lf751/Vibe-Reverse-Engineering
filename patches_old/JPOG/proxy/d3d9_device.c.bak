@@ -1,0 +1,1422 @@
+/*
+ * JPOG FFP Proxy for RTX Remix
+ *
+ * Converts the Toshi engine's shader-based rendering to Fixed Function
+ * Pipeline so RTX Remix can read geometry transforms directly.
+ *
+ * VS constant layout (from RE of TSysShaderD3D.dll):
+ *   c0-c3   = transpose(ModelView x Projection)  (per object)
+ *   c17-c20 = transpose(ModelView)                (per object)
+ *   c21     = eye position in object space         (per object)
+ *
+ * Strategy:
+ *   1. Capture c17-c20 writes -> transpose to get MV (D3D row-major)
+ *   2. Real View from ASI hook (or rotation-only from first MV)
+ *   3. Every draw: World = MV x inv(View), quantized for stability
+ *   4. Before each draw: NULL vertex/pixel shaders -> FFP mode
+ *   5. Remix reads WORLD/VIEW/PROJ from SetTransform (no vertex capture)
+ *   6. Suppress game's VIEW=IDENTITY and WORLD writes
+ */
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+/* No-CRT memcpy */
+#pragma function(memcpy)
+void * __cdecl memcpy(void *dst, const void *src, unsigned int n) {
+    unsigned char *d = (unsigned char *)dst;
+    const unsigned char *s = (const unsigned char *)src;
+    while (n--) *d++ = *s++;
+    return dst;
+}
+
+/* Logging (from d3d9_main.c) */
+extern void log_str(const char *s);
+extern void log_hex(const char *prefix, unsigned int val);
+extern void log_int(const char *prefix, int val);
+extern void log_floats(const char *prefix, float *data, unsigned int count);
+extern void log_float_val(const char *prefix, float f);
+extern void log_floats_dec(const char *prefix, float *data, unsigned int count);
+
+/* ============================================================
+ * JPOG VS Constant Register Layout
+ *
+ * c0-c3:   transpose(ModelView × Projection) — combined MVP
+ * c17-c20: transpose(ModelView) — for VS lighting/normals
+ *
+ * Both ranges change every draw call.
+ * ============================================================ */
+#define VS_REG_MV_START  17  /* First register of transposed ModelView */
+#define VS_REG_MV_END    21  /* One past last (4 vec4 = 4×4 matrix) */
+
+/* ---- Diagnostic logging ---- */
+#define DIAG_LOG_FRAMES  5
+#define DIAG_DELAY_MS    50000
+#define DIAG_ENABLED     1
+
+#define DIAG_ACTIVE(self) \
+    (DIAG_ENABLED && (self)->diagLoggedFrames < DIAG_LOG_FRAMES && \
+     GetTickCount() - (self)->createTick >= DIAG_DELAY_MS)
+
+/* ---- D3D9 Constants ---- */
+
+#define D3DTS_VIEW       2
+#define D3DTS_PROJECTION 3
+#define D3DTS_WORLD      256
+#define D3DRS_LIGHTING   137
+
+/* D3D9 vertex declaration types */
+#define D3DDECLTYPE_FLOAT2    1
+#define D3DDECLTYPE_FLOAT3    2
+#define D3DDECLTYPE_FLOAT4    3
+#define D3DDECLTYPE_D3DCOLOR  4
+#define D3DDECLTYPE_UNUSED   17
+
+/* D3D9 vertex declaration usages */
+#define D3DDECLUSAGE_POSITION      0
+#define D3DDECLUSAGE_BLENDWEIGHT   1
+#define D3DDECLUSAGE_BLENDINDICES  2
+#define D3DDECLUSAGE_NORMAL        3
+#define D3DDECLUSAGE_PSIZE         4
+#define D3DDECLUSAGE_TEXCOORD      5
+#define D3DDECLUSAGE_COLOR        10
+
+typedef struct {
+    unsigned short Stream;
+    unsigned short Offset;
+    unsigned char  Type;
+    unsigned char  Method;
+    unsigned char  Usage;
+    unsigned char  UsageIndex;
+} D3DVERTEXELEMENT9;
+
+/* ---- Device vtable slot indices ---- */
+enum {
+    SLOT_QueryInterface = 0,
+    SLOT_AddRef = 1,
+    SLOT_Release = 2,
+    SLOT_CreateVertexBuffer = 26,
+    SLOT_Reset = 16,
+    SLOT_Present = 17,
+    SLOT_BeginScene = 41,
+    SLOT_EndScene = 42,
+    SLOT_SetTransform = 44,
+    SLOT_GetTransform = 45,
+    SLOT_SetRenderState = 57,
+    SLOT_DrawPrimitive = 81,
+    SLOT_DrawIndexedPrimitive = 82,
+    SLOT_DrawPrimitiveUP = 83,
+    SLOT_DrawIndexedPrimitiveUP = 84,
+    SLOT_CreateVertexDeclaration = 86,
+    SLOT_SetVertexDeclaration = 87,
+    SLOT_SetVertexShader = 92,
+    SLOT_SetVertexShaderConstantF = 94,
+    SLOT_SetStreamSource = 100,
+    SLOT_SetPixelShader = 107,
+    DEVICE_VTABLE_SIZE = 119
+};
+
+/* ---- WrappedDevice ---- */
+
+typedef struct WrappedDevice {
+    void **vtbl;
+    void *pReal;
+    int refCount;
+    unsigned int frameCount;
+
+    /* Captured MV from c17-c20 (transposed to D3D row-major) */
+    float mvMatrix[16];
+    int   mvDirty;        /* Set by SVCF, cleared per-draw */
+
+    /* View matrix (real from ASI or rotation-only approximation) */
+    float viewMatrix[16];
+    float invViewMatrix[16];
+    int   viewCapturedThisFrame;
+    int   hasRealView;    /* ASI provided real View (persists across frames) */
+
+    /* Cached per-draw World for multi-batch re-use */
+    float cachedWorld[16];
+    int   hasCachedWorld;
+
+    /* Set when game explicitly calls SetTransform(WORLD); cleared on new MVP */
+    int   gameWorldSet;
+    float gameWorldMatrix[16];
+
+    /* MVP matrix captured from c0-c3 (transposed to D3D row-major) */
+    float mvpMatrix[16];
+    int   mvpDirty;
+
+    /* Projection captured from SetTransform(D3DTS_PROJECTION) */
+    float projMatrix[16];
+    float invProjMatrix[16];
+    int   hasProj;
+    int   invProjDirty;
+
+    /* Diagnostic state */
+    unsigned int createTick;
+    unsigned int diagLoggedFrames;
+    unsigned int drawCallCount;
+    unsigned int sceneCount;
+} WrappedDevice;
+
+#define REAL(self) (((WrappedDevice*)(self))->pReal)
+#define REAL_VT(self) (*(void***)(REAL(self)))
+
+static __inline void** RealVtbl(WrappedDevice *self) {
+    return *(void***)(self->pReal);
+}
+
+/* ---- Matrix helpers ---- */
+
+/* Transpose a 4×4 matrix (column-major ↔ row-major) */
+static void mat4_transpose(float *dst, const float *src) {
+    dst[0]  = src[0];  dst[1]  = src[4];  dst[2]  = src[8];  dst[3]  = src[12];
+    dst[4]  = src[1];  dst[5]  = src[5];  dst[6]  = src[9];  dst[7]  = src[13];
+    dst[8]  = src[2];  dst[9]  = src[6];  dst[10] = src[10]; dst[11] = src[14];
+    dst[12] = src[3];  dst[13] = src[7];  dst[14] = src[11]; dst[15] = src[15];
+}
+
+/* Log a 4×4 matrix row by row */
+static void diag_log_matrix(const char *name, const float *m) {
+    log_str(name);
+    log_str(":\r\n");
+    log_floats_dec("  row0: ", (float*)&m[0], 4);
+    log_floats_dec("  row1: ", (float*)&m[4], 4);
+    log_floats_dec("  row2: ", (float*)&m[8], 4);
+    log_floats_dec("  row3: ", (float*)&m[12], 4);
+}
+
+/* Invert an orthonormal rotation+translation matrix (no scale/shear) */
+static void mat4_invOrthogonal(float *dst, const float *src) {
+    float tx = src[12], ty = src[13], tz = src[14];
+    dst[0]  = src[0]; dst[1]  = src[4]; dst[2]  = src[8];  dst[3]  = 0.0f;
+    dst[4]  = src[1]; dst[5]  = src[5]; dst[6]  = src[9];  dst[7]  = 0.0f;
+    dst[8]  = src[2]; dst[9]  = src[6]; dst[10] = src[10]; dst[11] = 0.0f;
+    dst[12] = -(tx*src[0] + ty*src[1] + tz*src[2]);
+    dst[13] = -(tx*src[4] + ty*src[5] + tz*src[6]);
+    dst[14] = -(tx*src[8] + ty*src[9] + tz*src[10]);
+    dst[15] = 1.0f;
+}
+
+/* 4x4 matrix multiply: dst = a * b (D3D row-vector convention) */
+static void mat4_multiply(float *dst, const float *a, const float *b) {
+    float tmp[16];
+    int i, j, k;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            float sum = 0.0f;
+            for (k = 0; k < 4; k++)
+                sum += a[i*4+k] * b[k*4+j];
+            tmp[i*4+j] = sum;
+        }
+    }
+    memcpy(dst, tmp, 16 * sizeof(float));
+}
+
+/* Round float to nearest multiple of 1/scale. */
+static float qround(float v, float scale, float invScale) {
+    if (v >= 0.0f)
+        return (float)(int)(v * scale + 0.5f) * invScale;
+    else
+        return -(float)(int)(-v * scale + 0.5f) * invScale;
+}
+
+/* Quantize a World matrix by rounding to a fixed grid.
+   Rounding is stable within ±step/2 of each grid point. */
+#define Q_ROT_S   32768.0f           /* rotation step = 1/32768 */
+#define Q_ROT_I   (1.0f / 32768.0f)
+#define Q_TR_S    128.0f             /* translation step = 1/128 */
+#define Q_TR_I    (1.0f / 128.0f)
+
+static void mat4_quantize(float *m) {
+    int i;
+    for (i = 0; i < 3; i++) {
+        m[i*4+0] = qround(m[i*4+0], Q_ROT_S, Q_ROT_I);
+        m[i*4+1] = qround(m[i*4+1], Q_ROT_S, Q_ROT_I);
+        m[i*4+2] = qround(m[i*4+2], Q_ROT_S, Q_ROT_I);
+    }
+    m[12] = qround(m[12], Q_TR_S, Q_TR_I);
+    m[13] = qround(m[13], Q_TR_S, Q_TR_I);
+    m[14] = qround(m[14], Q_TR_S, Q_TR_I);
+    m[3] = 0.0f; m[7] = 0.0f; m[11] = 0.0f; m[15] = 1.0f;
+}
+
+/* ---- Transform injection ---- */
+
+static const float s_identity[16] = {
+    1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+};
+
+/* Minimum squared distance from origin for a VB centroid to be treated
+   as pre-baked world geometry (trees, foliage, terrain decorations).
+   Near-origin VBs (UI, small decorations) must not get centroid override. */
+#define CENTROID_MIN_DIST2 2500.0f
+
+/* Check if column 3 of matrix is approximately (0,0,0,1) */
+static int mat4_isRigid(const float *m) {
+    float d3 = m[3]*m[3] + m[7]*m[7] + m[11]*m[11];
+    float d15 = (m[15] - 1.0f) * (m[15] - 1.0f);
+    return (d3 < 0.001f && d15 < 0.001f);
+}
+
+/* Check if matrix is exactly identity */
+static int mat4_isIdentity(const float *m) {
+    int i;
+    for (i = 0; i < 16; i++) {
+        float expected = (i % 5 == 0) ? 1.0f : 0.0f;
+        if (m[i] != expected) return 0;
+    }
+    return 1;
+}
+
+/* ---- VB vtable hook: capture first-vertex XYZ at upload time ---- */
+
+/*
+ * We patch the Remix D3D9 VB vtable (once, when the first VB is created) to
+ * intercept Lock/Unlock globally. When the game writes vertices into a VB we
+ * save the first XYZ (world-space position for pre-baked tree geometry).
+ * At draw time, when World ≈ Identity, we look up the stream-0 VB's saved
+ * XYZ and use it as the World translation for Remix asset placement.
+ */
+
+#define VB_SAMPLE_MAX 4096
+#define VB_LOCK_SLOTS   64
+
+typedef struct { void *pVB; void *pData; } VBLockSlot;
+typedef struct { void *pVB; float x, y, z; } VBSample;
+
+static VBLockSlot  g_vbLocks[VB_LOCK_SLOTS];
+static VBSample    g_vbSamples[VB_SAMPLE_MAX];
+static int         g_vbSampleCount  = 0;
+static int         g_vbVtblHooked   = 0;
+static void       *g_origVBLock     = NULL;
+static void       *g_origVBUnlock   = NULL;
+static void       *g_curStream0VB   = NULL;  /* last pVB on stream 0 */
+static unsigned int g_curStream0Offset = 0;
+static unsigned int g_curStream0Stride = 0;
+static int         g_centroidOverrides = 0;  /* per-frame: count of centroid substitutions */
+static int         g_centroidMisses    = 0;  /* per-frame: VB in stream but not in sample table */
+static int         g_centroidNoVB      = 0;  /* per-frame: no stream-0 VB */
+static int         g_centroidNearOrigin= 0;  /* per-frame: centroid below threshold */
+static int         g_gameWorldSets     = 0;  /* per-frame: game-originated SetTransform(WORLD) calls suppressed */
+static int         g_svcfMvWrites      = 0;  /* per-frame: c17-c20 write count */
+static int         g_svcfMvpWrites     = 0;  /* per-frame: c0-c3 MVP write count */
+static int         g_mvpWorldExtracts  = 0;  /* per-frame: WORLD from MVP path */
+static int         g_ffpDraws          = 0;  /* per-frame: draws forced to FFP */
+static int         g_gameWorldDraws    = 0;  /* per-frame: WORLD from game SetTransform */
+static int         g_lastWorldPath     = 0;  /* 1=centroid, 2=mv, 3=gameW */
+static float       g_lastCentroid[3]   = {0,0,0};
+
+/* ---- FFP vertex declaration remapping ----
+ *
+ * D3D8-to-D3D9 conversion (dxwrapper) maps D3D8 input register numbers
+ * to D3D9 semantics using the standard register → usage table:
+ *   reg 0 → POSITION, reg 1 → BLENDWEIGHT, reg 2 → BLENDINDICES,
+ *   reg 3 → NORMAL, reg 4 → PSIZE, reg 5 → COLOR0, ... reg 7 → TEXCOORD0
+ *
+ * But JPOG's D3D8 shaders assign registers differently:
+ *   TSysShader:  v0=pos(FLOAT3), v1=color(D3DCOLOR), v2=texcoord(FLOAT2)
+ *   TSkinShader: v0=pos, v1=normal(FLOAT3), v2=boneIdx(D3DCOLOR),
+ *                v3=boneWt(D3DCOLOR), v4=texcoord(FLOAT2)
+ *
+ * So D3D9 declarations have BLENDWEIGHT holding color data, BLENDINDICES
+ * holding texcoords. When we NULL the VS for FFP, D3D9 reads the wrong
+ * semantics: no COLOR, no TEXCOORD → white objects, no texture mapping.
+ *
+ * Fix: for each vertex declaration, create an FFP-remapped version that
+ * assigns correct semantics based on the actual data type:
+ *   BLENDWEIGHT  + D3DCOLOR → COLOR0     (diffuse color)
+ *   BLENDWEIGHT  + FLOAT3   → NORMAL     (surface normal)
+ *   BLENDINDICES + FLOAT2   → TEXCOORD0  (texture coords)
+ *   BLENDINDICES + D3DCOLOR → COLOR1     (bone indices or specular)
+ *   NORMAL       + D3DCOLOR → COLOR      (bone weights as color)
+ *   PSIZE        + FLOAT2   → TEXCOORD   (extra texcoord set)
+ */
+
+#define FFP_DECL_MAX 128
+typedef struct {
+    void *pOrigDecl;
+    void *pFFPDecl;
+    unsigned int elemCount;
+    unsigned int ffpEligible;
+} FFPDeclEntry;
+static FFPDeclEntry g_ffpDecls[FFP_DECL_MAX];
+static int g_ffpDeclCount = 0;
+static void *g_currentDecl = NULL;  /* last SetVertexDeclaration from game */
+
+static FFPDeclEntry* ffpDecl_lookup(void *pOrigDecl) {
+    int i;
+    for (i = 0; i < g_ffpDeclCount; i++)
+        if (g_ffpDecls[i].pOrigDecl == pOrigDecl)
+            return &g_ffpDecls[i];
+    return NULL;
+}
+
+static float *vbsample_get(void *pVB) {
+    int i;
+    for (i = 0; i < g_vbSampleCount; i++)
+        if (g_vbSamples[i].pVB == pVB) return &g_vbSamples[i].x;
+    return NULL;
+}
+
+static void vbsample_store(void *pVB, float x, float y, float z) {
+    int i;
+    for (i = 0; i < g_vbSampleCount; i++) {
+        if (g_vbSamples[i].pVB == pVB) {
+            g_vbSamples[i].x = x; g_vbSamples[i].y = y; g_vbSamples[i].z = z;
+            return;
+        }
+    }
+    if (g_vbSampleCount >= VB_SAMPLE_MAX) return;
+    g_vbSamples[g_vbSampleCount].pVB = pVB;
+    g_vbSamples[g_vbSampleCount].x   = x;
+    g_vbSamples[g_vbSampleCount].y   = y;
+    g_vbSamples[g_vbSampleCount].z   = z;
+    g_vbSampleCount++;
+}
+
+#define D3DLOCK_READONLY 0x0010
+#define VB_CENTROID_SAMPLES 16
+
+static int vb_read_centroid(void *pVB, unsigned int byteOffset,
+    unsigned int stride, unsigned int vertexCount, float *outXYZ)
+{
+    typedef int (__stdcall *FN_LOCK)(void*, unsigned int, unsigned int, void**, unsigned int);
+    typedef int (__stdcall *FN_UNLOCK)(void*);
+    unsigned int sampleCount;
+    unsigned int sizeBytes;
+    unsigned int i;
+    unsigned char *pData;
+    float sumX, sumY, sumZ;
+
+    if (!pVB || !g_origVBLock || !g_origVBUnlock) return 0;
+    if (stride < 12 || vertexCount == 0) return 0;
+
+    sampleCount = vertexCount;
+    if (sampleCount > VB_CENTROID_SAMPLES)
+        sampleCount = VB_CENTROID_SAMPLES;
+    sizeBytes = sampleCount * stride;
+
+    pData = NULL;
+    if (((FN_LOCK)g_origVBLock)(pVB, byteOffset, sizeBytes, (void**)&pData, D3DLOCK_READONLY) != 0)
+        return 0;
+    if (!pData) {
+        ((FN_UNLOCK)g_origVBUnlock)(pVB);
+        return 0;
+    }
+
+    sumX = 0.0f;
+    sumY = 0.0f;
+    sumZ = 0.0f;
+    for (i = 0; i < sampleCount; i++) {
+        float *f = (float*)(pData + i * stride);
+        sumX += f[0];
+        sumY += f[1];
+        sumZ += f[2];
+    }
+
+    ((FN_UNLOCK)g_origVBUnlock)(pVB);
+
+    outXYZ[0] = sumX / (float)sampleCount;
+    outXYZ[1] = sumY / (float)sampleCount;
+    outXYZ[2] = sumZ / (float)sampleCount;
+    return 1;
+}
+
+/* Intercepts IDirect3DVertexBuffer9::Lock on the Remix VB class globally */
+static int __stdcall VBLock_Hook(void *pVB,
+    unsigned int offset, unsigned int size, void **ppData, unsigned int flags)
+{
+    typedef int (__stdcall *FN)(void*,unsigned int,unsigned int,void**,unsigned int);
+    int hr = ((FN)g_origVBLock)(pVB, offset, size, ppData, flags);
+    if (hr == 0 && ppData && offset == 0) {
+        int i;
+        for (i = 0; i < VB_LOCK_SLOTS; i++) {
+            if (!g_vbLocks[i].pVB) {
+                g_vbLocks[i].pVB  = pVB;
+                g_vbLocks[i].pData = *ppData;
+                break;
+            }
+        }
+    }
+    return hr;
+}
+
+/* Intercepts IDirect3DVertexBuffer9::Unlock — reads first vertex xyz */
+static int __stdcall VBUnlock_Hook(void *pVB) {
+    typedef int (__stdcall *FN)(void*);
+    int i;
+    for (i = 0; i < VB_LOCK_SLOTS; i++) {
+        if (g_vbLocks[i].pVB == pVB) {
+            float *f = (float *)g_vbLocks[i].pData;
+            if (f) vbsample_store(pVB, f[0], f[1], f[2]);
+            g_vbLocks[i].pVB  = NULL;
+            g_vbLocks[i].pData = NULL;
+            break;
+        }
+    }
+    return ((FN)g_origVBUnlock)(pVB);
+}
+
+/* Called once from WD_CreateVertexBuffer with the first Remix VB returned */
+static void vb_hook_vtable(void *pVB) {
+    void **vtbl;
+    DWORD oldProt;
+    if (g_vbVtblHooked) return;
+    g_vbVtblHooked = 1;
+    vtbl = *(void***)pVB;
+    g_origVBLock   = vtbl[11];
+    g_origVBUnlock = vtbl[12];
+    VirtualProtect(&vtbl[11], sizeof(void*) * 2, PAGE_READWRITE, &oldProt);
+    vtbl[11] = (void*)VBLock_Hook;
+    vtbl[12] = (void*)VBUnlock_Hook;
+    VirtualProtect(&vtbl[11], sizeof(void*) * 2, oldProt, &oldProt);
+}
+
+/* 26: CreateVertexBuffer — hook vtable of the first returned Remix VB */
+static int __stdcall WD_CreateVertexBuffer(WrappedDevice *self,
+    unsigned int length, unsigned int usage, unsigned int fvf, unsigned int pool,
+    void **ppVB, void *pSharedHandle)
+{
+    typedef int (__stdcall *FN)(void*,unsigned int,unsigned int,unsigned int,
+                                unsigned int,void**,void*);
+    int hr = ((FN)RealVtbl(self)[SLOT_CreateVertexBuffer])(
+        self->pReal, length, usage, fvf, pool, ppVB, pSharedHandle);
+    if (hr == 0 && ppVB && *ppVB) vb_hook_vtable(*ppVB);
+    return hr;
+}
+
+/* 100: SetStreamSource — remember stream-0 VB pointer for centroid lookup */
+static int __stdcall WD_SetStreamSource(WrappedDevice *self,
+    unsigned int stream, void *pVB, unsigned int offset, unsigned int stride)
+{
+    typedef int (__stdcall *FN)(void*,unsigned int,void*,unsigned int,unsigned int);
+    if (stream == 0) {
+        if (g_curStream0VB != pVB)
+            self->hasCachedWorld = 0;
+        g_curStream0VB = pVB;
+        g_curStream0Offset = offset;
+        g_curStream0Stride = stride;
+    }
+    return ((FN)RealVtbl(self)[SLOT_SetStreamSource])(
+        self->pReal, stream, pVB, offset, stride);
+}
+
+/* Extract rotation-only VIEW (zero translation) and its inverse (transpose) */
+static void extractViewRotation(float *viewMat, float *invViewMat, const float *mv) {
+    viewMat[0]  = mv[0];  viewMat[1]  = mv[1];  viewMat[2]  = mv[2];  viewMat[3]  = 0;
+    viewMat[4]  = mv[4];  viewMat[5]  = mv[5];  viewMat[6]  = mv[6];  viewMat[7]  = 0;
+    viewMat[8]  = mv[8];  viewMat[9]  = mv[9];  viewMat[10] = mv[10]; viewMat[11] = 0;
+    viewMat[12] = 0;      viewMat[13] = 0;      viewMat[14] = 0;      viewMat[15] = 1;
+    invViewMat[0]  = mv[0]; invViewMat[1]  = mv[4]; invViewMat[2]  = mv[8];  invViewMat[3]  = 0;
+    invViewMat[4]  = mv[1]; invViewMat[5]  = mv[5]; invViewMat[6]  = mv[9];  invViewMat[7]  = 0;
+    invViewMat[8]  = mv[2]; invViewMat[9]  = mv[6]; invViewMat[10] = mv[10]; invViewMat[11] = 0;
+    invViewMat[12] = 0;     invViewMat[13] = 0;     invViewMat[14] = 0;      invViewMat[15] = 1;
+}
+
+/* Lazily compute inv(Projection) from captured projection matrix.
+   D3D perspective: [[a,0,0,0],[0,b,0,0],[0,0,c,1],[0,0,d,0]]
+   Inverse:         [[1/a,0,0,0],[0,1/b,0,0],[0,0,0,1/d],[0,0,1,-c/d]] */
+static int ensureInvP(WrappedDevice *self) {
+    float *p, *ip;
+    int i;
+    if (!self->hasProj) return 0;
+    if (!self->invProjDirty) return 1;
+    p = self->projMatrix;
+    ip = self->invProjMatrix;
+    if (p[0] == 0.0f || p[5] == 0.0f || p[14] == 0.0f) return 0;
+    for (i = 0; i < 16; i++) ip[i] = 0.0f;
+    ip[0]  = 1.0f / p[0];
+    ip[5]  = 1.0f / p[5];
+    ip[11] = 1.0f / p[14];
+    ip[14] = 1.0f;
+    ip[15] = -p[10] / p[14];
+    self->invProjDirty = 0;
+    return 1;
+}
+
+/* Extract WORLD = MVP × inv(P) × inv(V) using double-precision intermediates
+   to avoid single-precision noise in the decomposition chain. */
+static void extractWorldDP(float *world,
+    const float *mvp, const float *invP, const float *invV)
+{
+    double mv[16], w[16];
+    int i, j, k;
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 4; j++) {
+            double sum = 0.0;
+            for (k = 0; k < 4; k++)
+                sum += (double)mvp[i*4+k] * (double)invP[k*4+j];
+            mv[i*4+j] = sum;
+        }
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 4; j++) {
+            double sum = 0.0;
+            for (k = 0; k < 4; k++)
+                sum += mv[i*4+k] * (double)invV[k*4+j];
+            w[i*4+j] = sum;
+        }
+    for (i = 0; i < 16; i++)
+        world[i] = (float)w[i];
+}
+
+/*
+ * Compute per-draw World matrix for FFP-eligible draws.
+ *
+ * Three geometry classes:
+ *   1. Game-set WORLD (terrain): use game's own SetTransform(WORLD)
+ *   2. World-baked VBs (centroid far from origin): identity rotation + centroid translation
+ *   3. Model-space VBs: derive WORLD from MVP × inv(P) × inv(V)
+ */
+static void ApplyTransforms(WrappedDevice *self,
+    unsigned int streamVertexStart, unsigned int vertexCount,
+    unsigned int primitiveCount) {
+    typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
+    void **vt = RealVtbl(self);
+    float worldMatrix[16];
+    float viewCopy[16];
+    float vbCentroid[3];
+    int hasCentroid = 0;
+    unsigned int byteOff;
+
+    /* Path 1: game explicitly set a WORLD matrix (terrain) */
+    if (self->gameWorldSet) {
+        if (!self->viewCapturedThisFrame && self->hasRealView) {
+            memcpy(viewCopy, self->viewMatrix, 16 * sizeof(float));
+            ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal, D3DTS_VIEW, viewCopy);
+            self->viewCapturedThisFrame = 1;
+        }
+
+        ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal,
+            D3DTS_WORLD, self->gameWorldMatrix);
+        memcpy(self->cachedWorld, self->gameWorldMatrix, 16 * sizeof(float));
+        self->hasCachedWorld = 1;
+        g_lastWorldPath = 3;
+        g_lastCentroid[0] = self->gameWorldMatrix[12];
+        g_lastCentroid[1] = self->gameWorldMatrix[13];
+        g_lastCentroid[2] = self->gameWorldMatrix[14];
+        g_gameWorldDraws++;
+        return;
+    }
+
+    if (!self->mvDirty) {
+        if (!self->hasCachedWorld) {
+            ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal,
+                D3DTS_WORLD, (float*)s_identity);
+        }
+        return;
+    }
+
+    self->mvDirty = 0;
+
+    if (!mat4_isRigid(self->mvMatrix)) {
+        self->hasCachedWorld = 0;
+        return;
+    }
+
+    if (!self->viewCapturedThisFrame) {
+        extractViewRotation(self->viewMatrix, self->invViewMatrix, self->mvMatrix);
+        self->viewCapturedThisFrame = 1;
+        memcpy(viewCopy, self->viewMatrix, 16 * sizeof(float));
+        ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal, D3DTS_VIEW, viewCopy);
+    }
+
+    /* Byte offset into the VB for this batch */
+    byteOff = g_curStream0Offset + streamVertexStart * g_curStream0Stride;
+
+    /* Path 2: centroid-based WORLD for world-baked VBs (trees, foliage) */
+    if (g_curStream0VB && g_curStream0Stride >= 12) {
+        hasCentroid = vb_read_centroid(g_curStream0VB,
+            byteOff, g_curStream0Stride, vertexCount, vbCentroid);
+    }
+
+    if (hasCentroid) {
+        float dist2 = vbCentroid[0]*vbCentroid[0] + vbCentroid[1]*vbCentroid[1] + vbCentroid[2]*vbCentroid[2];
+        if (dist2 > CENTROID_MIN_DIST2) {
+            memcpy(worldMatrix, s_identity, sizeof(worldMatrix));
+            worldMatrix[12] = vbCentroid[0];
+            worldMatrix[13] = vbCentroid[1];
+            worldMatrix[14] = vbCentroid[2];
+            mat4_quantize(worldMatrix);
+            g_lastWorldPath = 1;
+            g_lastCentroid[0] = vbCentroid[0];
+            g_lastCentroid[1] = vbCentroid[1];
+            g_lastCentroid[2] = vbCentroid[2];
+            g_centroidOverrides++;
+            goto set_world;
+        }
+        g_centroidNearOrigin++;
+    } else if (g_curStream0VB) {
+        g_centroidMisses++;
+    } else {
+        g_centroidNoVB++;
+    }
+
+    /* Path 3: WORLD = MVP × inv(P) × inv(V) for model-space VBs */
+    if (self->mvpDirty && ensureInvP(self)) {
+        extractWorldDP(worldMatrix, self->mvpMatrix, self->invProjMatrix,
+                        self->invViewMatrix);
+    } else {
+        mat4_multiply(worldMatrix, self->mvMatrix, self->invViewMatrix);
+    }
+    mat4_quantize(worldMatrix);
+    g_lastWorldPath = 2;
+    g_lastCentroid[0] = worldMatrix[12];
+    g_lastCentroid[1] = worldMatrix[13];
+    g_lastCentroid[2] = worldMatrix[14];
+    g_mvpWorldExtracts++;
+
+set_world:
+    ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal, D3DTS_WORLD, worldMatrix);
+
+    memcpy(self->cachedWorld, worldMatrix, 16 * sizeof(float));
+    self->hasCachedWorld = 1;
+}
+
+/* ---- Vtable method implementations ---- */
+
+static void *s_device_vtbl[DEVICE_VTABLE_SIZE];
+
+/* 0: QueryInterface */
+static int __stdcall WD_QueryInterface(WrappedDevice *self, void *riid, void **ppv) {
+    typedef int (__stdcall *FN)(void*, void*, void**);
+    return ((FN)RealVtbl(self)[0])(self->pReal, riid, ppv);
+}
+
+/* 1: AddRef */
+static unsigned long __stdcall WD_AddRef(WrappedDevice *self) {
+    typedef unsigned long (__stdcall *FN)(void*);
+    self->refCount++;
+    return ((FN)RealVtbl(self)[1])(self->pReal);
+}
+
+/* 2: Release */
+static unsigned long __stdcall WD_Release(WrappedDevice *self) {
+    typedef unsigned long (__stdcall *FN)(void*);
+    unsigned long rc = ((FN)RealVtbl(self)[2])(self->pReal);
+    self->refCount--;
+    if (self->refCount <= 0) {
+        log_str("WrappedDevice released\r\n");
+        HeapFree(GetProcessHeap(), 0, self);
+    }
+    return rc;
+}
+
+/* ---- Relay thunks for non-intercepted methods ---- */
+
+#ifdef _MSC_VER
+#define RELAY_THUNK(name, slot) \
+    static __declspec(naked) void __stdcall name(void) { \
+        __asm { mov eax, [esp+4] } \
+        __asm { mov ecx, [eax+4] } \
+        __asm { mov [esp+4], ecx } \
+        __asm { mov eax, [ecx] } \
+        __asm { jmp dword ptr [eax + slot*4] } \
+    }
+
+RELAY_THUNK(Relay_03, 3)
+RELAY_THUNK(Relay_04, 4)
+RELAY_THUNK(Relay_05, 5)
+RELAY_THUNK(Relay_06, 6)
+RELAY_THUNK(Relay_07, 7)
+RELAY_THUNK(Relay_08, 8)
+RELAY_THUNK(Relay_09, 9)
+RELAY_THUNK(Relay_10, 10)
+RELAY_THUNK(Relay_11, 11)
+RELAY_THUNK(Relay_12, 12)
+RELAY_THUNK(Relay_13, 13)
+RELAY_THUNK(Relay_14, 14)
+RELAY_THUNK(Relay_15, 15)
+RELAY_THUNK(Relay_18, 18)
+RELAY_THUNK(Relay_19, 19)
+RELAY_THUNK(Relay_20, 20)
+RELAY_THUNK(Relay_21, 21)
+RELAY_THUNK(Relay_22, 22)
+RELAY_THUNK(Relay_23, 23)
+RELAY_THUNK(Relay_24, 24)
+RELAY_THUNK(Relay_25, 25)
+RELAY_THUNK(Relay_26, 26)
+RELAY_THUNK(Relay_27, 27)
+RELAY_THUNK(Relay_28, 28)
+RELAY_THUNK(Relay_29, 29)
+RELAY_THUNK(Relay_30, 30)
+RELAY_THUNK(Relay_31, 31)
+RELAY_THUNK(Relay_32, 32)
+RELAY_THUNK(Relay_33, 33)
+RELAY_THUNK(Relay_34, 34)
+RELAY_THUNK(Relay_35, 35)
+RELAY_THUNK(Relay_36, 36)
+RELAY_THUNK(Relay_37, 37)
+RELAY_THUNK(Relay_38, 38)
+RELAY_THUNK(Relay_39, 39)
+RELAY_THUNK(Relay_40, 40)
+RELAY_THUNK(Relay_43, 43)
+RELAY_THUNK(Relay_45, 45)
+RELAY_THUNK(Relay_46, 46)
+RELAY_THUNK(Relay_47, 47)
+RELAY_THUNK(Relay_48, 48)
+RELAY_THUNK(Relay_49, 49)
+RELAY_THUNK(Relay_50, 50)
+RELAY_THUNK(Relay_51, 51)
+RELAY_THUNK(Relay_52, 52)
+RELAY_THUNK(Relay_53, 53)
+RELAY_THUNK(Relay_54, 54)
+RELAY_THUNK(Relay_55, 55)
+RELAY_THUNK(Relay_56, 56)
+RELAY_THUNK(Relay_57, 57)
+RELAY_THUNK(Relay_58, 58)
+RELAY_THUNK(Relay_59, 59)
+RELAY_THUNK(Relay_60, 60)
+RELAY_THUNK(Relay_61, 61)
+RELAY_THUNK(Relay_62, 62)
+RELAY_THUNK(Relay_63, 63)
+RELAY_THUNK(Relay_64, 64)
+RELAY_THUNK(Relay_65, 65)
+RELAY_THUNK(Relay_66, 66)
+RELAY_THUNK(Relay_67, 67)
+RELAY_THUNK(Relay_68, 68)
+RELAY_THUNK(Relay_69, 69)
+RELAY_THUNK(Relay_70, 70)
+RELAY_THUNK(Relay_71, 71)
+RELAY_THUNK(Relay_72, 72)
+RELAY_THUNK(Relay_73, 73)
+RELAY_THUNK(Relay_74, 74)
+RELAY_THUNK(Relay_75, 75)
+RELAY_THUNK(Relay_76, 76)
+RELAY_THUNK(Relay_77, 77)
+RELAY_THUNK(Relay_78, 78)
+RELAY_THUNK(Relay_79, 79)
+RELAY_THUNK(Relay_80, 80)
+RELAY_THUNK(Relay_83, 83)
+RELAY_THUNK(Relay_84, 84)
+RELAY_THUNK(Relay_85, 85)
+RELAY_THUNK(Relay_86, 86)
+RELAY_THUNK(Relay_87, 87)
+RELAY_THUNK(Relay_88, 88)
+RELAY_THUNK(Relay_89, 89)
+RELAY_THUNK(Relay_90, 90)
+RELAY_THUNK(Relay_91, 91)
+RELAY_THUNK(Relay_92, 92)
+RELAY_THUNK(Relay_93, 93)
+RELAY_THUNK(Relay_95, 95)
+RELAY_THUNK(Relay_96, 96)
+RELAY_THUNK(Relay_97, 97)
+RELAY_THUNK(Relay_98, 98)
+RELAY_THUNK(Relay_99, 99)
+RELAY_THUNK(Relay_100, 100)
+RELAY_THUNK(Relay_101, 101)
+RELAY_THUNK(Relay_102, 102)
+RELAY_THUNK(Relay_103, 103)
+RELAY_THUNK(Relay_104, 104)
+RELAY_THUNK(Relay_105, 105)
+RELAY_THUNK(Relay_106, 106)
+RELAY_THUNK(Relay_107, 107)
+RELAY_THUNK(Relay_108, 108)
+RELAY_THUNK(Relay_109, 109)
+RELAY_THUNK(Relay_110, 110)
+RELAY_THUNK(Relay_111, 111)
+RELAY_THUNK(Relay_112, 112)
+RELAY_THUNK(Relay_113, 113)
+RELAY_THUNK(Relay_114, 114)
+RELAY_THUNK(Relay_115, 115)
+RELAY_THUNK(Relay_116, 116)
+RELAY_THUNK(Relay_117, 117)
+RELAY_THUNK(Relay_118, 118)
+
+#else
+#error "Only MSVC x86 is supported"
+#endif
+
+/* ---- Intercepted methods ---- */
+
+/* 16: Reset */
+static int __stdcall WD_Reset(WrappedDevice *self, void *pPresentParams) {
+    typedef int (__stdcall *FN)(void*, void*);
+    int hr;
+    log_str("== Device Reset ==\r\n");
+    self->mvDirty = 0;
+    self->mvpDirty = 0;
+    self->viewCapturedThisFrame = 0;
+    self->hasCachedWorld = 0;
+    self->gameWorldSet = 0;
+    hr = ((FN)RealVtbl(self)[SLOT_Reset])(self->pReal, pPresentParams);
+    log_hex("  Reset hr=", hr);
+    return hr;
+}
+
+/* 17: Present — end of frame */
+static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, void *d) {
+    typedef int (__stdcall *FN)(void*, void*, void*, void*, void*);
+    int hr;
+
+#if DIAG_ENABLED
+    if (DIAG_ACTIVE(self)) {
+        log_str("==== PRESENT frame ");
+        log_int("", self->frameCount);
+        log_int("  drawCalls: ", self->drawCallCount);
+        diag_log_matrix("  VIEW", self->viewMatrix);
+        log_int("  hasRealView: ", self->hasRealView);
+        diag_log_matrix("  last MV", self->mvMatrix);
+        log_int("  vbSamples: ", g_vbSampleCount);
+        log_int("  centroidOverrides(worldBaked): ", g_centroidOverrides);
+        log_int("  centroidMisses(noSample): ", g_centroidMisses);
+        log_int("  centroidNoVB: ", g_centroidNoVB);
+        log_int("  svcfMvWrites: ", g_svcfMvWrites);
+        log_int("  svcfMvpWrites: ", g_svcfMvpWrites);
+        log_int("  hasProj: ", self->hasProj);
+        log_int("  mvpWorldExtracts(modelSpace): ", g_mvpWorldExtracts);
+        log_int("  gameWorldSets(suppressed): ", g_gameWorldSets);
+        log_hex("  curStream0VB: ", (unsigned int)(size_t)g_curStream0VB);
+        self->diagLoggedFrames++;
+    }
+#endif
+
+    hr = ((FN)RealVtbl(self)[SLOT_Present])(self->pReal, a, b, c, d);
+
+    self->frameCount++;
+    self->drawCallCount = 0;
+    self->mvDirty = 0;
+    self->mvpDirty = 0;
+    self->viewCapturedThisFrame = 0;
+    self->hasCachedWorld = 0;
+    self->gameWorldSet = 0;
+    g_centroidOverrides = 0;
+    g_centroidMisses    = 0;
+    g_centroidNoVB      = 0;
+    g_centroidNearOrigin= 0;
+    g_svcfMvWrites      = 0;
+    g_svcfMvpWrites     = 0;
+    g_gameWorldSets     = 0;
+    g_ffpDraws          = 0;
+    g_mvpWorldExtracts  = 0;
+    g_gameWorldDraws    = 0;
+
+    return hr;
+}
+
+/* 41: BeginScene */
+static int __stdcall WD_BeginScene(WrappedDevice *self) {
+    typedef int (__stdcall *FN)(void*);
+    self->sceneCount++;
+    return ((FN)RealVtbl(self)[SLOT_BeginScene])(self->pReal);
+}
+
+/* 42: EndScene */
+static int __stdcall WD_EndScene(WrappedDevice *self) {
+    typedef int (__stdcall *FN)(void*);
+    return ((FN)RealVtbl(self)[SLOT_EndScene])(self->pReal);
+}
+
+/* 44: SetTransform — detect real View from ASI, suppress game's WORLD writes */
+static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, float *pMatrix) {
+    typedef int (__stdcall *FN)(void*, unsigned int, float*);
+
+    if (state == D3DTS_VIEW && pMatrix) {
+        if (mat4_isIdentity(pMatrix)) {
+            /* Game's default identity VIEW — suppress */
+            return 0;
+        }
+        /* Real View from ASI hook — capture and forward to Remix */
+        memcpy(self->viewMatrix, pMatrix, 16 * sizeof(float));
+        mat4_invOrthogonal(self->invViewMatrix, self->viewMatrix);
+        self->viewCapturedThisFrame = 1;
+        self->hasRealView = 1;
+
+#if DIAG_ENABLED
+        if (DIAG_ACTIVE(self)) {
+            log_str("  ASI real VIEW received\r\n");
+            diag_log_matrix("    VIEW", self->viewMatrix);
+        }
+#endif
+        {
+            float copy[16];
+            memcpy(copy, self->viewMatrix, 16 * sizeof(float));
+            return ((FN)RealVtbl(self)[SLOT_SetTransform])(self->pReal, D3DTS_VIEW, copy);
+        }
+    }
+
+    /* Capture Projection matrix for MVP decomposition */
+    if (state == D3DTS_PROJECTION && pMatrix) {
+        memcpy(self->projMatrix, pMatrix, 16 * sizeof(float));
+        self->hasProj = 1;
+        self->invProjDirty = 1;
+    }
+
+    /* Game/dxwrapper D3DTS_WORLD writes: suppress. We set our own WORLD from
+       MVP × inv(P) × inv(V) before each draw in ApplyTransforms. */
+    if (state >= 256 && state < 512) {
+        g_gameWorldSets++;
+#if DIAG_ENABLED
+        if (DIAG_ACTIVE(self)) {
+            log_int("  game SetTransform(WORLD) #", g_gameWorldSets);
+        }
+#endif
+        memcpy(self->gameWorldMatrix, pMatrix, 16 * sizeof(float));
+        self->gameWorldSet = 1;
+        self->hasCachedWorld = 0;
+        return 0;
+    }
+
+    return ((FN)RealVtbl(self)[SLOT_SetTransform])(self->pReal, state, pMatrix);
+}
+
+/* 86: CreateVertexDeclaration — create original + FFP-remapped version */
+static int __stdcall WD_CreateVertexDeclaration(WrappedDevice *self,
+    D3DVERTEXELEMENT9 *pVertexElements, void **ppDecl)
+{
+    typedef int (__stdcall *FN)(void*, D3DVERTEXELEMENT9*, void**);
+    D3DVERTEXELEMENT9 ffpElems[32];
+    void *pFFPDecl = NULL;
+    int hr, i, count, needsRemap;
+    int texIdx = 0, colorIdx = 0, hasNormal = 0;
+
+    hr = ((FN)RealVtbl(self)[SLOT_CreateVertexDeclaration])(
+        self->pReal, pVertexElements, ppDecl);
+    if (hr != 0 || !ppDecl || !*ppDecl) return hr;
+
+    /* Count elements and detect mismatched semantics */
+    count = 0;
+    needsRemap = 0;
+    while (pVertexElements[count].Stream != 0xFF && count < 30) {
+        unsigned char u = pVertexElements[count].Usage;
+        unsigned char t = pVertexElements[count].Type;
+        if (u == D3DDECLUSAGE_BLENDWEIGHT || u == D3DDECLUSAGE_BLENDINDICES ||
+            (u == D3DDECLUSAGE_PSIZE  && t == D3DDECLTYPE_FLOAT2) ||
+            (u == D3DDECLUSAGE_NORMAL && t == D3DDECLTYPE_D3DCOLOR))
+            needsRemap = 1;
+        count++;
+    }
+
+    if (g_ffpDeclCount >= FFP_DECL_MAX) return hr;
+
+    if (!needsRemap) {
+        g_ffpDecls[g_ffpDeclCount].pOrigDecl = *ppDecl;
+        g_ffpDecls[g_ffpDeclCount].pFFPDecl  = *ppDecl;
+        g_ffpDecls[g_ffpDeclCount].elemCount = (unsigned int)count;
+        g_ffpDecls[g_ffpDeclCount].ffpEligible = (count == 3);
+        g_ffpDeclCount++;
+        return hr;
+    }
+
+    /* Build remapped declaration with FFP-compatible semantics */
+    for (i = 0; i < count; i++) {
+        ffpElems[i] = pVertexElements[i];
+        switch (ffpElems[i].Usage) {
+        case D3DDECLUSAGE_BLENDWEIGHT:
+            if (ffpElems[i].Type == D3DDECLTYPE_D3DCOLOR) {
+                ffpElems[i].Usage = D3DDECLUSAGE_COLOR;
+                ffpElems[i].UsageIndex = (unsigned char)colorIdx++;
+            } else if (ffpElems[i].Type == D3DDECLTYPE_FLOAT3 && !hasNormal) {
+                ffpElems[i].Usage = D3DDECLUSAGE_NORMAL;
+                ffpElems[i].UsageIndex = 0;
+                hasNormal = 1;
+            }
+            break;
+        case D3DDECLUSAGE_BLENDINDICES:
+            if (ffpElems[i].Type == D3DDECLTYPE_FLOAT2) {
+                ffpElems[i].Usage = D3DDECLUSAGE_TEXCOORD;
+                ffpElems[i].UsageIndex = (unsigned char)texIdx++;
+            } else if (ffpElems[i].Type == D3DDECLTYPE_D3DCOLOR) {
+                ffpElems[i].Usage = D3DDECLUSAGE_COLOR;
+                ffpElems[i].UsageIndex = (unsigned char)colorIdx++;
+            }
+            break;
+        case D3DDECLUSAGE_NORMAL:
+            if (ffpElems[i].Type == D3DDECLTYPE_D3DCOLOR) {
+                ffpElems[i].Usage = D3DDECLUSAGE_COLOR;
+                ffpElems[i].UsageIndex = (unsigned char)colorIdx++;
+            } else {
+                hasNormal = 1;
+            }
+            break;
+        case D3DDECLUSAGE_PSIZE:
+            if (ffpElems[i].Type == D3DDECLTYPE_FLOAT2) {
+                ffpElems[i].Usage = D3DDECLUSAGE_TEXCOORD;
+                ffpElems[i].UsageIndex = (unsigned char)texIdx++;
+            }
+            break;
+        case D3DDECLUSAGE_TEXCOORD:
+            texIdx = ffpElems[i].UsageIndex + 1;
+            break;
+        case D3DDECLUSAGE_COLOR:
+            colorIdx = ffpElems[i].UsageIndex + 1;
+            break;
+        }
+    }
+
+    /* End sentinel */
+    ffpElems[count].Stream = 0xFF;
+    ffpElems[count].Offset = 0;
+    ffpElems[count].Type = D3DDECLTYPE_UNUSED;
+    ffpElems[count].Method = 0;
+    ffpElems[count].Usage = 0;
+    ffpElems[count].UsageIndex = 0;
+
+    ((FN)RealVtbl(self)[SLOT_CreateVertexDeclaration])(
+        self->pReal, ffpElems, &pFFPDecl);
+
+    g_ffpDecls[g_ffpDeclCount].pOrigDecl = *ppDecl;
+    g_ffpDecls[g_ffpDeclCount].pFFPDecl  = pFFPDecl ? pFFPDecl : *ppDecl;
+    g_ffpDecls[g_ffpDeclCount].elemCount = (unsigned int)count;
+    g_ffpDecls[g_ffpDeclCount].ffpEligible = (count == 3);
+    g_ffpDeclCount++;
+
+    return hr;
+}
+
+/* 87: SetVertexDeclaration — track current declaration for FFP swap */
+static int __stdcall WD_SetVertexDeclaration(WrappedDevice *self, void *pDecl)
+{
+    typedef int (__stdcall *FN)(void*, void*);
+    g_currentDecl = pDecl;
+    return ((FN)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, pDecl);
+}
+
+/* 81: DrawPrimitive */
+static int __stdcall WD_DrawPrimitive(WrappedDevice *self,
+    unsigned int pt, unsigned int sv, unsigned int pc)
+{
+    typedef int (__stdcall *FN)(void*, unsigned int, unsigned int, unsigned int);
+    typedef int (__stdcall *FN_SS)(void*, void*);
+    int useFfp, hr;
+    FFPDeclEntry *pDeclInfo = NULL;
+    void *pFFP = NULL;
+    self->drawCallCount++;
+
+    pDeclInfo = ffpDecl_lookup(g_currentDecl);
+    useFfp = pDeclInfo && pDeclInfo->ffpEligible;
+
+    if (useFfp) {
+        ApplyTransforms(self, sv, pc * 3, pc);
+        useFfp = self->hasCachedWorld;
+    }
+
+    if (useFfp) {
+        pFFP = pDeclInfo->pFFPDecl;
+        if (pFFP && pFFP != g_currentDecl)
+            ((FN_SS)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, pFFP);
+        ((FN_SS)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, NULL);
+        {
+            typedef int (__stdcall *FN_RS)(void*, unsigned int, unsigned int);
+            ((FN_RS)RealVtbl(self)[SLOT_SetRenderState])(self->pReal,
+                D3DRS_LIGHTING, 0);
+        }
+        g_ffpDraws++;
+    }
+
+#if DIAG_ENABLED
+    if (DIAG_ACTIVE(self) && (self->drawCallCount <= 5 || useFfp)) {
+        log_int("  DP #", self->drawCallCount);
+        log_int("    type=", pt);
+        log_int("    primCount=", pc);
+        log_int("    ffp=", useFfp);
+        if (useFfp) {
+            log_hex("    vb=", (unsigned int)(size_t)g_curStream0VB);
+            log_int("    path=", g_lastWorldPath);
+            log_float_val("    cx=", g_lastCentroid[0]);
+            log_float_val("    cy=", g_lastCentroid[1]);
+            log_float_val("    cz=", g_lastCentroid[2]);
+            log_float_val("    world tx=", self->cachedWorld[12]);
+            log_float_val("    world ty=", self->cachedWorld[13]);
+            log_float_val("    world tz=", self->cachedWorld[14]);
+            if (g_lastWorldPath == 2)
+                log_int("  mvpWorld draw#", self->drawCallCount);
+            diag_log_matrix("    WORLD", self->cachedWorld);
+        }
+        diag_log_matrix("    MV", self->mvMatrix);
+    }
+#endif
+
+    hr = ((FN)RealVtbl(self)[SLOT_DrawPrimitive])(self->pReal, pt, sv, pc);
+
+    if (useFfp && pFFP && pFFP != g_currentDecl)
+        ((FN_SS)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, g_currentDecl);
+
+    return hr;
+}
+
+/* 82: DrawIndexedPrimitive */
+static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
+    unsigned int pt, int bvi, unsigned int mi, unsigned int nv,
+    unsigned int si, unsigned int pc)
+{
+    typedef int (__stdcall *FN)(void*, unsigned int, int, unsigned int,
+                                unsigned int, unsigned int, unsigned int);
+    typedef int (__stdcall *FN_SS)(void*, void*);
+    int hr;
+    int useFfp;
+    FFPDeclEntry *pDeclInfo = NULL;
+    void *pFFP = NULL;
+
+    self->drawCallCount++;
+
+    pDeclInfo = ffpDecl_lookup(g_currentDecl);
+    useFfp = pDeclInfo && pDeclInfo->ffpEligible;
+
+    if (useFfp) {
+        unsigned int streamStart = bvi < 0 ? 0u : (unsigned int)bvi;
+        ApplyTransforms(self, streamStart, nv, pc);
+        useFfp = self->hasCachedWorld;
+    }
+
+    if (useFfp) {
+        pFFP = pDeclInfo->pFFPDecl;
+        if (pFFP && pFFP != g_currentDecl)
+            ((FN_SS)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, pFFP);
+        ((FN_SS)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, NULL);
+        {
+            typedef int (__stdcall *FN_RS)(void*, unsigned int, unsigned int);
+            ((FN_RS)RealVtbl(self)[SLOT_SetRenderState])(self->pReal,
+                D3DRS_LIGHTING, 0);
+        }
+        g_ffpDraws++;
+    }
+
+#if DIAG_ENABLED
+    if (DIAG_ACTIVE(self) && (self->drawCallCount <= 5 || useFfp)) {
+        log_int("  DIP #", self->drawCallCount);
+        log_int("    type=", pt);
+        log_int("    baseVtx=", bvi);
+        log_int("    numVerts=", nv);
+        log_int("    primCount=", pc);
+        log_int("    ffp=", useFfp);
+        if (useFfp) {
+            log_hex("    vb=", (unsigned int)(size_t)g_curStream0VB);
+            log_int("    path=", g_lastWorldPath);
+            log_float_val("    cx=", g_lastCentroid[0]);
+            log_float_val("    cy=", g_lastCentroid[1]);
+            log_float_val("    cz=", g_lastCentroid[2]);
+            log_float_val("    world tx=", self->cachedWorld[12]);
+            log_float_val("    world ty=", self->cachedWorld[13]);
+            log_float_val("    world tz=", self->cachedWorld[14]);
+            if (g_lastWorldPath == 2)
+                log_int("  mvpWorld draw#", self->drawCallCount);
+            diag_log_matrix("    WORLD", self->cachedWorld);
+        }
+        diag_log_matrix("    MV", self->mvMatrix);
+    }
+#endif
+
+    hr = ((FN)RealVtbl(self)[SLOT_DrawIndexedPrimitive])(self->pReal,
+        pt, bvi, mi, nv, si, pc);
+
+    if (useFfp && pFFP && pFFP != g_currentDecl)
+        ((FN_SS)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, g_currentDecl);
+
+    return hr;
+}
+
+/* 94: SetVertexShaderConstantF — capture c17-c20 (transposed ModelView) */
+static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
+    unsigned int startReg, float *pData, unsigned int count)
+{
+    typedef int (__stdcall *FN)(void*, unsigned int, float*, unsigned int);
+
+    if (pData) {
+        unsigned int endReg = startReg + count;
+
+        /* New constant data in c0-c3 range means new object — invalidate cache */
+        if (startReg < 4 && endReg > 0) {
+            self->hasCachedWorld = 0;
+            self->gameWorldSet = 0;
+
+            /* Capture complete MVP (c0-c3, transposed to row-major) */
+            if (startReg == 0 && endReg >= 4) {
+                mat4_transpose(self->mvpMatrix, pData);
+                self->mvpDirty = 1;
+                g_svcfMvpWrites++;
+            }
+        }
+
+        /* Capture c17-c20 (transposed ModelView) */
+        if (startReg < VS_REG_MV_END && endReg > VS_REG_MV_START) {
+            unsigned int mvOff;
+            if (startReg <= VS_REG_MV_START && endReg >= VS_REG_MV_END) {
+                float *mvSrc = pData + (VS_REG_MV_START - startReg) * 4;
+                mat4_transpose(self->mvMatrix, mvSrc);
+                self->mvDirty = 1;
+            } else {
+                float raw[16];
+                unsigned int r;
+                mat4_transpose(raw, self->mvMatrix);
+                for (r = startReg; r < endReg; r++) {
+                    if (r >= VS_REG_MV_START && r < VS_REG_MV_END) {
+                        mvOff = (r - VS_REG_MV_START) * 4;
+                        raw[mvOff + 0] = pData[(r - startReg) * 4 + 0];
+                        raw[mvOff + 1] = pData[(r - startReg) * 4 + 1];
+                        raw[mvOff + 2] = pData[(r - startReg) * 4 + 2];
+                        raw[mvOff + 3] = pData[(r - startReg) * 4 + 3];
+                    }
+                }
+                mat4_transpose(self->mvMatrix, raw);
+                self->mvDirty = 1;
+            }
+            g_svcfMvWrites++;
+        }
+    }
+
+    return ((FN)RealVtbl(self)[SLOT_SetVertexShaderConstantF])(self->pReal,
+        startReg, pData, count);
+}
+
+/* ---- Build vtable ---- */
+
+WrappedDevice* WrappedDevice_Create(void *pRealDevice) {
+    WrappedDevice *w;
+    int i;
+
+    w = (WrappedDevice*)HeapAlloc(GetProcessHeap(), 8 /*HEAP_ZERO_MEMORY*/,
+                                  sizeof(WrappedDevice));
+    if (!w) return NULL;
+
+    s_device_vtbl[0]  = (void*)WD_QueryInterface;
+    s_device_vtbl[1]  = (void*)WD_AddRef;
+    s_device_vtbl[2]  = (void*)WD_Release;
+    s_device_vtbl[3]  = (void*)Relay_03;
+    s_device_vtbl[4]  = (void*)Relay_04;
+    s_device_vtbl[5]  = (void*)Relay_05;
+    s_device_vtbl[6]  = (void*)Relay_06;
+    s_device_vtbl[7]  = (void*)Relay_07;
+    s_device_vtbl[8]  = (void*)Relay_08;
+    s_device_vtbl[9]  = (void*)Relay_09;
+    s_device_vtbl[10] = (void*)Relay_10;
+    s_device_vtbl[11] = (void*)Relay_11;
+    s_device_vtbl[12] = (void*)Relay_12;
+    s_device_vtbl[13] = (void*)Relay_13;
+    s_device_vtbl[14] = (void*)Relay_14;
+    s_device_vtbl[15] = (void*)Relay_15;
+    s_device_vtbl[16] = (void*)WD_Reset;                     /* INTERCEPTED */
+    s_device_vtbl[17] = (void*)WD_Present;                   /* INTERCEPTED */
+    s_device_vtbl[18] = (void*)Relay_18;
+    s_device_vtbl[19] = (void*)Relay_19;
+    s_device_vtbl[20] = (void*)Relay_20;
+    s_device_vtbl[21] = (void*)Relay_21;
+    s_device_vtbl[22] = (void*)Relay_22;
+    s_device_vtbl[23] = (void*)Relay_23;
+    s_device_vtbl[24] = (void*)Relay_24;
+    s_device_vtbl[25] = (void*)Relay_25;
+    s_device_vtbl[26] = (void*)WD_CreateVertexBuffer;        /* INTERCEPTED */
+    s_device_vtbl[27] = (void*)Relay_27;
+    s_device_vtbl[28] = (void*)Relay_28;
+    s_device_vtbl[29] = (void*)Relay_29;
+    s_device_vtbl[30] = (void*)Relay_30;
+    s_device_vtbl[31] = (void*)Relay_31;
+    s_device_vtbl[32] = (void*)Relay_32;
+    s_device_vtbl[33] = (void*)Relay_33;
+    s_device_vtbl[34] = (void*)Relay_34;
+    s_device_vtbl[35] = (void*)Relay_35;
+    s_device_vtbl[36] = (void*)Relay_36;
+    s_device_vtbl[37] = (void*)Relay_37;
+    s_device_vtbl[38] = (void*)Relay_38;
+    s_device_vtbl[39] = (void*)Relay_39;
+    s_device_vtbl[40] = (void*)Relay_40;
+    s_device_vtbl[41] = (void*)WD_BeginScene;                /* INTERCEPTED */
+    s_device_vtbl[42] = (void*)WD_EndScene;                  /* INTERCEPTED */
+    s_device_vtbl[43] = (void*)Relay_43;
+    s_device_vtbl[44] = (void*)WD_SetTransform;              /* INTERCEPTED */
+    s_device_vtbl[45] = (void*)Relay_45;
+    s_device_vtbl[46] = (void*)Relay_46;
+    s_device_vtbl[47] = (void*)Relay_47;
+    s_device_vtbl[48] = (void*)Relay_48;
+    s_device_vtbl[49] = (void*)Relay_49;
+    s_device_vtbl[50] = (void*)Relay_50;
+    s_device_vtbl[51] = (void*)Relay_51;
+    s_device_vtbl[52] = (void*)Relay_52;
+    s_device_vtbl[53] = (void*)Relay_53;
+    s_device_vtbl[54] = (void*)Relay_54;
+    s_device_vtbl[55] = (void*)Relay_55;
+    s_device_vtbl[56] = (void*)Relay_56;
+    s_device_vtbl[57] = (void*)Relay_57;
+    s_device_vtbl[58] = (void*)Relay_58;
+    s_device_vtbl[59] = (void*)Relay_59;
+    s_device_vtbl[60] = (void*)Relay_60;
+    s_device_vtbl[61] = (void*)Relay_61;
+    s_device_vtbl[62] = (void*)Relay_62;
+    s_device_vtbl[63] = (void*)Relay_63;
+    s_device_vtbl[64] = (void*)Relay_64;
+    s_device_vtbl[65] = (void*)Relay_65;
+    s_device_vtbl[66] = (void*)Relay_66;
+    s_device_vtbl[67] = (void*)Relay_67;
+    s_device_vtbl[68] = (void*)Relay_68;
+    s_device_vtbl[69] = (void*)Relay_69;
+    s_device_vtbl[70] = (void*)Relay_70;
+    s_device_vtbl[71] = (void*)Relay_71;
+    s_device_vtbl[72] = (void*)Relay_72;
+    s_device_vtbl[73] = (void*)Relay_73;
+    s_device_vtbl[74] = (void*)Relay_74;
+    s_device_vtbl[75] = (void*)Relay_75;
+    s_device_vtbl[76] = (void*)Relay_76;
+    s_device_vtbl[77] = (void*)Relay_77;
+    s_device_vtbl[78] = (void*)Relay_78;
+    s_device_vtbl[79] = (void*)Relay_79;
+    s_device_vtbl[80] = (void*)Relay_80;
+    s_device_vtbl[81] = (void*)WD_DrawPrimitive;             /* INTERCEPTED */
+    s_device_vtbl[82] = (void*)WD_DrawIndexedPrimitive;      /* INTERCEPTED */
+    s_device_vtbl[83] = (void*)Relay_83;
+    s_device_vtbl[84] = (void*)Relay_84;
+    s_device_vtbl[85] = (void*)Relay_85;
+    s_device_vtbl[86] = (void*)WD_CreateVertexDeclaration;   /* INTERCEPTED */
+    s_device_vtbl[87] = (void*)WD_SetVertexDeclaration;      /* INTERCEPTED */
+    s_device_vtbl[88] = (void*)Relay_88;
+    s_device_vtbl[89] = (void*)Relay_89;
+    s_device_vtbl[90] = (void*)Relay_90;
+    s_device_vtbl[91] = (void*)Relay_91;
+    s_device_vtbl[92] = (void*)Relay_92;
+    s_device_vtbl[93] = (void*)Relay_93;
+    s_device_vtbl[94] = (void*)WD_SetVertexShaderConstantF;  /* INTERCEPTED */
+    s_device_vtbl[95] = (void*)Relay_95;
+    s_device_vtbl[96] = (void*)Relay_96;
+    s_device_vtbl[97] = (void*)Relay_97;
+    s_device_vtbl[98] = (void*)Relay_98;
+    s_device_vtbl[99] = (void*)Relay_99;
+    s_device_vtbl[100] = (void*)WD_SetStreamSource;          /* INTERCEPTED */
+    s_device_vtbl[101] = (void*)Relay_101;
+    s_device_vtbl[102] = (void*)Relay_102;
+    s_device_vtbl[103] = (void*)Relay_103;
+    s_device_vtbl[104] = (void*)Relay_104;
+    s_device_vtbl[105] = (void*)Relay_105;
+    s_device_vtbl[106] = (void*)Relay_106;
+    s_device_vtbl[107] = (void*)Relay_107;
+    s_device_vtbl[108] = (void*)Relay_108;
+    s_device_vtbl[109] = (void*)Relay_109;
+    s_device_vtbl[110] = (void*)Relay_110;
+    s_device_vtbl[111] = (void*)Relay_111;
+    s_device_vtbl[112] = (void*)Relay_112;
+    s_device_vtbl[113] = (void*)Relay_113;
+    s_device_vtbl[114] = (void*)Relay_114;
+    s_device_vtbl[115] = (void*)Relay_115;
+    s_device_vtbl[116] = (void*)Relay_116;
+    s_device_vtbl[117] = (void*)Relay_117;
+    s_device_vtbl[118] = (void*)Relay_118;
+
+    w->vtbl = s_device_vtbl;
+    w->pReal = pRealDevice;
+    w->refCount = 1;
+    w->frameCount = 0;
+    w->mvDirty = 0;
+    w->mvpDirty = 0;
+    w->viewCapturedThisFrame = 0;
+    w->hasRealView = 0;
+    w->hasCachedWorld = 0;
+    w->gameWorldSet = 0;
+    w->hasProj = 0;
+    w->invProjDirty = 1;
+    w->createTick = GetTickCount();
+    w->diagLoggedFrames = 0;
+    w->drawCallCount = 0;
+    w->sceneCount = 0;
+
+    /* Initialize matrices to identity */
+    for (i = 0; i < 16; i++) {
+        w->mvMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+        w->mvpMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+        w->viewMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+        w->invViewMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+        w->cachedWorld[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+        w->projMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+        w->invProjMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+    }
+
+    log_str("WrappedDevice_Create: JPOG Matrix-Capture proxy ready\r\n");
+    return w;
+}

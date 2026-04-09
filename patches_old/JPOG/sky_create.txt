@@ -1,0 +1,182 @@
+﻿python : hint: use --types kb.h to load a knowledge base for richer output
+At line:1 char:1
++ python -m retools.decompiler "D:\Games\JPOGRTX\JPOG\SIMJP.EXE" 0x0051 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (hint: use --typ...r richer output 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+KB workflow: decompile -> learn -> update kb.h with new 
+types/functions/globals \u2192 decompile again
+INFO: Second cons!
+void __thiscall
+
+sym.SimJP.exe__Create_ASky__QAEXMMII_Z(int param_1,uint param_2,float param_3,int param_4,int param_5)
+
+
+
+{
+
+    float fVar1;
+
+    float fVar2;
+
+    int *piVar3;
+
+    int iVar4;
+
+    float fVar5;
+
+    float fVar6;
+
+    float fVar7;
+
+    int iVar8;
+
+    uint32_t uVar9;
+
+    int *piVar10;
+
+    float unaff_ESI;
+
+    uint32_t uVar11;
+
+    float10 fVar12;
+
+    float10 fVar13;
+
+    
+
+    //public: void __thiscall ASky::Create(float, float, unsigned int, unsigned int)
+
+    *(param_1 + 0xc) = param_5;
+
+    *(param_1 + 0x10) = param_4;
+
+    *(param_1 + 0x14) = -param_3;
+
+    *(param_1 + 0x18) = param_2;
+
+    iVar8 = (*_sym.imp.tkernelinterface.dll__tmalloc__YGPAXHPADH_Z)(param_5 * param_4 * 0xc,0,0xffffffff);
+
+    if (iVar8 == 0) {
+
+        iVar8 = 0;
+
+    }
+
+    *(param_1 + 200) = iVar8;
+
+    fVar1 = *_sym.imp.tkernelinterface.dll__TWO_PI_TMath_Toshi__2MB;
+
+    fVar5 = param_4;
+
+    if (param_4 < 0) {
+
+        fVar5 = fVar5 + *0xd11d78;
+
+    }
+
+    iVar8 = 0;
+
+    uVar9 = *(param_1 + 0xc);
+
+    if (uVar9 != 0) {
+
+        uVar11 = 0;
+
+        do {
+
+            fVar6 = uVar9 - 1;
+
+            if (uVar9 - 1 < 0) {
+
+                fVar6 = fVar6 + *0xd11d78;
+
+            }
+
+            fVar2 = *(param_1 + 0x14);
+
+            fVar12 = func_0x00730f64(*_sym.imp.tkernelinterface.dll__HALF_PI_TMath_Toshi__2MB * (uVar11 / fVar6));
+
+            uVar9 = 0;
+
+            fVar7 = *0xd11d74;
+
+            if (*(param_1 + 0x10) != 0) {
+
+                do {
+
+                    fVar13 = func_0x00730f5e(fVar7);
+
+                    iVar4 = iVar8 * 0xc;
+
+                    *(iVar4 + *(param_1 + 200)) = unaff_ESI * fVar12 * fVar13;
+
+                    *(iVar4 + 4 + *(param_1 + 200)) = fVar2 * (uVar11 / fVar6);
+
+                    fVar13 = func_0x00730f64(fVar7);
+
+                    iVar8 = iVar8 + 1;
+
+                    uVar9 = uVar9 + 1;
+
+                    *(iVar4 + 8 + *(param_1 + 200)) = unaff_ESI * fVar12 * fVar13;
+
+                    fVar7 = fVar7 + fVar1 / fVar5;
+
+                } while (uVar9 < *(param_1 + 0x10));
+
+            }
+
+            uVar11 = uVar11 + 1;
+
+            uVar9 = *(param_1 + 0xc);
+
+        } while (uVar11 < uVar9);
+
+    }
+
+    iVar8 = func_0x00484db0();
+
+    piVar3 = *(iVar8 + 0xd0);
+
+    piVar10 = NULL;
+
+    if (piVar3 != NULL) {
+
+        piVar3[1] = piVar3[1] + 1;
+
+        piVar10 = piVar3;
+
+    }
+
+    (*_sym.imp.trenderinterface.dll__GetSystemResource_TRenderInterface_Toshi__QAEPAVTResource_2_W4SYSRESOURCES_12__Z)
+
+              (8);
+
+    if ((piVar10 != NULL) && (iVar8 = piVar10[1], piVar10[1] = iVar8 + -1, iVar8 + -1 == 0)) {
+
+        (**(*piVar10 + 4))();
+
+    }
+
+    piVar3 = *(_sym.SimJP.exe__m_pSimJPTerrain_AParkManager__0PAVASimJPTerrain__A + 0xd8);
+
+    iVar8 = 0;
+
+    do {
+
+        (**(*piVar3 + 0x13c))(iVar8,0);
+
+        iVar8 = iVar8 + 1;
+
+    } while (iVar8 < 5);
+
+    *(param_1 + 4) = 0;
+
+    func_0x0051f990(0);
+
+    return;
+
+}

@@ -4,6 +4,7 @@
 #include "imgui.hpp"
 #include "diagnostics.hpp"
 #include "shared/common/ffp_state.hpp"
+#include "../game/game.hpp"
 
 namespace comp
 {
@@ -53,6 +54,8 @@ namespace comp
 		if (!is_initialized() || shared::globals::imgui_is_rendering) {
 			return dev->DrawPrimitive(PrimitiveType, StartVertex, PrimitiveCount);
 		}
+
+		comp::game::inject_world_pre_draw(dev);
 
 		static auto im = imgui::get();
 		im->m_stats._drawcall_prim_incl_ignored.track_single();
@@ -106,6 +109,8 @@ namespace comp
 		if (!is_initialized() || shared::globals::imgui_is_rendering) {
 			return dev->DrawIndexedPrimitive(PrimitiveType, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
 		}
+
+		comp::game::inject_world_pre_draw(dev);
 
 		auto& ctx = setup_context(dev);
 		const auto im = imgui::get();
@@ -248,8 +253,9 @@ namespace comp
 		// Initialize FFP state tracker
 		shared::common::ffp_state::get().init(shared::globals::d3d_device);
 
-		// GAME-SPECIFIC: Create hooks as required.
-		// See documentation for per-object hook examples.
+		// JPOG: hook SetRenderMatrices to fix VIEW matrix and capture TRenderContext*.
+		// Must run here (not in init_game_addresses) because game DLLs load after DllMain.
+		comp::game::install_render_hooks();
 
 		m_initialized = true;
 		shared::common::log("Renderer", "Module initialized.", shared::common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
