@@ -1,0 +1,367 @@
+=== DX9 Shader-to-FFP Proxy ===
+Remix enabled, loading: D:\Games\JPOGRTX\JPOG\d3d9_remix.dll
+Direct3DCreate9 called, SDK version: 0x00000020
+Real IDirect3D9: 0x0117B910
+WrappedD3D9 created at 0x0116E040
+CreateDevice called
+  Adapter: 0x00000000
+  DeviceType: 0x00000001
+  BehaviorFlags: 0x00000080
+  Real device: 0x011A6948
+WrappedDevice_Create: JPOG Matrix-Capture proxy ready
+  Wrapped device: 0x011D5908
+  ASI real VIEW received
+    VIEW:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -0.00 12.22 1.83 1.00
+  ASI real VIEW received
+    VIEW:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  game SetTransform(WORLD) #1
+    tx=0xB2DF657F
+    ty=0x41439174
+    tz=0x3FEABA0A
+  DIP #1
+    type=5
+    baseVtx=0
+    numVerts=96
+    primCount=194
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.15 0.00
+  row2: 0.74 0.10 -0.65 0.00
+  row3: -8.65 -93.64 689.23 1.00
+  game SetTransform(WORLD) #2
+    tx=0xC0D783C5
+    ty=0xC2B5B12E
+    tz=0x442C3516
+  DIP #2
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.15 0.00
+  row2: 0.74 0.10 -0.65 0.00
+  row3: -8.65 -93.64 689.23 1.00
+  DIP #3
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.15 0.00
+  row2: 0.74 0.10 -0.65 0.00
+  row3: -8.65 -93.64 689.23 1.00
+  DIP #4
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.15 0.00
+  row2: 0.74 0.10 -0.65 0.00
+  row3: -8.65 -93.64 689.23 1.00
+  DIP #5
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.15 0.00
+  row2: 0.74 0.10 -0.65 0.00
+  row3: -8.65 -93.64 689.23 1.00
+  game SetTransform(WORLD) #3
+    tx=0x405553E8
+    ty=0x4105A486
+    tz=0x41DD0C9F
+  mvpWorld draw#782
+    world tx=0x43FAF280
+    world ty=0xBFE66100
+    world tz=0x43DA3280
+  mvpWorld draw#783
+    world tx=0x43E2D100
+    world ty=0xBF800000
+    world tz=0x43CBF400
+  mvpWorld draw#784
+    world tx=0x43DF7E80
+    world ty=0xBF7FFC00
+    world tz=0x43D93A00
+  mvpWorld draw#785
+    world tx=0x43DC6480
+    world ty=0xBF900000
+    world tz=0x43D18A00
+  mvpWorld draw#786
+    world tx=0x43D2D180
+    world ty=0xBF900000
+    world tz=0x43D26C80
+==== PRESENT frame 32572
+  drawCalls: 1041
+  VIEW:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  hasRealView: 1
+  hasProj: 1
+  last MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  vbSamples: 1150
+  centroidOverrides(worldBaked): 14
+  mvpWorldExtracts(modelSpace): 246
+  centroidMisses(noSample): 0
+  centroidNoVB: 0
+  svcfMvWrites: 4
+  svcfMvpWrites: 203
+  gameWorldSets(suppressed): 3
+  curStream0VB=0x0F9CCAA0
+  curStream0VB: 1
+  ASI real VIEW received
+    VIEW:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: 0.00 12.01 1.76 1.00
+  ASI real VIEW received
+    VIEW:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  game SetTransform(WORLD) #1
+    tx=0x31C31CAB
+    ty=0x41402F80
+    tz=0x3FE14F52
+  DIP #1
+    type=5
+    baseVtx=0
+    numVerts=96
+    primCount=194
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  game SetTransform(WORLD) #2
+    tx=0xC08E17AB
+    ty=0xC2B13F0A
+    tz=0x442C1E9A
+  DIP #2
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  DIP #3
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  DIP #4
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  DIP #5
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.66 0.11 -0.73 0.00
+  row1: -0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -6.73 -90.84 688.82 1.00
+  game SetTransform(WORLD) #3
+    tx=0x40532E13
+    ty=0x4105348B
+    tz=0x41D75199
+  mvpWorld draw#775
+    world tx=0x43FAF5C0
+    world ty=0xBFE66900
+    world tz=0x43DA3500
+  mvpWorld draw#776
+    world tx=0x43E2D380
+    world ty=0xBF800400
+    world tz=0x43CBF600
+  mvpWorld draw#777
+    world tx=0x43DF8180
+    world ty=0xBF800400
+    world tz=0x43D93C80
+  mvpWorld draw#778
+    world tx=0x43DC6780
+    world ty=0xBF900400
+    world tz=0x43D18B80
+  mvpWorld draw#779
+    world tx=0x43D2D480
+    world ty=0xBF900400
+    world tz=0x43D26E00
+==== PRESENT frame 32573
+  drawCalls: 1032
+  VIEW:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  hasRealView: 1
+  hasProj: 1
+  last MV:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  vbSamples: 1152
+  centroidOverrides(worldBaked): 14
+  mvpWorldExtracts(modelSpace): 244
+  centroidMisses(noSample): 0
+  centroidNoVB: 0
+  svcfMvWrites: 4
+  svcfMvpWrites: 200
+  gameWorldSets(suppressed): 3
+  curStream0VB=0x0F9CCAA0
+  curStream0VB: 1
+  ASI real VIEW received
+    VIEW:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.73 0.09 -0.66 0.00
+  row3: 0.00 11.84 1.70 1.00
+  ASI real VIEW received
+    VIEW:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.73 0.09 -0.66 0.00
+  row3: -3.06 -86.83 688.16 1.00
+  game SetTransform(WORLD) #1
+    tx=0x329434C3
+    ty=0x413D7D47
+    tz=0x3FD9EB89
+  DIP #1
+    type=5
+    baseVtx=0
+    numVerts=96
+    primCount=194
+    MV:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  game SetTransform(WORLD) #2
+    tx=0xC044147B
+    ty=0xC2ADADF5
+    tz=0x442C0AD0
+  DIP #2
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  DIP #3
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  DIP #4
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  DIP #5
+    type=5
+    baseVtx=0
+    numVerts=9
+    primCount=17
+    MV:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.74 0.09 -0.66 0.00
+  row3: -4.44 -88.62 688.47 1.00
+  game SetTransform(WORLD) #3
+    tx=0x4051E3EA
+    ty=0x4104D8ED
+    tz=0x41D2A10D
+  mvpWorld draw#774
+    world tx=0x43FAF3E0
+    world ty=0xBFE67400
+    world tz=0x43DA33C0
+  mvpWorld draw#775
+    world tx=0x43E2D200
+    world ty=0xBF800200
+    world tz=0x43CBF580
+  mvpWorld draw#776
+    world tx=0x43DF7F00
+    world ty=0xBF800200
+    world tz=0x43D93B00
+  mvpWorld draw#777
+    world tx=0x43DC6500
+    world ty=0xBF900000
+    world tz=0x43D18B80
+  mvpWorld draw#778
+    world tx=0x43D2D200
+    world ty=0xBF8FFC00
+    world tz=0x43D26E00
+==== PRESENT frame 32574
+  drawCalls: 1029
+  VIEW:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.73 0.09 -0.66 0.00
+  row3: -3.06 -86.83 688.16 1.00
+  hasRealView: 1
+  hasProj: 1
+  last MV:
+  row0: -0.67 0.10 -0.73 0.00
+  row1: 0.00 0.98 0.14 0.00
+  row2: 0.73 0.09 -0.66 0.00
+  row3: -3.06 -86.83 688.16 1.00
+  vbSamples: 1152
+  centroidOverrides(worldBaked): 14
+  mvpWorldExtracts(modelSpace): 242
+  centroidMisses(noSample): 0
+  centroidNoVB: 0
+  svcfMvWrites: 4
+  svcfMvpWrites: 198
+  gameWorldSets(suppressed): 3
+  curStream0VB=0x0F9CCAA0
+  curStream0VB: 1
+Proxy unloading

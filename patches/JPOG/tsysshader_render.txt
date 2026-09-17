@@ -1,0 +1,358 @@
+﻿python : hint: use --types kb.h to load a knowledge base for richer output
+At line:1 char:1
++ python -m retools.decompiler "d:\Games\JPOGRTX\JPOG\Shaders\D3D\TSysS ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (hint: use --typ...r richer output 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+KB workflow: decompile -> learn -> update kb.h with new 
+types/functions/globals \u2192 decompile again
+INFO: Second cons!
+void __thiscall sym.TSysShaderD3D.dll__Render_TSysShaderHAL_Toshi__UAEXPAVTRenderPacket_2__Z(int param_1,int param_2)
+
+
+
+{
+
+    int *piVar1;
+
+    int *piVar2;
+
+    char cVar3;
+
+    uint uVar4;
+
+    uint32_t uVar5;
+
+    int iVar6;
+
+    uint32_t uVar7;
+
+    int *piStack_128;
+
+    uchar *puStack_124;
+
+    int *piStack_114;
+
+    int *piStack_110;
+
+    int iStack_10c;
+
+    int iStack_108;
+
+    uchar auStack_100 [8];
+
+    uchar auStack_f8 [40];
+
+    uint32_t uStack_d0;
+
+    uint uStack_cc;
+
+    uint uStack_c8;
+
+    uint uStack_c4;
+
+    uint32_t uStack_c0;
+
+    uint uStack_bc;
+
+    uint uStack_b8;
+
+    uint uStack_b4;
+
+    uint32_t uStack_b0;
+
+    uint uStack_ac;
+
+    uint uStack_a8;
+
+    uint uStack_a4;
+
+    uint uStack_a0;
+
+    uint uStack_9c;
+
+    uint uStack_98;
+
+    uint uStack_94;
+
+    uint uStack_90;
+
+    ushort uStack_8c;
+
+    uint uStack_88;
+
+    int iStack_24;
+
+    int iStack_14;
+
+    
+
+    //public virtual: void __thiscall Toshi::TSysShaderHAL::Render(class Toshi::TRenderPacket *)
+
+    iStack_14 = *(param_1 + 0x18);
+
+    piVar1 = *(iStack_14 + 0x178);
+
+    piVar2 = *(param_2 + 8);
+
+    iStack_108 = 0x100022fe;
+
+    cVar3 = (*_sym.imp.TRenderInterface.dll__IsDying_TResource_Toshi__QAE_NXZ)();
+
+    if (cVar3 != '\0') {
+
+        return;
+
+    }
+
+    iStack_108 = 0x1000231f;
+
+    iStack_14 = (*
+
+                _sym.imp.TRenderInterface.dll__GetCurrentRenderContext_TRenderInterface_Toshi__QAEPAVTRenderContext_2_XZ
+
+                )();
+
+    if (*(param_1 + 0x3c) == '\0') {
+
+        iStack_108 = 0x10002475;
+
+        iStack_108 = (*
+
+                     _sym.imp.TRenderInterface.dll__GetCurrentRenderContext_TRenderInterface_Toshi__QAEPAVTRenderContext_2_XZ
+
+                     )();
+
+        if ((*0x100098e0 & 1) == 0) {
+
+            *0x100098e0 = *0x100098e0 | 1;
+
+            *0x100098a0 = *_sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B;
+
+            *0x100098a4 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[1];
+
+            *0x100098a8 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[2];
+
+            *0x100098ac = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[3];
+
+            *0x100098b0 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[4];
+
+            *0x100098b4 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[5];
+
+            *0x100098b8 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[6];
+
+            *0x100098bc = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[7];
+
+            *0x100098c0 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[8];
+
+            *0x100098c4 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[9];
+
+            *0x100098c8 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[10];
+
+            *0x100098cc = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[0xb];
+
+            *0x100098d0 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[0xc];
+
+            *0x100098d4 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[0xd];
+
+            *0x100098d8 = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[0xe];
+
+            *0x100098dc = _sym.imp.TKernelInterface.dll__IDENTITY_TMatrix44_Toshi__2V12_B[0xf];
+
+        }
+
+        iStack_108 = iStack_108 + 0x484;
+
+        iStack_10c = 3;
+
+        piStack_114 = 0x10002535;
+
+        piStack_110 = piVar1;
+
+        (**(*piVar1 + 0x94))();
+
+        piStack_114 = param_2 + 0xc;
+
+        (**(*piVar1 + 0x94))();
+
+        puStack_124 = 0x2;
+
+        piStack_128 = piVar1;
+
+        (**(*piVar1 + 0x94))();
+
+        (**(*piVar1 + 0xfc))(piVar1,0,1,4);
+
+        (**(*piVar1 + 0xfc))(piVar1,0,2,2);
+
+        (**(*piVar1 + 0xfc))(piVar1,0,3,1);
+
+        (**(*piVar1 + 0xfc))(piVar1,0,4,4);
+
+        (**(*piVar1 + 0xfc))(piVar1,0,5,2);
+
+        (**(*piVar1 + 0xfc))(piVar1,0,6,1);
+
+        (**(*piVar1 + 0xfc))(piVar1,1,1,1);
+
+        (**(*piVar1 + 0xfc))(piVar1,1,4,1);
+
+    }
+
+    else {
+
+        iStack_10c = piVar2[0xc] + 0x54;
+
+        iStack_108 = 1;
+
+        piStack_110 = 0x4;
+
+        piStack_114 = piVar1;
+
+        (**(*piVar1 + 0x13c))();
+
+        sym.TSysShaderD3D.dll__SetVertexShaderScatteringConstants_TSysShaderHAL_Toshi__QAEXXZ();
+
+        puStack_124 = 0x10002367;
+
+        fcn.10003e6a(&stack0xfffffeec,param_2 + 0xc,iStack_24 + 0x484);
+
+        piStack_128 = &stack0xfffffee0;
+
+        puStack_124 = &stack0xfffffee0;
+
+        fcn.10003f4d();
+
+        (**(*piVar1 + 0x13c))(piVar1,0,&stack0xfffffed8,4);
+
+        fcn.10003f4d(&stack0xffffff08,param_2 + 0xc);
+
+        (**(*piVar1 + 0x13c))(piVar1,0x11,&stack0xffffff00,4);
+
+        uStack_d0 = *(param_2 + 0xc);
+
+        uStack_cc = *(param_2 + 0x10);
+
+        uStack_c8 = *(param_2 + 0x14);
+
+        uStack_c4 = *(param_2 + 0x18);
+
+        uStack_c0 = *(param_2 + 0x1c);
+
+        uStack_bc = *(param_2 + 0x20);
+
+        uStack_b8 = *(param_2 + 0x24);
+
+        uStack_b4 = *(param_2 + 0x28);
+
+        uStack_b0 = *(param_2 + 0x2c);
+
+        uStack_ac = *(param_2 + 0x30);
+
+        uStack_a8 = *(param_2 + 0x34);
+
+        uStack_a4 = *(param_2 + 0x38);
+
+        uStack_a0 = *(param_2 + 0x3c);
+
+        uStack_9c = *(param_2 + 0x40);
+
+        uStack_98 = *(param_2 + 0x44);
+
+        uStack_94 = *(param_2 + 0x48);
+
+        (*_sym.imp.TKernelInterface.dll__Invert_TMatrix44_Toshi__QAE_NXZ)();
+
+        (**(*piVar1 + 0x13c))(piVar1,0x15,&stack0xffffff60,1);
+
+    }
+
+    uVar4 = (**(*piVar1 + 200))(piVar1,0x2f,piVar2[0x15]);
+
+    (*_sym.imp.TRenderD3DInterface.dll__TD3DAssert_TRenderD3DInterface_Toshi__SGXJPBD_Z)(uVar4,0);
+
+    uStack_b4 = 0;
+
+    uStack_b0 = uStack_b0 & 0xffff0000;
+
+    uStack_ac = 0;
+
+    uStack_a8 = 0;
+
+    uStack_a4 = 0;
+
+    uStack_a0 = 0;
+
+    uStack_9c = 0;
+
+    uStack_98 = 0;
+
+    uStack_94 = 0;
+
+    uStack_90 = 0;
+
+    uStack_8c = 0;
+
+    uStack_88 = 0;
+
+    (**(*piVar2 + 0x3c))();
+
+    (**(*piVar2 + 0x40))();
+
+    (*_sym.imp.TRenderD3DInterface.dll__GetHAL_TVertexPoolResource_Toshi__QAE_NPAVHALBuffer_TVertexBlockResource_2__Z)
+
+              (&stack0xffffff4c);
+
+    (*_sym.imp.TRenderD3DInterface.dll__GetHAL_TIndexPoolResource_Toshi__QAE_NPAVHALBuffer_TIndexBlockResource_2__Z)
+
+              (&stack0xffffff70);
+
+    uVar4 = (**(*piVar1 + 0x14c))(piVar1,0,uStack_b4,0x18);
+
+    (*_sym.imp.TRenderD3DInterface.dll__TD3DAssert_TRenderD3DInterface_Toshi__SGXJPBD_Z)(uVar4,0);
+
+    uVar4 = (**(*piVar1 + 0x154))(piVar1,uStack_a8,uStack_d0 & 0xffff);
+
+    (*_sym.imp.TRenderD3DInterface.dll__TD3DAssert_TRenderD3DInterface_Toshi__SGXJPBD_Z)(uVar4,0);
+
+    if (*0x10009100 == '\x01') {
+
+        uVar5 = (*_sym.imp.TRenderInterface.dll__GetFlags_TIndexPoolResourceInterface_Toshi__QBEIXZ)();
+
+        if ((uVar5 & 8) == 0) {
+
+            uVar4 = (*_sym.imp.TRenderInterface.dll__GetNumVertices_TVertexPoolResourceInterface_Toshi__QBEIXZ)();
+
+            uVar7 = uStack_c0 & 0xffff;
+
+            uVar5 = (*_sym.imp.TRenderInterface.dll__GetNumIndices_TIndexPoolResourceInterface_Toshi__QBEIXZ)();
+
+            uVar4 = (**(*piVar1 + 0x11c))(piVar1,4,0,uVar4,uVar7,uVar5 / 3);
+
+        }
+
+        else {
+
+            uVar4 = (*_sym.imp.TRenderInterface.dll__GetNumVertices_TVertexPoolResourceInterface_Toshi__QBEIXZ)();
+
+            uVar5 = uStack_c0 & 0xffff;
+
+            iVar6 = (*_sym.imp.TRenderInterface.dll__GetNumIndices_TIndexPoolResourceInterface_Toshi__QBEIXZ)();
+
+            uVar4 = (**(*piVar1 + 0x11c))(piVar1,5,0,uVar4,uVar5,iVar6 + -2);
+
+        }
+
+    }
+
+    (*_sym.imp.TRenderD3DInterface.dll__TD3DAssert_TRenderD3DInterface_Toshi__SGXJPBD_Z)(uVar4,0);
+
+    uVar4 = (**(*piVar1 + 200))(piVar1,0x2f,0);
+
+    (*_sym.imp.TRenderD3DInterface.dll__TD3DAssert_TRenderD3DInterface_Toshi__SGXJPBD_Z)(uVar4,0);
+
+    return;
+
+}

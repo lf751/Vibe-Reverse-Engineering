@@ -1,0 +1,80 @@
+﻿python : hint: use --types kb.h to load a knowledge base for richer output
+At line:1 char:1
++ python -m retools.decompiler "D:\Games\JPOGRTX\JPOG\SIMJP.EXE" 0x0047 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (hint: use --typ...r richer output 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+KB workflow: decompile -> learn -> update kb.h with new 
+types/functions/globals \u2192 decompile again
+INFO: Second cons!
+void __fastcall fcn.00477cf0(uint param_1,uint param_2)
+
+
+
+{
+
+    int *piVar1;
+
+    uint uVar2;
+
+    int *unaff_EBX;
+
+    int unaff_ESI;
+
+    
+
+    piVar1 = (*
+
+             _sym.imp.trenderinterface.dll__CreateResource_TRenderInterface_Toshi__QAEPAVTResource_2_PBVTClass_2_PBDPAV32__Z
+
+             )(param_2,0xcefd40);
+
+    *(unaff_ESI + 0x30) = piVar1;
+
+    (**(*piVar1 + 0xc))();
+
+    uVar2 = (*_sym.imp.trenderinterface.dll__CreateViewport_TScene_Toshi__QAEPAVTViewport_2_PBDPAVTResource_2__N_Z)
+
+                      (0xcefd60,0,1);
+
+    *(unaff_ESI + 0x34) = uVar2;
+
+    (*_sym.imp.trenderinterface.dll__SetX_TViewport_Toshi__QAEMM_Z)(0);
+
+    (*_sym.imp.trenderinterface.dll__SetY_TViewport_Toshi__QAEMM_Z)(0);
+
+    (*_sym.imp.trenderinterface.dll__SetWidth_TViewport_Toshi__QAEMM_Z)(*unaff_EBX);
+
+    (*_sym.imp.trenderinterface.dll__SetHeight_TViewport_Toshi__QAEMM_Z)(unaff_EBX[1]);
+
+    (*_sym.imp.trenderinterface.dll__SetMinZ_TViewport_Toshi__QAEMM_Z)(0);
+
+    (*_sym.imp.trenderinterface.dll__SetMaxZ_TViewport_Toshi__QAEMM_Z)(0x3f800000);
+
+    (*_sym.imp.trenderinterface.dll__AllowBackgroundClear_TViewport_Toshi__QAE_N_N_Z)(1);
+
+    (*_sym.imp.trenderinterface.dll__AllowDepthClear_TViewport_Toshi__QAE_N_N_Z)(1);
+
+    (*_sym.imp.trenderinterface.dll__SetBackgroundColour_TViewport_Toshi__QAEXEEEE_Z)(0,0,0,0xff);
+
+    (*_sym.imp.trenderinterface.dll__SetViewport_TCameraObject_Toshi__QAEPAVTViewport_2_PAV32__Z)(*(unaff_ESI + 0x34));
+
+    (*_sym.imp.trenderinterface.dll__SetFOV_TCameraObject_Toshi__QAEMM_Z)
+
+              (_sym.SimJP.exe__DEFAULT_FIELDOFVIEW_ACamera__2MB);
+
+    (*_sym.imp.tkernelinterface.dll__Connect_TGenericListener_Toshi__IAEXPAVTGenericEmitter_2_PAXP6G_N111_ZH_Z)
+
+              (*(unaff_ESI + 0x2c) + 0x78);
+
+    (*_sym.imp.tkernelinterface.dll__Connect_TGenericListener_Toshi__IAEXPAVTGenericEmitter_2_PAXP6G_N111_ZH_Z)
+
+              (*(unaff_ESI + 0x34) + 0x78);
+
+    (*_sym.imp.tkernelinterface.dll__OnCreate_TTask_Toshi__MAE_NXZ)();
+
+    return;
+
+}
