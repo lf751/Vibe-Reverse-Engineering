@@ -133,8 +133,6 @@ typedef struct WrappedDevice {
 
     unsigned int stream0Stride;
     void *vertexDeclaration;
-    unsigned int currentFVF;
-    int usesFVF;
     void *vertexShader;
     void *pixelShader;
     unsigned int alphaBlendEnabled;
@@ -625,19 +623,16 @@ static void reload_remix_tag_config(void) {
     log_hex("Reloaded decal texture tags=", decalCount);
 }
 
-static int get_texture_hash(void *texture, unsigned __int64 *hash) {
-    if (!texture || !hash || !initialize_remix_api())
-        return 0;
-    if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, hash) !=
-        REMIXAPI_ERROR_CODE_SUCCESS || *hash == 0)
-        return 0;
-    return 1;
-}
-
-static int texture_hash_is_tagged(unsigned __int64 hash,
-    const unsigned __int64 *hashes, unsigned int count)
+static int texture_is_tagged(void *texture, const unsigned __int64 *hashes,
+    unsigned int count)
 {
+    unsigned __int64 hash;
     unsigned int i;
+    if (!texture || !initialize_remix_api())
+        return 0;
+    if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, &hash) !=
+        REMIXAPI_ERROR_CODE_SUCCESS || hash == 0)
+        return 0;
     for (i = 0; i < count; i++) {
         if (hashes[i] == hash)
             return 1;
@@ -1016,14 +1011,12 @@ static int __stdcall WD_SetRenderState(WrappedDevice *self,
 static int __stdcall WD_SetVertexDeclaration(WrappedDevice *self, void *declaration) {
     typedef int (__stdcall *FN)(void*, void*);
     self->vertexDeclaration = declaration;
-    self->usesFVF = 0;
     return ((FN)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, declaration);
 }
 
 static int __stdcall WD_SetFVF(WrappedDevice *self, unsigned int fvf) {
     typedef int (__stdcall *FN)(void*, unsigned int);
-    self->currentFVF = fvf;
-    self->usesFVF = 1;
+    self->vertexDeclaration = NULL;
     return ((FN)RealVtbl(self)[SLOT_SetFVF])(self->pReal, fvf);
 }
 
@@ -1238,7 +1231,6 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
     typedef int (__stdcall *FN)(void*, unsigned int, int, unsigned int,
                                 unsigned int, unsigned int, unsigned int);
     typedef int (__stdcall *FN_SetDeclaration)(void*, void*);
-    typedef int (__stdcall *FN_SetFVF)(void*, unsigned int);
     typedef int (__stdcall *FN_SetShader)(void*, void*);
     typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
     typedef int (__stdcall *FN_GetTransform)(void*, unsigned int, float*);
@@ -1249,7 +1241,6 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
     int particleBlendOverridden = 0;
     int isParticleTexture = 0;
     int isDecalTexture = 0;
-    unsigned __int64 textureHash;
     float particlePreviousWorld[16];
 
     if (!applyMvPath(self))
@@ -1279,10 +1270,10 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
 
     if (self->currentVertexShaderHash == PARTICLE_VERTEX_SHADER_HASH &&
         self->alphaBlendEnabled && self->stream0Stride == 24 &&
-        !self->pixelShader && get_texture_hash(self->texture0, &textureHash)) {
-        isParticleTexture = texture_hash_is_tagged(textureHash,
+        !self->pixelShader) {
+        isParticleTexture = texture_is_tagged(self->texture0,
             g_particleTextureHashes, g_particleTextureHashCount);
-        isDecalTexture = texture_hash_is_tagged(textureHash,
+        isDecalTexture = texture_is_tagged(self->texture0,
             g_decalTextureHashes, g_decalTextureHashCount);
     }
 
@@ -1318,13 +1309,8 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
         }
         ((FN_SetShader)RealVtbl(self)[SLOT_SetVertexShader])(
             self->pReal, self->vertexShader);
-        if (self->usesFVF) {
-            ((FN_SetFVF)RealVtbl(self)[SLOT_SetFVF])(
-                self->pReal, self->currentFVF);
-        } else {
-            ((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
-                self->pReal, self->vertexDeclaration);
-        }
+        ((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
+            self->pReal, self->vertexDeclaration);
     }
     return hr;
 }

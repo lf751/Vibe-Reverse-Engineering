@@ -63,6 +63,7 @@ void * __cdecl memcpy(void *dst, const void *src, unsigned int n) {
 #define WEATHER_OFF_ACTIVE       0x4C
 #define TERRAIN_RENDER_RVA       0x5790
 #define CAMERA_MIN_TRANSLATION2  2500.0f
+#define ENABLE_RENDER_MATRIX_HOOK 1
 
 typedef int (__stdcall *FnSetTransform)(void*, int, void*);
 typedef int (__fastcall *FnWeatherUpdate)(void*, void*, float);
@@ -381,7 +382,9 @@ static DWORD WINAPI InitThread(LPVOID param) {
         if (!renderDone) {
             hRenderD3D = GetModuleHandleA("TRenderD3DInterface.dll");
             if (hRenderD3D) {
+#if ENABLE_RENDER_MATRIX_HOOK
                 InstallRenderHooks(hRenderD3D);
+#endif
                 renderDone = 1;
             }
         }
@@ -402,14 +405,10 @@ static DWORD WINAPI InitThread(LPVOID param) {
 /* ---- DLL entry point ---- */
 
 BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
-    HANDLE thread;
-
     (void)reserved;
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(hDll);
-        thread = CreateThread(NULL, 0, InitThread, NULL, 0, NULL);
-        if (thread)
-            CloseHandle(thread);
+        CreateThread(NULL, 0, InitThread, NULL, 0, NULL);
     }
     return TRUE;
 }

@@ -402,14 +402,10 @@ static DWORD WINAPI InitThread(LPVOID param) {
 /* ---- DLL entry point ---- */
 
 BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
-    HANDLE thread;
-
     (void)reserved;
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(hDll);
-        thread = CreateThread(NULL, 0, InitThread, NULL, 0, NULL);
-        if (thread)
-            CloseHandle(thread);
+        CreateThread(NULL, 0, InitThread, NULL, 0, NULL);
     }
     return TRUE;
 }
