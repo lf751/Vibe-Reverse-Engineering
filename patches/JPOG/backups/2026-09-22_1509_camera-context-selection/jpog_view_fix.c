@@ -222,6 +222,14 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
         viewMatrix[8]  == 0.0f && viewMatrix[9]  == 0.0f && viewMatrix[10] == 1.0f && viewMatrix[11] == 0.0f &&
         viewMatrix[12] == 0.0f && viewMatrix[13] == 0.0f && viewMatrix[14] == 0.0f && viewMatrix[15] == 1.0f;
 
+    /* Translation alone doesn't distinguish the camera from an ordinary
+     * mirrored (negative-determinant) object placed away from local origin —
+     * both branches need the same substantial camera-scale translation. */
+    if ((tRow2 > CAMERA_MIN_TRANSLATION2 || tCol2 > CAMERA_MIN_TRANSLATION2) &&
+        determinant < -0.5f) {
+        g_mainCameraContext = thisPtr;
+    }
+
     if ((tRow2 > CAMERA_MIN_TRANSLATION2 || tCol2 > CAMERA_MIN_TRANSLATION2) &&
         determinant > 0.5f) {
         g_mainCameraContext = thisPtr;
