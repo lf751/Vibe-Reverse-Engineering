@@ -57,6 +57,7 @@ void * __cdecl memcpy(void *dst, const void *src, unsigned int n) {
 
 #define D3DTS_VIEW       2
 #define D3DTS_PROJECTION 3
+#define D3DTS_WORLD      256   /* 0x100 */
 
 #define WEATHER_UPDATE_RVA       0x1F7B80
 #define WEATHER_OFF_ACTIVE       0x4C
@@ -67,6 +68,10 @@ typedef int (__stdcall *FnSetTransform)(void*, int, void*);
 typedef int (__fastcall *FnWeatherUpdate)(void*, void*, float);
 typedef void (__fastcall *FnTerrainRender)(void*, void*, void*);
 
+static const float s_identity[16] = {
+    1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+};
+
 /* ====================================================================
  * Hook 1: View Matrix Fix (TRenderD3DInterface.dll)
  * ==================================================================== */
@@ -74,7 +79,12 @@ typedef void (__fastcall *FnTerrainRender)(void*, void*, void*);
 static float g_lastRealView[16] = {
     1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
 };
+static float g_lastRealProjection[16] = {
+    1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+};
+static int g_hasLastRealView = 0;
 static void *g_mainCameraContext = NULL;
+static FnSetTransform g_originalSetTransform = NULL;
 static FnWeatherUpdate g_originalWeatherUpdate = NULL;
 static FnTerrainRender g_originalTerrainRender = NULL;
 static BYTE *g_weatherTrampoline = NULL;
@@ -159,6 +169,15 @@ static void __fastcall Hook_TerrainRender(void *thisPtr, void *edx_unused, void 
         *g_terrainRenderActive = wasActive;
 }
 
+static int __stdcall Hook_DeviceSetTransform(void *device, int state, void *matrix) {
+    if (state == D3DTS_VIEW && g_hasLastRealView) {
+        matrix = (void*)g_lastRealView;
+    } else if (state == D3DTS_PROJECTION && g_hasLastRealView) {
+        matrix = (void*)g_lastRealProjection;
+    }
+    return g_originalSetTransform(device, state, matrix);
+}
+
 static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
     void **ppIface;
     void *device;
@@ -170,11 +189,21 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
     float txCol, tyCol, tzCol;
     float tRow2, tCol2;
     float determinant;
+    int isIdentity;
+    void *viewToSend;
 
     ppIface = *(void**)((char*)thisPtr + RCTX_OFF_IFACE);
     device  = *(void**)((char*)ppIface + IFACE_OFF_DEVICE);
     vtbl    = *(void***)device;
     fnST    = (FnSetTransform)vtbl[D3D8_VT_SETTRANSFORM / 4];
+
+    if (!g_originalSetTransform) {
+        DWORD oldProt;
+        g_originalSetTransform = fnST;
+        VirtualProtect(&vtbl[D3D8_VT_SETTRANSFORM / 4], sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProt);
+        vtbl[D3D8_VT_SETTRANSFORM / 4] = (void*)Hook_DeviceSetTransform;
+        VirtualProtect(&vtbl[D3D8_VT_SETTRANSFORM / 4], sizeof(void*), oldProt, &oldProt);
+    }
 
     viewMatrix = (float*)((char*)thisPtr + RCTX_OFF_WORLDVIEW);
     projMatrix = (float*)((char*)thisPtr + RCTX_OFF_PROJECTION);
@@ -187,17 +216,32 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
         viewMatrix[0] * (viewMatrix[5] * viewMatrix[10] - viewMatrix[6] * viewMatrix[9]) -
         viewMatrix[1] * (viewMatrix[4] * viewMatrix[10] - viewMatrix[6] * viewMatrix[8]) +
         viewMatrix[2] * (viewMatrix[4] * viewMatrix[9] - viewMatrix[5] * viewMatrix[8]);
-    if (!g_mainCameraContext &&
-        (tRow2 > CAMERA_MIN_TRANSLATION2 || tCol2 > CAMERA_MIN_TRANSLATION2) &&
+    isIdentity =
+        viewMatrix[0]  == 1.0f && viewMatrix[1]  == 0.0f && viewMatrix[2]  == 0.0f && viewMatrix[3]  == 0.0f &&
+        viewMatrix[4]  == 0.0f && viewMatrix[5]  == 1.0f && viewMatrix[6]  == 0.0f && viewMatrix[7]  == 0.0f &&
+        viewMatrix[8]  == 0.0f && viewMatrix[9]  == 0.0f && viewMatrix[10] == 1.0f && viewMatrix[11] == 0.0f &&
+        viewMatrix[12] == 0.0f && viewMatrix[13] == 0.0f && viewMatrix[14] == 0.0f && viewMatrix[15] == 1.0f;
+
+    if ((tRow2 > CAMERA_MIN_TRANSLATION2 || tCol2 > CAMERA_MIN_TRANSLATION2) &&
         determinant > 0.5f) {
         g_mainCameraContext = thisPtr;
     }
 
     if (thisPtr == g_mainCameraContext && determinant > 0.5f) {
         memcpy(g_lastRealView, viewMatrix, sizeof(g_lastRealView));
-        fnST(device, D3DTS_VIEW, viewMatrix);
-        fnST(device, D3DTS_PROJECTION, projMatrix);
+        memcpy(g_lastRealProjection, projMatrix, sizeof(g_lastRealProjection));
+        g_hasLastRealView = 1;
+        viewToSend = (void*)viewMatrix;
+    } else if (g_hasLastRealView) {
+        viewToSend = (void*)g_lastRealView;
+    } else if (isIdentity) {
+        viewToSend = (void*)s_identity;
+    } else {
+        viewToSend = (void*)s_identity;
     }
+
+    Hook_DeviceSetTransform(device, D3DTS_VIEW, viewToSend);
+    Hook_DeviceSetTransform(device, D3DTS_PROJECTION, projMatrix);
 }
 
 /* ====================================================================
