@@ -262,30 +262,26 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
 
 /* ---- Patch helpers ---- */
 
-static int PatchBytes(BYTE *addr, const BYTE *data, int len) {
+static void PatchBytes(BYTE *addr, const BYTE *data, int len) {
     DWORD oldProt;
-    if (!VirtualProtect(addr, len, PAGE_EXECUTE_READWRITE, &oldProt))
-        return 0;
+    VirtualProtect(addr, len, PAGE_EXECUTE_READWRITE, &oldProt);
     memcpy(addr, data, len);
     FlushInstructionCache(GetCurrentProcess(), addr, len);
     VirtualProtect(addr, len, oldProt, &oldProt);
-    return 1;
 }
 
-static int InstallJump(HMODULE hMod, DWORD rva, void *pHook) {
+static void InstallJump(HMODULE hMod, DWORD rva, void *pHook) {
     BYTE *pTarget;
     DWORD oldProt;
     int rel;
 
     pTarget = (BYTE*)hMod + rva;
-    if (!VirtualProtect(pTarget, 5, PAGE_EXECUTE_READWRITE, &oldProt))
-        return 0;
+    VirtualProtect(pTarget, 5, PAGE_EXECUTE_READWRITE, &oldProt);
     pTarget[0] = 0xE9;
     rel = (int)((BYTE*)pHook - pTarget - 5);
     memcpy(pTarget + 1, &rel, 4);
     FlushInstructionCache(GetCurrentProcess(), pTarget, 5);
     VirtualProtect(pTarget, 5, oldProt, &oldProt);
-    return 1;
 }
 
 static int InstallWeatherHook(HMODULE hMod) {
@@ -310,12 +306,7 @@ static int InstallWeatherHook(HMODULE hMod) {
     rel = (int)((target + 5) - (g_weatherTrampoline + 10));
     memcpy(g_weatherTrampoline + 6, &rel, 4);
     g_originalWeatherUpdate = (FnWeatherUpdate)g_weatherTrampoline;
-    if (!InstallJump(hMod, WEATHER_UPDATE_RVA, (void*)Hook_WeatherUpdate)) {
-        VirtualFree(g_weatherTrampoline, 0, MEM_RELEASE);
-        g_weatherTrampoline = NULL;
-        g_originalWeatherUpdate = NULL;
-        return 0;
-    }
+    InstallJump(hMod, WEATHER_UPDATE_RVA, (void*)Hook_WeatherUpdate);
     return 1;
 }
 
@@ -350,32 +341,26 @@ static int InstallTerrainRenderHook(HMODULE hMod) {
     memcpy(patch + 1, &rel, 4);
     patch[5] = 0x90;
     patch[6] = 0x90;
-    if (!PatchBytes(target, patch, 7)) {
-        VirtualFree(g_terrainTrampoline, 0, MEM_RELEASE);
-        g_terrainTrampoline = NULL;
-        g_originalTerrainRender = NULL;
-        return 0;
-    }
+    PatchBytes(target, patch, 7);
     return 1;
 }
 
 /* ---- Install terrain patches ---- */
 
-static int InstallTerrainPatches(HMODULE hMod) {
+static void InstallTerrainPatches(HMODULE hMod) {
     HMODULE hProxy = GetModuleHandleA("d3d9.dll");
     if (hProxy) {
         g_terrainRenderActive = (volatile int*)GetProcAddress(
             hProxy, "g_terrainRenderActive");
     }
-    if (!g_terrainRenderActive)
-        return 0;
-    return InstallTerrainRenderHook(hMod);
+    if (g_terrainRenderActive)
+        InstallTerrainRenderHook(hMod);
 }
 
 /* ---- Install render hooks ---- */
 
-static int InstallRenderHooks(HMODULE hMod) {
-    return InstallJump(hMod, 0x7180, (void*)Hook_SetRenderMatrices);
+static void InstallRenderHooks(HMODULE hMod) {
+    InstallJump(hMod, 0x7180, (void*)Hook_SetRenderMatrices);
 }
 
 /* ---- Delayed init thread ---- */
@@ -396,13 +381,15 @@ static DWORD WINAPI InitThread(LPVOID param) {
         if (!renderDone) {
             hRenderD3D = GetModuleHandleA("TRenderD3DInterface.dll");
             if (hRenderD3D) {
-                renderDone = InstallRenderHooks(hRenderD3D);
+                InstallRenderHooks(hRenderD3D);
+                renderDone = 1;
             }
         }
         if (!terrainDone) {
             hTerrainShader = GetModuleHandleA("TTerrainShaderD3D.dll");
             if (hTerrainShader) {
-                terrainDone = InstallTerrainPatches(hTerrainShader);
+                InstallTerrainPatches(hTerrainShader);
+                terrainDone = 1;
             }
         }
         if (renderDone && terrainDone)

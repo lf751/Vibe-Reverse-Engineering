@@ -87,8 +87,6 @@ static void *g_mainCameraContext = NULL;
 static FnSetTransform g_originalSetTransform = NULL;
 static FnWeatherUpdate g_originalWeatherUpdate = NULL;
 static FnTerrainRender g_originalTerrainRender = NULL;
-static BYTE *g_weatherTrampoline = NULL;
-static BYTE *g_terrainTrampoline = NULL;
 static volatile int *g_terrainRenderActive = NULL;
 static remixapi_Interface g_remix = { 0 };
 static int g_lastWeatherIndex = -1;
@@ -262,35 +260,32 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
 
 /* ---- Patch helpers ---- */
 
-static int PatchBytes(BYTE *addr, const BYTE *data, int len) {
+static void PatchBytes(BYTE *addr, const BYTE *data, int len) {
     DWORD oldProt;
-    if (!VirtualProtect(addr, len, PAGE_EXECUTE_READWRITE, &oldProt))
-        return 0;
+    VirtualProtect(addr, len, PAGE_EXECUTE_READWRITE, &oldProt);
     memcpy(addr, data, len);
     FlushInstructionCache(GetCurrentProcess(), addr, len);
     VirtualProtect(addr, len, oldProt, &oldProt);
-    return 1;
 }
 
-static int InstallJump(HMODULE hMod, DWORD rva, void *pHook) {
+static void InstallJump(HMODULE hMod, DWORD rva, void *pHook) {
     BYTE *pTarget;
     DWORD oldProt;
     int rel;
 
     pTarget = (BYTE*)hMod + rva;
-    if (!VirtualProtect(pTarget, 5, PAGE_EXECUTE_READWRITE, &oldProt))
-        return 0;
+    VirtualProtect(pTarget, 5, PAGE_EXECUTE_READWRITE, &oldProt);
     pTarget[0] = 0xE9;
     rel = (int)((BYTE*)pHook - pTarget - 5);
     memcpy(pTarget + 1, &rel, 4);
     FlushInstructionCache(GetCurrentProcess(), pTarget, 5);
     VirtualProtect(pTarget, 5, oldProt, &oldProt);
-    return 1;
 }
 
 static int InstallWeatherHook(HMODULE hMod) {
     static const BYTE expectedPrologue[5] = { 0x56, 0x53, 0x83, 0xEC, 0x14 };
     BYTE *target;
+    BYTE *trampoline;
     int rel;
     int i;
 
@@ -300,22 +295,17 @@ static int InstallWeatherHook(HMODULE hMod) {
             return 0;
     }
 
-    g_weatherTrampoline = (BYTE*)VirtualAlloc(NULL, 10,
-        MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!g_weatherTrampoline)
+    trampoline = (BYTE*)VirtualAlloc(NULL, 10, MEM_COMMIT | MEM_RESERVE,
+                                     PAGE_EXECUTE_READWRITE);
+    if (!trampoline)
         return 0;
 
-    memcpy(g_weatherTrampoline, target, 5);
-    g_weatherTrampoline[5] = 0xE9;
-    rel = (int)((target + 5) - (g_weatherTrampoline + 10));
-    memcpy(g_weatherTrampoline + 6, &rel, 4);
-    g_originalWeatherUpdate = (FnWeatherUpdate)g_weatherTrampoline;
-    if (!InstallJump(hMod, WEATHER_UPDATE_RVA, (void*)Hook_WeatherUpdate)) {
-        VirtualFree(g_weatherTrampoline, 0, MEM_RELEASE);
-        g_weatherTrampoline = NULL;
-        g_originalWeatherUpdate = NULL;
-        return 0;
-    }
+    memcpy(trampoline, target, 5);
+    trampoline[5] = 0xE9;
+    rel = (int)((target + 5) - (trampoline + 10));
+    memcpy(trampoline + 6, &rel, 4);
+    g_originalWeatherUpdate = (FnWeatherUpdate)trampoline;
+    InstallJump(hMod, WEATHER_UPDATE_RVA, (void*)Hook_WeatherUpdate);
     return 1;
 }
 
@@ -324,6 +314,7 @@ static int InstallTerrainRenderHook(HMODULE hMod) {
         0x57, 0x56, 0x55, 0x53, 0x83, 0xEC, 0x64
     };
     BYTE *target;
+    BYTE *trampoline;
     BYTE patch[7];
     int rel;
     int i;
@@ -334,48 +325,42 @@ static int InstallTerrainRenderHook(HMODULE hMod) {
             return 0;
     }
 
-    g_terrainTrampoline = (BYTE*)VirtualAlloc(NULL, 12,
-        MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!g_terrainTrampoline)
+    trampoline = (BYTE*)VirtualAlloc(NULL, 12, MEM_COMMIT | MEM_RESERVE,
+                                     PAGE_EXECUTE_READWRITE);
+    if (!trampoline)
         return 0;
 
-    memcpy(g_terrainTrampoline, target, 7);
-    g_terrainTrampoline[7] = 0xE9;
-    rel = (int)((target + 7) - (g_terrainTrampoline + 12));
-    memcpy(g_terrainTrampoline + 8, &rel, 4);
-    g_originalTerrainRender = (FnTerrainRender)g_terrainTrampoline;
+    memcpy(trampoline, target, 7);
+    trampoline[7] = 0xE9;
+    rel = (int)((target + 7) - (trampoline + 12));
+    memcpy(trampoline + 8, &rel, 4);
+    g_originalTerrainRender = (FnTerrainRender)trampoline;
 
     patch[0] = 0xE9;
     rel = (int)((BYTE*)Hook_TerrainRender - target - 5);
     memcpy(patch + 1, &rel, 4);
     patch[5] = 0x90;
     patch[6] = 0x90;
-    if (!PatchBytes(target, patch, 7)) {
-        VirtualFree(g_terrainTrampoline, 0, MEM_RELEASE);
-        g_terrainTrampoline = NULL;
-        g_originalTerrainRender = NULL;
-        return 0;
-    }
+    PatchBytes(target, patch, 7);
     return 1;
 }
 
 /* ---- Install terrain patches ---- */
 
-static int InstallTerrainPatches(HMODULE hMod) {
+static void InstallTerrainPatches(HMODULE hMod) {
     HMODULE hProxy = GetModuleHandleA("d3d9.dll");
     if (hProxy) {
         g_terrainRenderActive = (volatile int*)GetProcAddress(
             hProxy, "g_terrainRenderActive");
     }
-    if (!g_terrainRenderActive)
-        return 0;
-    return InstallTerrainRenderHook(hMod);
+    if (g_terrainRenderActive)
+        InstallTerrainRenderHook(hMod);
 }
 
 /* ---- Install render hooks ---- */
 
-static int InstallRenderHooks(HMODULE hMod) {
-    return InstallJump(hMod, 0x7180, (void*)Hook_SetRenderMatrices);
+static void InstallRenderHooks(HMODULE hMod) {
+    InstallJump(hMod, 0x7180, (void*)Hook_SetRenderMatrices);
 }
 
 /* ---- Delayed init thread ---- */
@@ -396,13 +381,15 @@ static DWORD WINAPI InitThread(LPVOID param) {
         if (!renderDone) {
             hRenderD3D = GetModuleHandleA("TRenderD3DInterface.dll");
             if (hRenderD3D) {
-                renderDone = InstallRenderHooks(hRenderD3D);
+                InstallRenderHooks(hRenderD3D);
+                renderDone = 1;
             }
         }
         if (!terrainDone) {
             hTerrainShader = GetModuleHandleA("TTerrainShaderD3D.dll");
             if (hTerrainShader) {
-                terrainDone = InstallTerrainPatches(hTerrainShader);
+                InstallTerrainPatches(hTerrainShader);
+                terrainDone = 1;
             }
         }
         if (renderDone && terrainDone)
@@ -423,15 +410,6 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
         thread = CreateThread(NULL, 0, InitThread, NULL, 0, NULL);
         if (thread)
             CloseHandle(thread);
-    } else if (reason == DLL_PROCESS_DETACH) {
-        if (g_weatherTrampoline) {
-            VirtualFree(g_weatherTrampoline, 0, MEM_RELEASE);
-            g_weatherTrampoline = NULL;
-        }
-        if (g_terrainTrampoline) {
-            VirtualFree(g_terrainTrampoline, 0, MEM_RELEASE);
-            g_terrainTrampoline = NULL;
-        }
     }
     return TRUE;
 }

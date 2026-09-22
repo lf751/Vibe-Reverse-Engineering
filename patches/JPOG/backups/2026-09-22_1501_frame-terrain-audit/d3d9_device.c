@@ -1087,7 +1087,6 @@ static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, 
     self->mvDirty = 0;
     self->viewCapturedThisFrame = 0;
     self->hasCachedWorld = 0;
-    self->gameWorldSet = 0;
 
     return hr;
 }
