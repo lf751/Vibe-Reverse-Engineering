@@ -6,7 +6,7 @@ This section is the current release policy and supersedes the older Q1/Q2 and sk
 - Sky rendering is game/Remix-owned. The proxy no longer exports or checks `g_skipWorldOverride`, does not suppress world reconstruction for sky draws, and does not inject a camera-centred sky world matrix.
 - The terrain render hook at `TTerrainShaderD3D.dll+0x5790` remains solely to scope automatic `rtx.terrainTextures` tagging. It does not select or alter a terrain quality path.
 - The ASI retains only three release responsibilities: main-camera View/Projection forwarding, Remix weather preset sync, and terrain texture-tag scope.
-- The proxy retains general matrix reconstruction plus tagged particle conversion. Its release build uses MSVC `/O2 /Oi /Gy` and linker `/OPT:REF /OPT:ICF`; `/GL` is intentionally excluded because MSVC rejects whole-program optimization with the proxy's no-CRT `memcpy`/`memset` helpers. The ASI uses `/GL /LTCG` in addition to those release optimizations.
+- The proxy retains general matrix reconstruction plus tagged particle/decal conversion. Its release build uses MSVC `/O2 /Oi /Gy` and linker `/OPT:REF /OPT:ICF`; `/GL` is intentionally excluded because MSVC rejects whole-program optimization with the proxy's no-CRT `memcpy`/`memset` helpers. The ASI uses `/GL /LTCG` in addition to those release optimizations.
 - Dead release baggage removed: the unused ASI copy of the last View matrix, unused math headers, stale sky/Q1 discovery comments, unused transform-helper locals, and an obsolete linker map that still listed the removed sky export.
 
 ## Proxy hot-path cache optimization — 2026-09-23
@@ -17,13 +17,6 @@ This section is the current release policy and supersedes the older Q1/Q2 and sk
 - Texture-hash lookup now checks the same pointer-derived slot used for insertion instead of scanning all 64 direct-mapped entries. Collision behavior is unchanged.
 - Removed write-only `cachedWorld`, `hasCachedWorld`, and `viewCapturedThisFrame` fields and their per-draw copies.
 - No terrain-quality or sky behavior changed.
-
-## Discarded proxy water and selection/highlight experiments — 2026-09-23
-
-- Confirmed the active proxy and ASI already contained no water-specific transform, shader, camera, or draw-routing code.
-- Removed the abandoned selection/highlight decal-tag parsing and conversion branch; tagged particle conversion remains independent and active.
-- Remix-owned `rtx.animatedWaterTextures` and `rtx.decalTextures` settings remain in project and deployed configuration; this cleanup is limited to patch code and inactive captures.
-- Removed the inactive water and selection trace captures from the active project tree. Historical backups remain isolated under `backups/` and do not affect builds or runtime.
 
 ## TerrainQuality=2 static path + terrain break triage (simjp.exe) — 2026-03-24
 

@@ -111,6 +111,7 @@ typedef struct WrappedDevice {
     /* View matrix (real from ASI or rotation-only approximation) */
     float viewMatrix[16];
     float invViewMatrix[16];
+    int   viewCapturedThisFrame;
     int   hasRealView;
 
     /* Projection from SetTransform(D3DTS_PROJECTION) */
@@ -121,7 +122,9 @@ typedef struct WrappedDevice {
     int   hasProjection;
     int   invProjDirty;
 
-    /* Last WORLD submitted to the real device by any path. */
+    /* Cached per-draw World */
+    float cachedWorld[16];
+    int   hasCachedWorld;
     float appliedWorld[16];
     int   hasAppliedWorld;
 
@@ -310,17 +313,10 @@ static int mat4_equals(const float *a, const float *b) {
 
 static void set_world_if_changed(WrappedDevice *self, const float *world) {
     typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
-    int hr;
-
-    if (self->hasAppliedWorld && mat4_equals(self->appliedWorld, world))
-        return;
-
-    hr = ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(
+    ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(
         self->pReal, D3DTS_WORLD, (float*)world);
-    if (hr == 0) {
-        memcpy(self->appliedWorld, world, sizeof(self->appliedWorld));
-        self->hasAppliedWorld = 1;
-    }
+    memcpy(self->appliedWorld, world, sizeof(self->appliedWorld));
+    self->hasAppliedWorld = 1;
 }
 
 /* ---- VB vtable hook: capture first-vertex XYZ at upload time ---- */
@@ -354,6 +350,8 @@ static unsigned __int64 g_terrainHashes[TERRAIN_HASH_MAX];
 static int g_terrainHashCount = 0;
 static unsigned __int64 g_particleTextureHashes[REMIX_TAG_HASH_MAX];
 static unsigned int g_particleTextureHashCount = 0;
+static unsigned __int64 g_decalTextureHashes[REMIX_TAG_HASH_MAX];
+static unsigned int g_decalTextureHashCount = 0;
 static FILETIME g_remixTagConfigWriteTime = { 0, 0 };
 static int g_remixTagConfigLoaded = 0;
 static int g_loggedTerrainScope = 0;
@@ -581,7 +579,11 @@ static void reload_remix_tag_config(void) {
     DWORD size;
     DWORD bytesRead;
     char *data;
+    unsigned __int64 *hashStorage;
+    unsigned __int64 *particleHashes;
+    unsigned __int64 *decalHashes;
     unsigned int particleCount;
+    unsigned int decalCount;
 
     DWORD now = GetTickCount();
     if ((LONG)(now - g_nextRemixTagConfigPoll) < 0)
@@ -615,29 +617,48 @@ static void reload_remix_tag_config(void) {
     }
     CloseHandle(file);
 
+    hashStorage = (unsigned __int64*)HeapAlloc(GetProcessHeap(), 0,
+        2 * REMIX_TAG_HASH_MAX * sizeof(unsigned __int64));
+    if (!hashStorage) {
+        HeapFree(GetProcessHeap(), 0, data);
+        return;
+    }
+    particleHashes = hashStorage;
+    decalHashes = hashStorage + REMIX_TAG_HASH_MAX;
+
     parse_tag_option(data, size, "rtx.particleTextures", 20,
-        g_particleTextureHashes, &particleCount);
+        particleHashes, &particleCount);
+    parse_tag_option(data, size, "rtx.decalTextures", 17,
+        decalHashes, &decalCount);
+    memcpy(g_particleTextureHashes, particleHashes,
+        particleCount * sizeof(unsigned __int64));
+    memcpy(g_decalTextureHashes, decalHashes,
+        decalCount * sizeof(unsigned __int64));
     g_particleTextureHashCount = particleCount;
+    g_decalTextureHashCount = decalCount;
     g_remixTagConfigWriteTime = attributes.ftLastWriteTime;
     g_remixTagConfigLoaded = 1;
+    HeapFree(GetProcessHeap(), 0, hashStorage);
     HeapFree(GetProcessHeap(), 0, data);
     log_hex("Reloaded particle texture tags=", particleCount);
+    log_hex("Reloaded decal texture tags=", decalCount);
 }
 
 static int get_texture_hash(void *texture, unsigned __int64 *hash) {
     unsigned int i;
     if (!texture || !hash || !initialize_remix_api())
         return 0;
-
-    i = ((unsigned int)(unsigned long)texture >> 4) % TEXTURE_HASH_CACHE_MAX;
-    if (g_textureHashCache[i].frame == g_textureHashFrame &&
-        g_textureHashCache[i].texture == texture) {
-        *hash = g_textureHashCache[i].hash;
-        return 1;
+    for (i = 0; i < TEXTURE_HASH_CACHE_MAX; i++) {
+        if (g_textureHashCache[i].frame == g_textureHashFrame &&
+            g_textureHashCache[i].texture == texture) {
+            *hash = g_textureHashCache[i].hash;
+            return 1;
+        }
     }
     if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, hash) !=
         REMIXAPI_ERROR_CODE_SUCCESS || *hash == 0)
         return 0;
+    i = ((unsigned int)(unsigned long)texture >> 4) % TEXTURE_HASH_CACHE_MAX;
     g_textureHashCache[i].texture = texture;
     g_textureHashCache[i].hash = *hash;
     g_textureHashCache[i].frame = g_textureHashFrame;
@@ -760,15 +781,19 @@ static int applyMvPath(WrappedDevice *self) {
     self->mvDirty = 0;
 
     if (!mat4_isRigid(self->mvMatrix)) {
+        self->hasCachedWorld = 0;
         return 0;
     }
 
     if (!self->hasRealView) {
+        self->hasCachedWorld = 0;
         return 0;
     }
 
     mat4_multiply(world, self->mvMatrix, self->invViewMatrix);
     world[3] = 0.0f; world[7] = 0.0f; world[11] = 0.0f; world[15] = 1.0f;
+    memcpy(self->cachedWorld, world, 16 * sizeof(float));
+    self->hasCachedWorld = 1;
     set_world_if_changed(self, world);
     return 1;
 }
@@ -795,6 +820,8 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
         mat4_multiply(world, mv, self->invViewMatrix);
         world[3] = 0.0f; world[7] = 0.0f; world[11] = 0.0f; world[15] = 1.0f;
         set_world_if_changed(self, world);
+        memcpy(self->cachedWorld, world, 16 * sizeof(float));
+        self->hasCachedWorld = 1;
         return;
     }
 
@@ -812,6 +839,8 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
                 world[13] = centroid[1];
                 world[14] = centroid[2];
                 set_world_if_changed(self, world);
+                memcpy(self->cachedWorld, world, 16 * sizeof(float));
+                self->hasCachedWorld = 1;
             }
         }
     }
@@ -1063,6 +1092,8 @@ static int __stdcall WD_SetPixelShader(WrappedDevice *self, void *shader) {
 static int __stdcall WD_Reset(WrappedDevice *self, void *pPresentParams) {
     typedef int (__stdcall *FN)(void*, void*);
     self->mvDirty = 0;
+    self->viewCapturedThisFrame = 0;
+    self->hasCachedWorld = 0;
     self->hasAppliedWorld = 0;
     self->gameWorldSet = 0;
     g_vbSampleCount = 0;
@@ -1086,6 +1117,8 @@ static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, 
     }
 
     self->mvDirty = 0;
+    self->viewCapturedThisFrame = 0;
+    self->hasCachedWorld = 0;
     self->hasAppliedWorld = 0;
     self->gameWorldSet = 0;
 
@@ -1113,6 +1146,7 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
             if (tRow2 > 1.0f || tCol2 > 1.0f) {
                 memcpy(self->viewMatrix, pMatrix, 16 * sizeof(float));
                 mat4_invOrthogonal(self->invViewMatrix, self->viewMatrix);
+                self->viewCapturedThisFrame = 1;
                 self->hasRealView = 1;
             }
         }
@@ -1126,18 +1160,9 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
         }
     }
 
-    /* Keep synthetic-WORLD deduplication coherent with game WORLD writes. */
+    /* Track game WORLD writes — forward to real device AND set flag */
     if (state >= 256 && state < 512) {
-        int hr = ((FN)RealVtbl(self)[SLOT_SetTransform])(
-            self->pReal, state, pMatrix);
-        if (hr == 0) {
-            self->gameWorldSet = 1;
-            if (state == D3DTS_WORLD && pMatrix) {
-                memcpy(self->appliedWorld, pMatrix, sizeof(self->appliedWorld));
-                self->hasAppliedWorld = 1;
-            }
-        }
-        return hr;
+        self->gameWorldSet = 1;
     }
 
     /* Capture Projection matrix */
@@ -1255,7 +1280,9 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
     int hr;
     int particleDeclarationBound = 0;
     int particleWorldSaved = 0;
+    int particleBlendOverridden = 0;
     int isParticleTexture = 0;
+    int isDecalTexture = 0;
     unsigned __int64 textureHash;
     float particlePreviousWorld[16];
 
@@ -1275,9 +1302,12 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
         !self->pixelShader && get_texture_hash(self->texture0, &textureHash)) {
         isParticleTexture = texture_hash_is_tagged(textureHash,
             g_particleTextureHashes, g_particleTextureHashCount);
+        isDecalTexture = texture_hash_is_tagged(textureHash,
+            g_decalTextureHashes, g_decalTextureHashCount);
     }
 
-    if (isParticleTexture && ensure_particle_declaration(self)) {
+    if ((isParticleTexture || isDecalTexture) &&
+        ensure_particle_declaration(self)) {
         ((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
             self->pReal, self->particleDeclaration);
         ((FN_SetShader)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, NULL);
@@ -1287,16 +1317,21 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
                 self->pReal, D3DTS_WORLD, (float*)s_identity);
             particleWorldSaved = 1;
         }
-        ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
-            self->pReal, D3DRS_DESTBLEND, 2);
+        if (isParticleTexture) {
+            ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
+                self->pReal, D3DRS_DESTBLEND, 2);
+            particleBlendOverridden = 1;
+        }
         particleDeclarationBound = 1;
     }
 
     hr = ((FN)RealVtbl(self)[SLOT_DrawIndexedPrimitive])(self->pReal,
         pt, bvi, mi, nv, si, pc);
     if (particleDeclarationBound) {
-        ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
-            self->pReal, D3DRS_DESTBLEND, self->destBlend);
+        if (particleBlendOverridden) {
+            ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
+                self->pReal, D3DRS_DESTBLEND, self->destBlend);
+        }
         if (particleWorldSaved) {
             ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(
                 self->pReal, D3DTS_WORLD, particlePreviousWorld);
@@ -1449,9 +1484,11 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice) {
     w->refCount = 1;
     w->mvDirty = 0;
     w->hasMVP = 0;
+    w->viewCapturedThisFrame = 0;
     w->hasRealView = 0;
     w->hasProjection = 0;
     w->invProjDirty = 1;
+    w->hasCachedWorld = 0;
     w->gameWorldSet = 0;
     w->texture0 = NULL;
 
@@ -1463,6 +1500,7 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice) {
         w->invViewMatrix[i] = v;
         w->projMatrix[i] = v;
         w->invProjMatrix[i] = v;
+        w->cachedWorld[i] = v;
     }
 
     log_str("WrappedDevice_Create: JPOG Matrix-Capture proxy ready\r\n");

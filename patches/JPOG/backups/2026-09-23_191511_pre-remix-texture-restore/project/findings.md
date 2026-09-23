@@ -18,11 +18,11 @@ This section is the current release policy and supersedes the older Q1/Q2 and sk
 - Removed write-only `cachedWorld`, `hasCachedWorld`, and `viewCapturedThisFrame` fields and their per-draw copies.
 - No terrain-quality or sky behavior changed.
 
-## Discarded proxy water and selection/highlight experiments — 2026-09-23
+## Discarded water and selection/highlight experiments — 2026-09-23
 
 - Confirmed the active proxy and ASI already contained no water-specific transform, shader, camera, or draw-routing code.
 - Removed the abandoned selection/highlight decal-tag parsing and conversion branch; tagged particle conversion remains independent and active.
-- Remix-owned `rtx.animatedWaterTextures` and `rtx.decalTextures` settings remain in project and deployed configuration; this cleanup is limited to patch code and inactive captures.
+- Removed `rtx.animatedWaterTextures` and `rtx.decalTextures` from the project Remix configuration.
 - Removed the inactive water and selection trace captures from the active project tree. Historical backups remain isolated under `backups/` and do not affect builds or runtime.
 
 ## TerrainQuality=2 static path + terrain break triage (simjp.exe) — 2026-03-24

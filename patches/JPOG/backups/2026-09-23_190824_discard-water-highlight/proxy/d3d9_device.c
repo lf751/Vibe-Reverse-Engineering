@@ -354,6 +354,8 @@ static unsigned __int64 g_terrainHashes[TERRAIN_HASH_MAX];
 static int g_terrainHashCount = 0;
 static unsigned __int64 g_particleTextureHashes[REMIX_TAG_HASH_MAX];
 static unsigned int g_particleTextureHashCount = 0;
+static unsigned __int64 g_decalTextureHashes[REMIX_TAG_HASH_MAX];
+static unsigned int g_decalTextureHashCount = 0;
 static FILETIME g_remixTagConfigWriteTime = { 0, 0 };
 static int g_remixTagConfigLoaded = 0;
 static int g_loggedTerrainScope = 0;
@@ -581,7 +583,11 @@ static void reload_remix_tag_config(void) {
     DWORD size;
     DWORD bytesRead;
     char *data;
+    unsigned __int64 *hashStorage;
+    unsigned __int64 *particleHashes;
+    unsigned __int64 *decalHashes;
     unsigned int particleCount;
+    unsigned int decalCount;
 
     DWORD now = GetTickCount();
     if ((LONG)(now - g_nextRemixTagConfigPoll) < 0)
@@ -615,13 +621,31 @@ static void reload_remix_tag_config(void) {
     }
     CloseHandle(file);
 
+    hashStorage = (unsigned __int64*)HeapAlloc(GetProcessHeap(), 0,
+        2 * REMIX_TAG_HASH_MAX * sizeof(unsigned __int64));
+    if (!hashStorage) {
+        HeapFree(GetProcessHeap(), 0, data);
+        return;
+    }
+    particleHashes = hashStorage;
+    decalHashes = hashStorage + REMIX_TAG_HASH_MAX;
+
     parse_tag_option(data, size, "rtx.particleTextures", 20,
-        g_particleTextureHashes, &particleCount);
+        particleHashes, &particleCount);
+    parse_tag_option(data, size, "rtx.decalTextures", 17,
+        decalHashes, &decalCount);
+    memcpy(g_particleTextureHashes, particleHashes,
+        particleCount * sizeof(unsigned __int64));
+    memcpy(g_decalTextureHashes, decalHashes,
+        decalCount * sizeof(unsigned __int64));
     g_particleTextureHashCount = particleCount;
+    g_decalTextureHashCount = decalCount;
     g_remixTagConfigWriteTime = attributes.ftLastWriteTime;
     g_remixTagConfigLoaded = 1;
+    HeapFree(GetProcessHeap(), 0, hashStorage);
     HeapFree(GetProcessHeap(), 0, data);
     log_hex("Reloaded particle texture tags=", particleCount);
+    log_hex("Reloaded decal texture tags=", decalCount);
 }
 
 static int get_texture_hash(void *texture, unsigned __int64 *hash) {
@@ -1255,7 +1279,9 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
     int hr;
     int particleDeclarationBound = 0;
     int particleWorldSaved = 0;
+    int particleBlendOverridden = 0;
     int isParticleTexture = 0;
+    int isDecalTexture = 0;
     unsigned __int64 textureHash;
     float particlePreviousWorld[16];
 
@@ -1275,9 +1301,12 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
         !self->pixelShader && get_texture_hash(self->texture0, &textureHash)) {
         isParticleTexture = texture_hash_is_tagged(textureHash,
             g_particleTextureHashes, g_particleTextureHashCount);
+        isDecalTexture = texture_hash_is_tagged(textureHash,
+            g_decalTextureHashes, g_decalTextureHashCount);
     }
 
-    if (isParticleTexture && ensure_particle_declaration(self)) {
+    if ((isParticleTexture || isDecalTexture) &&
+        ensure_particle_declaration(self)) {
         ((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
             self->pReal, self->particleDeclaration);
         ((FN_SetShader)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, NULL);
@@ -1287,16 +1316,21 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
                 self->pReal, D3DTS_WORLD, (float*)s_identity);
             particleWorldSaved = 1;
         }
-        ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
-            self->pReal, D3DRS_DESTBLEND, 2);
+        if (isParticleTexture) {
+            ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
+                self->pReal, D3DRS_DESTBLEND, 2);
+            particleBlendOverridden = 1;
+        }
         particleDeclarationBound = 1;
     }
 
     hr = ((FN)RealVtbl(self)[SLOT_DrawIndexedPrimitive])(self->pReal,
         pt, bvi, mi, nv, si, pc);
     if (particleDeclarationBound) {
-        ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
-            self->pReal, D3DRS_DESTBLEND, self->destBlend);
+        if (particleBlendOverridden) {
+            ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
+                self->pReal, D3DRS_DESTBLEND, self->destBlend);
+        }
         if (particleWorldSaved) {
             ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(
                 self->pReal, D3DTS_WORLD, particlePreviousWorld);
