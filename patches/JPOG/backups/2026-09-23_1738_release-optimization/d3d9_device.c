@@ -338,7 +338,8 @@ static void       *g_origVBLock     = NULL;
 static void       *g_origVBUnlock   = NULL;
 static void       *g_curStream0VB   = NULL;
 
-/* Set by the ASI while TTerrainShaderD3D renders a terrain packet. */
+/* Set by ASI sky hook to suppress WorldOverride during sky DIPs */
+__declspec(dllexport) volatile int g_skipWorldOverride = 0;
 __declspec(dllexport) volatile int g_terrainRenderActive = 0;
 
 #define TERRAIN_HASH_MAX 64
@@ -770,6 +771,8 @@ static int ensureInvProj(WrappedDevice *self) {
  * centroid/MVP path below knows not to clobber it with an identity rotation.
  */
 static int applyMvPath(WrappedDevice *self) {
+    typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
+    void **vt = RealVtbl(self);
     float world[16];
 
     if (!self->mvDirty) {
@@ -803,10 +806,13 @@ static int applyMvPath(WrappedDevice *self) {
  * Skips when game already called SetTransform(WORLD) for this object.
  */
 static void applyCentroidOrMvpPath(WrappedDevice *self) {
+    typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
+    void **vt = RealVtbl(self);
     float world[16];
     float *centroid;
 
     if (self->gameWorldSet) return;
+    if (g_skipWorldOverride) return;  /* sky render in progress — leave D3DTS_WORLD as-is */
 
     /* MVP decomposition: World = MVP × inv(P) × inv(V). Exact for any VS-based
      * draw that uploaded c0-c3 (carries the object's real rotation), so it
@@ -1288,6 +1294,20 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
 
     if (!applyMvPath(self))
         applyCentroidOrMvpPath(self);
+
+    /* During sky render: override D3DTS_WORLD to camera-centered translation.
+     * Whatever MV/centroid path computed gets overwritten so Remix sees the
+     * sky dome always centred on the camera, preventing far-plane clipping. */
+    if (g_skipWorldOverride && self->hasRealView) {
+        typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
+        float skyWorld[16];
+        memcpy(skyWorld, s_identity, sizeof(skyWorld));
+        skyWorld[12] = self->invViewMatrix[12];
+        skyWorld[13] = self->invViewMatrix[13];
+        skyWorld[14] = self->invViewMatrix[14];
+        ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(self->pReal,
+            D3DTS_WORLD, skyWorld);
+    }
 
     if (g_terrainRenderActive) {
         if (!g_loggedTerrainScope) {

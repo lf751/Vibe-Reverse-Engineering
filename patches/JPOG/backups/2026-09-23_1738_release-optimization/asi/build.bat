@@ -12,11 +12,11 @@ echo Setting up x86 build environment...
 call "%VCVARSALL%" x86 >nul 2>&1
 
 echo Compiling jpog_view_fix.c...
-cl /nologo /W3 /O2 /Oi /Gy /GL /GS- /Zl /I"..\..\..\..\dxvk-remix_numos\public\include" /c jpog_view_fix.c
+cl /nologo /W3 /O2 /GS- /Zl /I"..\..\..\..\dxvk-remix_numos\public\include" /c jpog_view_fix.c
 if errorlevel 1 goto fail
 
 echo Linking jpog_view_fix.asi...
-link /nologo /DLL /LTCG /OPT:REF /OPT:ICF /NODEFAULTLIB /ENTRY:DllMain /OUT:jpog_view_fix.asi ^
+link /nologo /DLL /NODEFAULTLIB /ENTRY:DllMain /OUT:jpog_view_fix.asi ^
      jpog_view_fix.obj kernel32.lib
 if errorlevel 1 goto fail
 

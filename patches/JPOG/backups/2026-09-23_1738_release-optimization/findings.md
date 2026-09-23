@@ -1,14 +1,3 @@
-## Release proxy/ASI ownership and optimization pass — 2026-09-23
-
-This section is the current release policy and supersedes the older Q1/Q2 and sky experiments retained below as historical analysis.
-
-- Terrain quality is game-owned. The ASI does not patch `IsHighEndTerrain`, `IsMediumTerrain`, the Q1/Q2 render entries, or the terrain shader getters.
-- Sky rendering is game/Remix-owned. The proxy no longer exports or checks `g_skipWorldOverride`, does not suppress world reconstruction for sky draws, and does not inject a camera-centred sky world matrix.
-- The terrain render hook at `TTerrainShaderD3D.dll+0x5790` remains solely to scope automatic `rtx.terrainTextures` tagging. It does not select or alter a terrain quality path.
-- The ASI retains only three release responsibilities: main-camera View/Projection forwarding, Remix weather preset sync, and terrain texture-tag scope.
-- The proxy retains general matrix reconstruction plus tagged particle/decal conversion. Its release build uses MSVC `/O2 /Oi /Gy` and linker `/OPT:REF /OPT:ICF`; `/GL` is intentionally excluded because MSVC rejects whole-program optimization with the proxy's no-CRT `memcpy`/`memset` helpers. The ASI uses `/GL /LTCG` in addition to those release optimizations.
-- Dead release baggage removed: the unused ASI copy of the last View matrix, unused math headers, stale sky/Q1 discovery comments, unused transform-helper locals, and an obsolete linker map that still listed the removed sky export.
-
 ## TerrainQuality=2 static path + terrain break triage (simjp.exe) — 2026-03-24
 
 ## LIVE traced terrain/system SVCF callers -> behavior mapping (TTerrainShaderD3D + TSysShaderD3D) — 2026-03-24

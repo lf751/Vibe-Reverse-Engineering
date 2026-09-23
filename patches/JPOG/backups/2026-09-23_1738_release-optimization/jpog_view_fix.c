@@ -7,25 +7,34 @@
  *    Hooks SetRenderMatrices to pass the real camera View matrix instead
  *    of the identity the engine sends. Remix needs this for camera tracking.
  *
- * 2. Weather Preset Sync (simjp.exe)
+ * 2. Terrain path remains unmodified; the game already uses medium terrain.
+ *    This patch only adjusts the view/projection matrix flow for Remix.
+ *
+ * 3. Weather Preset Sync (simjp.exe)
  *    Maps JPOG's active weather index to the matching Remix weather preset.
  *
- * 3. Terrain Texture Detection (TTerrainShaderD3D.dll)
+ * 4. Terrain Texture Detection (TTerrainShaderD3D.dll)
  *    Brackets terrain rendering so the D3D9 proxy can tag generated island
  *    textures as Remix terrain without relying on unstable content hashes.
- *
- * Terrain quality and sky rendering remain owned by the game and Remix.
  *
  * RE discoveries (Toshi engine):
  *   TRenderContext: +0x8C = View, +0x484 = Projection
  *   TRenderPacket:  +0x08 = resource, +0x0C = world matrix (4x4 float)
  *   Toshi device vtable: +0x94 = SetTransform(__stdcall)
  *   SetRenderMatrices: RVA 0x7180  in TRenderD3DInterface.dll
- *   Terrain Render:    RVA 0x5790 in TTerrainShaderD3D.dll
+ *   IsHighEndTerrain:  RVA 0x10D50 in TTerrainShaderD3D.dll
+ *   IsMediumTerrain:   RVA 0x10D40 in TTerrainShaderD3D.dll
+ *   Q1 Render entry:   RVA 0x5866  in TTerrainShaderD3D.dll
+ *   RenderSky entry:   RVA 0x9C90  in TTerrainShaderD3D.dll (12-byte prologue hooked)
+ *   Sky VB pointer:    TTerrainShaderHAL + 0xD4 (IDirect3DVertexBuffer8*)
+ *   Sky VB stride:     20 bytes (5 floats: X,Y,Z,U,V); V at float offset 16
+ *   Sky VB vtable:     [11]=Lock, [12]=Unlock (D3D8 IDirect3DVertexBuffer8)
  */
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <math.h>
+#include <float.h>
 #define REMIX_ALLOW_X86
 #define REMIX_WINAPI_NO_LIBRARY_LOADER
 #include "remix/remix_c.h"
@@ -62,6 +71,9 @@ typedef void (__fastcall *FnTerrainRender)(void*, void*, void*);
  * Hook 1: View Matrix Fix (TRenderD3DInterface.dll)
  * ==================================================================== */
 
+static float g_lastRealView[16] = {
+    1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+};
 static void *g_mainCameraContext = NULL;
 static FnWeatherUpdate g_originalWeatherUpdate = NULL;
 static FnTerrainRender g_originalTerrainRender = NULL;
@@ -182,10 +194,19 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
     }
 
     if (thisPtr == g_mainCameraContext && determinant > 0.5f) {
+        memcpy(g_lastRealView, viewMatrix, sizeof(g_lastRealView));
         fnST(device, D3DTS_VIEW, viewMatrix);
         fnST(device, D3DTS_PROJECTION, projMatrix);
     }
 }
+
+/* ====================================================================
+ * Terrain path remains unmodified; the game already uses medium terrain.
+ * ==================================================================== */
+
+/* ====================================================================
+ * Sky rendering is intentionally left unmodified.
+ * ==================================================================== */
 
 /* ---- Patch helpers ---- */
 
@@ -286,9 +307,9 @@ static int InstallTerrainRenderHook(HMODULE hMod) {
     return 1;
 }
 
-/* ---- Install terrain tagging hook ---- */
+/* ---- Install terrain patches ---- */
 
-static int InstallTerrainTagHook(HMODULE hMod) {
+static int InstallTerrainPatches(HMODULE hMod) {
     HMODULE hProxy = GetModuleHandleA("d3d9.dll");
     if (hProxy) {
         g_terrainRenderActive = (volatile int*)GetProcAddress(
@@ -329,7 +350,7 @@ static DWORD WINAPI InitThread(LPVOID param) {
         if (!terrainDone) {
             hTerrainShader = GetModuleHandleA("TTerrainShaderD3D.dll");
             if (hTerrainShader) {
-                terrainDone = InstallTerrainTagHook(hTerrainShader);
+                terrainDone = InstallTerrainPatches(hTerrainShader);
             }
         }
         if (renderDone && terrainDone)
