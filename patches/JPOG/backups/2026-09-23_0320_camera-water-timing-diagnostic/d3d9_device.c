@@ -65,6 +65,8 @@ extern void log_hex(const char *prefix, unsigned int val);
 
 #define VERTEX_SHADER_RECORDS 128
 #define PARTICLE_VERTEX_SHADER_HASH 0x72F91594u
+#define WATER_VERTEX_SHADER_HASH    0xD6D994B1u
+#define WATER_VERTEX_STRIDE         20u
 
 /* ---- Device vtable slot indices ---- */
 enum {
@@ -107,6 +109,9 @@ typedef struct WrappedDevice {
     /* MVP from c0-c3 (transposed to D3D row-major) */
     float mvpMatrix[16];
     int   hasMVP;
+    float mvpInvViewMatrix[16];
+    float mvpInvProjMatrix[16];
+    int   hasMvpCamera;
 
     /* View matrix (real from ASI or rotation-only approximation) */
     float viewMatrix[16];
@@ -147,6 +152,8 @@ typedef struct WrappedDevice {
     unsigned int currentVertexShaderHash;
     void *particleDeclaration;
 } WrappedDevice;
+
+static void applyCentroidOrMvpPath(WrappedDevice *self);
 
 static __inline void** RealVtbl(WrappedDevice *self) {
     return *(void***)(self->pReal);
@@ -801,6 +808,25 @@ static int applyMvPath(WrappedDevice *self) {
     return 1;
 }
 
+/* The water shader consumes world-space vertices.  Its c0-c3 upload belongs
+ * to the game's camera transform, not to a per-object model transform. */
+static int isWorldSpaceWaterPass(const WrappedDevice *self) {
+    return self->currentVertexShaderHash == WATER_VERTEX_SHADER_HASH &&
+           self->stream0Stride == WATER_VERTEX_STRIDE;
+}
+
+static void applyDrawWorld(WrappedDevice *self) {
+    if (isWorldSpaceWaterPass(self)) {
+        set_world_if_changed(self, s_identity);
+        memcpy(self->cachedWorld, s_identity, sizeof(self->cachedWorld));
+        self->hasCachedWorld = 1;
+        return;
+    }
+
+    if (!applyMvPath(self))
+        applyCentroidOrMvpPath(self);
+}
+
 /*
  * Centroid / MVP path: override WORLD for objects without game-set transforms.
  * Skips when game already called SetTransform(WORLD) for this object.
@@ -820,10 +846,10 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
      * represent rotation at all.
      * Split into two steps to avoid precision loss from inverting View×Proj
      * as a single matrix (large camera translations make V×P ill-conditioned). */
-    if (self->hasMVP && self->hasRealView && ensureInvProj(self)) {
+    if (self->hasMVP && self->hasMvpCamera) {
         float mv[16];
-        mat4_multiply(mv, self->mvpMatrix, self->invProjMatrix);
-        mat4_multiply(world, mv, self->invViewMatrix);
+        mat4_multiply(mv, self->mvpMatrix, self->mvpInvProjMatrix);
+        mat4_multiply(world, mv, self->mvpInvViewMatrix);
         world[3] = 0.0f; world[7] = 0.0f; world[11] = 0.0f; world[15] = 1.0f;
         set_world_if_changed(self, world);
         memcpy(self->cachedWorld, world, 16 * sizeof(float));
@@ -1217,6 +1243,13 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
                 mat4_transpose(self->mvpMatrix, raw);
             }
             self->hasMVP = 1;
+            self->hasMvpCamera = 0;
+            if (self->hasRealView && self->hasProjection &&
+                mat4_invert(self->mvpInvProjMatrix, self->projMatrix)) {
+                memcpy(self->mvpInvViewMatrix, self->invViewMatrix,
+                    sizeof(self->mvpInvViewMatrix));
+                self->hasMvpCamera = 1;
+            }
             self->gameWorldSet = 0;
         }
 
@@ -1256,8 +1289,7 @@ static int __stdcall WD_DrawPrimitive(WrappedDevice *self,
     typedef int (__stdcall *FN)(void*, unsigned int, unsigned int, unsigned int);
     int hr;
 
-    if (!applyMvPath(self))
-        applyCentroidOrMvpPath(self);
+    applyDrawWorld(self);
     if (g_terrainRenderActive) {
         if (!g_loggedTerrainScope) {
             log_str("Terrain render scope observed\r\n");
@@ -1292,8 +1324,7 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
     unsigned __int64 textureHash;
     float particlePreviousWorld[16];
 
-    if (!applyMvPath(self))
-        applyCentroidOrMvpPath(self);
+    applyDrawWorld(self);
 
     /* During sky render: override D3DTS_WORLD to camera-centered translation.
      * Whatever MV/centroid path computed gets overwritten so Remix sees the

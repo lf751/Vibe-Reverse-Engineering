@@ -107,6 +107,9 @@ typedef struct WrappedDevice {
     /* MVP from c0-c3 (transposed to D3D row-major) */
     float mvpMatrix[16];
     int   hasMVP;
+    float mvpInvViewMatrix[16];
+    float mvpInvProjMatrix[16];
+    int   hasMvpCamera;
 
     /* View matrix (real from ASI or rotation-only approximation) */
     float viewMatrix[16];
@@ -820,10 +823,10 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
      * represent rotation at all.
      * Split into two steps to avoid precision loss from inverting View×Proj
      * as a single matrix (large camera translations make V×P ill-conditioned). */
-    if (self->hasMVP && self->hasRealView && ensureInvProj(self)) {
+    if (self->hasMVP && self->hasMvpCamera) {
         float mv[16];
-        mat4_multiply(mv, self->mvpMatrix, self->invProjMatrix);
-        mat4_multiply(world, mv, self->invViewMatrix);
+        mat4_multiply(mv, self->mvpMatrix, self->mvpInvProjMatrix);
+        mat4_multiply(world, mv, self->mvpInvViewMatrix);
         world[3] = 0.0f; world[7] = 0.0f; world[11] = 0.0f; world[15] = 1.0f;
         set_world_if_changed(self, world);
         memcpy(self->cachedWorld, world, 16 * sizeof(float));
@@ -1217,6 +1220,13 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
                 mat4_transpose(self->mvpMatrix, raw);
             }
             self->hasMVP = 1;
+            self->hasMvpCamera = 0;
+            if (self->hasRealView && self->hasProjection &&
+                mat4_invert(self->mvpInvProjMatrix, self->projMatrix)) {
+                memcpy(self->mvpInvViewMatrix, self->invViewMatrix,
+                    sizeof(self->mvpInvViewMatrix));
+                self->hasMvpCamera = 1;
+            }
             self->gameWorldSet = 0;
         }
 

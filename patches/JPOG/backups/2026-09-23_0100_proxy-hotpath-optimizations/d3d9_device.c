@@ -125,8 +125,6 @@ typedef struct WrappedDevice {
     /* Cached per-draw World */
     float cachedWorld[16];
     int   hasCachedWorld;
-    float appliedWorld[16];
-    int   hasAppliedWorld;
 
     /* Set when game calls SetTransform(WORLD); cleared on new MVP write */
     int   gameWorldSet;
@@ -304,21 +302,6 @@ static int mat4_isIdentity(const float *m) {
     return 1;
 }
 
-static int mat4_equals(const float *a, const float *b) {
-    int i;
-    for (i = 0; i < 16; i++)
-        if (a[i] != b[i]) return 0;
-    return 1;
-}
-
-static void set_world_if_changed(WrappedDevice *self, const float *world) {
-    typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
-    ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(
-        self->pReal, D3DTS_WORLD, (float*)world);
-    memcpy(self->appliedWorld, world, sizeof(self->appliedWorld));
-    self->hasAppliedWorld = 1;
-}
-
 /* ---- VB vtable hook: capture first-vertex XYZ at upload time ---- */
 
 #define VB_SAMPLE_MAX 4096
@@ -344,8 +327,6 @@ __declspec(dllexport) volatile int g_terrainRenderActive = 0;
 
 #define TERRAIN_HASH_MAX 64
 #define REMIX_TAG_HASH_MAX 256
-#define TEXTURE_HASH_CACHE_MAX 64
-typedef struct { void *texture; unsigned __int64 hash; unsigned int frame; } TextureHashCache;
 static remixapi_Interface g_remix = { 0 };
 static unsigned __int64 g_terrainHashes[TERRAIN_HASH_MAX];
 static int g_terrainHashCount = 0;
@@ -360,9 +341,6 @@ static int g_loggedRemixInitFailure = 0;
 static int g_loggedTextureHashFailure = 0;
 static int g_loggedTextureHashZero = 0;
 static int g_loggedTerrainAddFailure = 0;
-static TextureHashCache g_textureHashCache[TEXTURE_HASH_CACHE_MAX];
-static unsigned int g_textureHashFrame = 1;
-static DWORD g_nextRemixTagConfigPoll = 0;
 
 static int initialize_remix_api(void) {
     HMODULE hRemix;
@@ -423,8 +401,6 @@ static void hash_to_hex(char out[17], unsigned __int64 hash) {
     out[16] = '\0';
 }
 
-static int get_texture_hash(void *texture, unsigned __int64 *hash);
-
 static void tag_terrain_texture(void *texture) {
     unsigned __int64 hash;
     char hashText[17];
@@ -439,10 +415,18 @@ static void tag_terrain_texture(void *texture) {
     }
     if (!initialize_remix_api())
         return;
-    if (!get_texture_hash(texture, &hash)) {
+    if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, &hash) !=
+        REMIXAPI_ERROR_CODE_SUCCESS) {
         if (!g_loggedTextureHashFailure) {
             log_str("Terrain tag: texture hash lookup failed\r\n");
             g_loggedTextureHashFailure = 1;
+        }
+        return;
+    }
+    if (hash == 0) {
+        if (!g_loggedTextureHashZero) {
+            log_str("Terrain tag: texture hash is not ready\r\n");
+            g_loggedTextureHashZero = 1;
         }
         return;
     }
@@ -586,10 +570,6 @@ static void reload_remix_tag_config(void) {
     unsigned int particleCount;
     unsigned int decalCount;
 
-    DWORD now = GetTickCount();
-    if ((LONG)(now - g_nextRemixTagConfigPoll) < 0)
-        return;
-    g_nextRemixTagConfigPoll = now + 1000;
     if (!GetFileAttributesExA("rtx.conf", GetFileExInfoStandard, &attributes))
         return;
     if (g_remixTagConfigLoaded &&
@@ -646,23 +626,11 @@ static void reload_remix_tag_config(void) {
 }
 
 static int get_texture_hash(void *texture, unsigned __int64 *hash) {
-    unsigned int i;
     if (!texture || !hash || !initialize_remix_api())
         return 0;
-    for (i = 0; i < TEXTURE_HASH_CACHE_MAX; i++) {
-        if (g_textureHashCache[i].frame == g_textureHashFrame &&
-            g_textureHashCache[i].texture == texture) {
-            *hash = g_textureHashCache[i].hash;
-            return 1;
-        }
-    }
     if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, hash) !=
         REMIXAPI_ERROR_CODE_SUCCESS || *hash == 0)
         return 0;
-    i = ((unsigned int)(unsigned long)texture >> 4) % TEXTURE_HASH_CACHE_MAX;
-    g_textureHashCache[i].texture = texture;
-    g_textureHashCache[i].hash = *hash;
-    g_textureHashCache[i].frame = g_textureHashFrame;
     return 1;
 }
 
@@ -778,7 +746,8 @@ static int applyMvPath(WrappedDevice *self) {
     if (!self->mvDirty) {
         /* MV unchanged — default WORLD to identity (world-space geometry).
          * Model-space objects will be overridden by centroid/MVP path after. */
-        set_world_if_changed(self, s_identity);
+        ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal,
+            D3DTS_WORLD, (float*)s_identity);
         return 0;
     }
     self->mvDirty = 0;
@@ -797,7 +766,7 @@ static int applyMvPath(WrappedDevice *self) {
     world[3] = 0.0f; world[7] = 0.0f; world[11] = 0.0f; world[15] = 1.0f;
     memcpy(self->cachedWorld, world, 16 * sizeof(float));
     self->hasCachedWorld = 1;
-    set_world_if_changed(self, world);
+    ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal, D3DTS_WORLD, world);
     return 1;
 }
 
@@ -825,7 +794,8 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
         mat4_multiply(mv, self->mvpMatrix, self->invProjMatrix);
         mat4_multiply(world, mv, self->invViewMatrix);
         world[3] = 0.0f; world[7] = 0.0f; world[11] = 0.0f; world[15] = 1.0f;
-        set_world_if_changed(self, world);
+        ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal,
+            D3DTS_WORLD, world);
         memcpy(self->cachedWorld, world, 16 * sizeof(float));
         self->hasCachedWorld = 1;
         return;
@@ -844,7 +814,8 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
                 world[12] = centroid[0];
                 world[13] = centroid[1];
                 world[14] = centroid[2];
-                set_world_if_changed(self, world);
+                ((FN_SetTransform)vt[SLOT_SetTransform])(self->pReal,
+                    D3DTS_WORLD, world);
                 memcpy(self->cachedWorld, world, 16 * sizeof(float));
                 self->hasCachedWorld = 1;
             }
@@ -1075,14 +1046,12 @@ static int __stdcall WD_CreateVertexShader(WrappedDevice *self,
 static int __stdcall WD_SetVertexShader(WrappedDevice *self, void *shader) {
     typedef int (__stdcall *FN)(void*, void*);
     unsigned int index;
-    if (self->vertexShader != shader) {
-        self->vertexShader = shader;
-        self->currentVertexShaderHash = 0;
-        for (index = 0; index < self->vertexShaderRecordCount; index++) {
-            if (self->vertexShaderObjects[index] == shader) {
-                self->currentVertexShaderHash = self->vertexShaderHashes[index];
-                break;
-            }
+    self->vertexShader = shader;
+    self->currentVertexShaderHash = 0;
+    for (index = 0; index < self->vertexShaderRecordCount; index++) {
+        if (self->vertexShaderObjects[index] == shader) {
+            self->currentVertexShaderHash = self->vertexShaderHashes[index];
+            break;
         }
     }
     return ((FN)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, shader);
@@ -1100,13 +1069,10 @@ static int __stdcall WD_Reset(WrappedDevice *self, void *pPresentParams) {
     self->mvDirty = 0;
     self->viewCapturedThisFrame = 0;
     self->hasCachedWorld = 0;
-    self->hasAppliedWorld = 0;
     self->gameWorldSet = 0;
     g_vbSampleCount = 0;
     memset(g_vbLocks, 0, sizeof(g_vbLocks));
     g_curStream0VB = NULL;
-    memset(g_textureHashCache, 0, sizeof(g_textureHashCache));
-    g_textureHashFrame = 1;
     return ((FN)RealVtbl(self)[SLOT_Reset])(self->pReal, pPresentParams);
 }
 
@@ -1117,15 +1083,10 @@ static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, 
 
     hr = ((FN)RealVtbl(self)[SLOT_Present])(self->pReal, a, b, c, d);
     reload_remix_tag_config();
-    if (++g_textureHashFrame == 0) {
-        memset(g_textureHashCache, 0, sizeof(g_textureHashCache));
-        g_textureHashFrame = 1;
-    }
 
     self->mvDirty = 0;
     self->viewCapturedThisFrame = 0;
     self->hasCachedWorld = 0;
-    self->hasAppliedWorld = 0;
     self->gameWorldSet = 0;
 
     return hr;
