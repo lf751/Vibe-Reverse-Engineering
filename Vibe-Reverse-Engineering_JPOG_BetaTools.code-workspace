@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../dxvk-remix_numos"
+		},
+		{
+			"path": "../toolkit-remix"
 		}
 	],
 	"settings": {

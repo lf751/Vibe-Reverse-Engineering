@@ -16,7 +16,22 @@ venv/
 *.ilk
 
 # Generated patch output (asi_patcher)
-#patches/
+patches/13492
+patches/4088
+patches/31780
+patches/10820
+patches/31492
+patches/simjp
+patches/1636
+patches/8960
+patches/27000
+patches/24620
+patches/9816
+patches/JPOG/backups
+patches/JPOG/culling-investigation
+patches/JPOG/terrain-blend
+patches/JPOG/terrain-control-map-investigation
+
 
 # D3D9 tracer runtime artifacts
 dxtrace_capture.trigger
