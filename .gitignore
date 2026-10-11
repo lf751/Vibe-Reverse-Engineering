@@ -18,6 +18,7 @@ venv/
 # Generated patch output (asi_patcher)
 /backups/
 /test-artifacts/
+patches/JPOG/terrain-control-map-investigation/
 patches/JPOG/organize-workspace.py
 
 
