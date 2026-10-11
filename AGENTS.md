@@ -40,17 +40,19 @@ Shared tooling can be modified to improve the tools themselves — just not for 
 
 ## Project Workspace
 
-Use `patches/<project_name>/` (git-ignored) for all project-specific artifacts: knowledge base files (`kb.h`), one-off analysis scripts, ASI patch specs and builds, notes, logs, and collected trace data. Create the project subfolder on first use.
+Use `patches/<project_name>/` for project-specific knowledge base files (`kb.h`), analysis scripts, ASI patch specs, and findings. Put generated test games, captures, fixtures, logs, and disposable test output in `test-artifacts/<project_name>/` at the repository root. Keep the tracked toolkit test suite in `tests/`. Create the project subfolders on first use.
 
 ### Backups
 
 Before modifying project files (proxy source, kb.h, proxy.ini, build scripts, ASI specs), create a timestamped backup capturing the last known-good state:
 
 ```
-patches/<project>/backups/YYYY-MM-DD_HHMM_<short-description-slug>/
+backups/<project>/YYYY-MM-DD_HHMM_<short-description-slug>/
 ```
 
 Copy ALL files being modified into the backup folder before making changes.
+
+Root `backups/` and `test-artifacts/` are local and ignored by Git. When retiring backups, preserve findings, notes, knowledge bases, and source snapshots in a verified archive before removing generated binaries. Keep current deployment recovery copies and any baseline referenced by an active rollback script.
 
 ### Knowledge Base
 
