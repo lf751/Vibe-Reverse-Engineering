@@ -1,0 +1,13 @@
+{
+  "originX": 384,
+  "originZ": 224,
+  "width": 593,
+  "height": 705,
+  "missingColor": [
+    40,
+    20,
+    55
+  ],
+  "rawPreview": "Valid samples only; purple marks uncaptured or unused samples",
+  "reconstructedPreview": "Nearest-sample reconstruction within captured sections; not an original game texture"
+}

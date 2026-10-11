@@ -1,0 +1,98 @@
+
+/* public: class Toshi::TStrataFieldBuffer * __thiscall
+   Toshi::TTerrainInterface::CacheStrataBuffer(unsigned int,unsigned int,class
+   Toshi::TTerrainSection *) */
+
+TStrataFieldBuffer * __thiscall
+Toshi::TTerrainInterface::CacheStrataBuffer
+          (TTerrainInterface *this,uint param_1,uint param_2,TTerrainSection *param_3)
+
+{
+  int iVar1;
+  char cVar2;
+  uint uVar3;
+  int unaff_ESI;
+  TStrataFieldBuffer *pTVar4;
+  
+                    /* 0xa8a0  33
+                       ?CacheStrataBuffer@TTerrainInterface@Toshi@@QAEPAVTStrataFieldBuffer@2@IIPAVTTerrainSection@2@@Z
+                        */
+  pTVar4 = *(TStrataFieldBuffer **)(param_3 + 0x24);
+  if (pTVar4 == (TStrataFieldBuffer *)0x0) {
+    if (*(TTerrainInterface **)(this + 0x40) == this + 0x40) {
+      pTVar4 = (TStrataFieldBuffer *)0x0;
+    }
+    else {
+      pTVar4 = *(TStrataFieldBuffer **)(this + 0x40);
+      **(int **)(pTVar4 + 4) = *(int *)pTVar4;
+      *(int *)(*(int *)pTVar4 + 4) = *(int *)(pTVar4 + 4);
+      *(TStrataFieldBuffer **)pTVar4 = pTVar4;
+      *(TStrataFieldBuffer **)(pTVar4 + 4) = pTVar4;
+    }
+    if (pTVar4 == (TStrataFieldBuffer *)0x0) {
+      if (*(uint *)(this + 0x60) < *(uint *)(this + 0x34)) {
+        pTVar4 = (TStrataFieldBuffer *)tmalloc(0x134,(char *)0x0,-1);
+        if (pTVar4 == (TStrataFieldBuffer *)0x0) {
+          pTVar4 = (TStrataFieldBuffer *)0x0;
+        }
+        else {
+          FUN_1000c250((int)pTVar4);
+        }
+      }
+      else {
+        DAT_10012524 = DAT_10012524 + 1;
+        DeactivateTerrainSectionStrata(this,*(TTerrainSection **)(*(int *)(this + 0x4c) + 0xc));
+        if (this + 0x40 == *(TTerrainInterface **)(this + 0x40)) {
+          pTVar4 = (TStrataFieldBuffer *)0x0;
+        }
+        else {
+          pTVar4 = *(TStrataFieldBuffer **)(this + 0x40);
+          **(int **)(pTVar4 + 4) = *(int *)pTVar4;
+          *(int *)(*(int *)pTVar4 + 4) = *(int *)(pTVar4 + 4);
+          *(TStrataFieldBuffer **)pTVar4 = pTVar4;
+          *(TStrataFieldBuffer **)(pTVar4 + 4) = pTVar4;
+        }
+      }
+      if (pTVar4 == (TStrataFieldBuffer *)0x0) {
+        return (TStrataFieldBuffer *)0x0;
+      }
+    }
+    pTVar4[8] = SUB41(param_1,0);
+    pTVar4[9] = SUB41(param_2,0);
+    uVar3 = (*(uint *)(param_3 + 0x18) & 0xc00) >> 10;
+    cVar2 = (**(code **)(**(int **)(this + 0xd8) + 0xcc))();
+    if ((cVar2 == '\0') && ((*(uint *)(param_3 + 0x1c) & 0x200) != 0)) {
+      uVar3 = 0;
+    }
+    (**(code **)(*(int *)this + 0x2c))(pTVar4,param_1,param_2,uVar3,0xff);
+    pTVar4[10] = SUB41(uVar3,0);
+    iVar1 = *(int *)(this + 0x48);
+    *(int *)pTVar4 = iVar1;
+    *(TTerrainInterface **)(pTVar4 + 4) = this + 0x48;
+    *(TStrataFieldBuffer **)(iVar1 + 4) = pTVar4;
+    *(TStrataFieldBuffer **)(this + 0x48) = pTVar4;
+    *(int *)(this + 0x60) = *(int *)(this + 0x60) + 1;
+    *(int *)(pTVar4 + 0xc) = unaff_ESI;
+    *(TStrataFieldBuffer **)(unaff_ESI + 0x24) = pTVar4;
+  }
+  else {
+    cVar2 = (**(code **)(**(int **)(this + 0xd8) + 0xcc))();
+    if (((cVar2 == '\0') && ((*(uint *)(param_3 + 0x1c) & 0x200) != 0)) &&
+       (pTVar4[10] != (TStrataFieldBuffer)0x0)) {
+      (**(code **)(*(int *)this + 0x2c))(pTVar4,param_1,param_2,0,pTVar4[10]);
+      pTVar4[10] = (TStrataFieldBuffer)0x0;
+    }
+    **(int **)(pTVar4 + 4) = *(int *)pTVar4;
+    *(int *)(*(int *)pTVar4 + 4) = *(int *)(pTVar4 + 4);
+    *(TStrataFieldBuffer **)pTVar4 = pTVar4;
+    *(TStrataFieldBuffer **)(pTVar4 + 4) = pTVar4;
+    iVar1 = *(int *)(this + 0x48);
+    *(int *)pTVar4 = iVar1;
+    *(TTerrainInterface **)(pTVar4 + 4) = this + 0x48;
+    *(TStrataFieldBuffer **)(iVar1 + 4) = pTVar4;
+    *(TStrataFieldBuffer **)(this + 0x48) = pTVar4;
+  }
+  return pTVar4;
+}
+
+

@@ -1,0 +1,142 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+
+def Xform "RootNode"
+{
+    def Scope "TerrainBlend"
+    {
+        custom bool remix:terrainBlend:smoothNormals = false
+        custom float4 remix:terrainBlend:displacementInward = (0.2, 0.2, 1.0, 0.2)
+        custom float4 remix:terrainBlend:displacementOutward = (0, 0, 1, 0)
+        custom float4 remix:terrainBlend:displacementHeightMin = (0, 0, 0, 0)
+        custom float4 remix:terrainBlend:displacementHeightMax = (1, 1, 1, 1)
+        custom int remix:terrainBlend:displacementMaxIterations = 64
+        custom bool remix:terrainBlend:displacementSelfShadowEnabled = 1
+        custom float remix:terrainBlend:displacementShadowStrength = 1
+        custom int remix:terrainBlend:displacementShadowMaxIterations = 32
+        custom float remix:terrainBlend:dirtElevationFadeWidth = 1
+        custom rel remix:terrainBlend:dirtMaterial = </RootNode/TerrainBlend/dirt>
+        custom float remix:terrainBlend:dirtMinElevation = 0.5
+        custom float remix:terrainBlend:dirtStrength = 0.6
+        custom float remix:terrainBlend:dirtUnitsPerRepeat = 18
+        custom float remix:terrainBlend:dirtWidth = 1.4
+        custom bool remix:terrainBlend:displacementEnabled = 1
+        custom float remix:terrainBlend:displacementStrength = 1
+        custom bool remix:terrainBlend:enabled = 1
+        custom bool remix:terrainBlend:flipElevation = 1
+        custom rel remix:terrainBlend:grassMaterial = </RootNode/TerrainBlend/grass>
+        custom float remix:terrainBlend:heightBlendStrength = 0.5
+        custom float remix:terrainBlend:heightBlendWidth = 0.2
+        custom float remix:terrainBlend:highElevation = 1
+        custom float remix:terrainBlend:lowElevation = 0
+        custom float remix:terrainBlend:rockHighElevation = 20
+        custom float remix:terrainBlend:rockLowElevation = 8
+        custom rel remix:terrainBlend:rockMaterial = </RootNode/TerrainBlend/rock>
+        custom token remix:terrainBlend:rockMode = "both"
+        custom rel remix:terrainBlend:sandMaterial = </RootNode/TerrainBlend/sand>
+        custom int remix:terrainBlend:schemaVersion = 1
+        custom float remix:terrainBlend:slopeEndDegrees = 75
+        custom float remix:terrainBlend:slopeStartDegrees = 35
+        custom float3 remix:terrainBlend:unitsPerRepeat = (10, 10, 32)
+
+        def Material "grass"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TerrainBlend/grass/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\Grass002_2K-PNG_Color.a.rtex.dds@
+                asset inputs:height_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\Grass002_2K-PNG_Displacement.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\Grass002_2K-PNG_NormalGL_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.7
+                asset inputs:reflectionroughness_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\Grass002_2K-PNG_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+
+        def Material "sand"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TerrainBlend/sand/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_sand_02_diff_2k.a.rtex.dds@
+                asset inputs:height_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_sand_02_disp_2k.h.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_sand_02_nor_gl_2k_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.7
+                asset inputs:reflectionroughness_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_sand_02_rough_2k.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+
+        def Material "dirt"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TerrainBlend/dirt/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_land_rocks_01_diff_2k.a.rtex.dds@
+                asset inputs:height_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_land_rocks_01_disp_2k.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_land_rocks_01_nor_gl_2k_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.7
+                asset inputs:reflectionroughness_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\coast_land_rocks_01_rough_2k.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+
+        def Material "rock"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TerrainBlend/rock/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\aerial_rocks_04_diff_2k.a.rtex.dds@
+                asset inputs:height_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\aerial_rocks_04_disp_2k.h.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\aerial_rocks_04_nor_gl_2k_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.7
+                asset inputs:reflectionroughness_texture = @C:\Users\User\Desktop\Files\JPOGRTX\assets\ingested\Terrain\aerial_rocks_04_rough_2k.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+    }
+}
+
+

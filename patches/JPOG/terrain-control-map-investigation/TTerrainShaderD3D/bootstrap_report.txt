@@ -1,0 +1,14 @@
+Bootstrap Report
+================
+
+Binary: D:\Games\JPOGRTX\JPOG\Shaders\D3D\TTerrainShaderD3D.dll
+Compiler: msvc (confidence: 70%)
+
+Signature DB matches: 0
+RTTI classes found: 0
+Imports cataloged: 161
+Strings indexed: 2555
+Propagated labels: 9
+Functions identified: 9
+KB entries written: 9
+

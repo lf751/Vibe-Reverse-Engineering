@@ -1,0 +1,779 @@
+{
+  "files": [
+    {
+      "sha256": "A1624CC4238FEF046F30C4D80CE3F47BE63FC5F5373F49E3EE9EDB9960F54C78",
+      "path": "amd_fidelityfx_vk.dll"
+    },
+    {
+      "sha256": "50789CEC469106D4F6AA68A0BE99EC51ADE31D215A39E254E5DFE22E28D0CC50",
+      "path": "crashpad_handler.exe"
+    },
+    {
+      "sha256": "9A5502E41CAAFC0DBAD61E80CCB85B77EF7EC066336545430FF1383BC6CC78F8",
+      "path": "crashpad_wer.dll"
+    },
+    {
+      "sha256": "B00CA6F53699120DA815BF3E06E2E4285FAE2F201235B883DCBB50EEC51E2A2A",
+      "path": "cudart64_13.dll"
+    },
+    {
+      "sha256": "92C8D24545B207C43AFC553625DE7F7AFE24A2AB1C7A3CFEC885FFFEBFE1138D",
+      "path": "d3d9.dll"
+    },
+    {
+      "sha256": "033E66D9AEC90E718B46F8CB3B711A546F602EF26710FB8238BEB359CC1DBF2C",
+      "path": "d3d9.exp"
+    },
+    {
+      "sha256": "18ADA8DBCA831BC091C9E669A28C47A796A8A2E5287B5D12DC278D747CBCB71E",
+      "path": "d3d9.lib"
+    },
+    {
+      "sha256": "3C779991D7793526080757C4308475E97E4B989E058762075E72600EB4713C44",
+      "path": "d3d9.pdb"
+    },
+    {
+      "sha256": "E119D214ECBC8ABBBE9F3DC4990A77B999E4FD268071E0A1145C25E487CC0DD7",
+      "path": "GFSDK_Aftermath_Lib.x64.dll"
+    },
+    {
+      "sha256": "A49F487F15A815C1242B659182CC9365B6AFF2D94051D25D5379316BDB11A2DD",
+      "path": "libxess.dll"
+    },
+    {
+      "sha256": "DD0EBE2C998D0275F4333C32EACA56C96C854F84F7317D94E14EC94C98EAAF78",
+      "path": "NRC_Vulkan.dll"
+    },
+    {
+      "sha256": "163D173133F56E8CEF5186F1734CE7326E197FC5EF2712771D185843F7F6C27E",
+      "path": "NRD.dll"
+    },
+    {
+      "sha256": "76E0C3EC8FAE603AC6FBBCC05A6A511CCE8794A44AEB310B819442233AD47331",
+      "path": "NvLowLatencyVk.dll"
+    },
+    {
+      "sha256": "3975567B8943C53ACCE397F2B72380092F84F162D00B0D2C7D08A1025C563983",
+      "path": "nvngx_dlss.dll"
+    },
+    {
+      "sha256": "4BC7EA5FCB2F32CF86BC2CB072E8D2860914A0BE511CBDCB2FC206C1D9D83B80",
+      "path": "nvngx_dlssd.dll"
+    },
+    {
+      "sha256": "FF6E90EB78B827927DFF5B4ECC6B1C870C2E9BCA29ED9F48C7D348CC9E170B82",
+      "path": "nvngx_dlssg.dll"
+    },
+    {
+      "sha256": "82C703802846329D3BAB3D8DF06F8C956516A0EEEC568033092D6C0A69B2733A",
+      "path": "nvrtc-builtins64_133.dll"
+    },
+    {
+      "sha256": "C7AF6B5DBD001852D1B4A18EFFC6FBCFC94787EDDADFFEA629A8333CB25B05FE",
+      "path": "nvrtc64_130_0.dll"
+    },
+    {
+      "sha256": "5F9DFCE56BDF92C8EA5210F0EEA17D29565A18A004A69070CC300D1E48E54409",
+      "path": "rtxio.dll"
+    },
+    {
+      "sha256": "F121D088D8CB3594CC49459FCFA58A1033E8FF2E4A586E9A859A4EE3316DC5EB",
+      "path": "tbb12.dll"
+    },
+    {
+      "sha256": "3AB300D79451320183D299CD64DAE86E9D4E33E9B165526CED0DFBDA1FCD8884",
+      "path": "tbbmalloc.dll"
+    },
+    {
+      "sha256": "D8A8475932A6BC77B42512465C2A45319E06E8AE8966ACB1A94A359382DCBA43",
+      "path": "usd_ar.dll"
+    },
+    {
+      "sha256": "52DAB8F4B87CE09D86ED6F048A7071A55C29071AA7A13981F259D789997F51B5",
+      "path": "usd_arch.dll"
+    },
+    {
+      "sha256": "41C2729A6E64D9295D3830D3F89634EB006657F8EE57AFD4D8B063298BF42E0F",
+      "path": "usd_gf.dll"
+    },
+    {
+      "sha256": "F8B0EBD374A90E29AB00705293AB93DF4B06BACB99DB5D09A03FA480B05EDFEA",
+      "path": "usd_js.dll"
+    },
+    {
+      "sha256": "2CD2054DA2E425A11ABDDCC84551CBF0AE9EA033D66E289847A476D0FD3771AC",
+      "path": "usd_kind.dll"
+    },
+    {
+      "sha256": "691ECAA94584B2B79890ED37CE45CC443ED5AE813497146F8BD997CD107FD95D",
+      "path": "usd_pcp.dll"
+    },
+    {
+      "sha256": "34805932BCE95890566B44A22112B0D11062C48E74A8E2B92024AEF5A9965981",
+      "path": "usd_plug.dll"
+    },
+    {
+      "sha256": "4FC082231E6EC94035CA3CC1100086CFAC1B02C344DFE251F6610DE969B406A6",
+      "path": "usd_sdf.dll"
+    },
+    {
+      "sha256": "DA1666D7D192EEA7A55C50962E014839A81447390657329AFC545C5213D525DB",
+      "path": "usd_sdr.dll"
+    },
+    {
+      "sha256": "3EA9103C20488C4D1BE9BE773ED697DC3CDA7FA6B15861D84016F99D24C8DDE1",
+      "path": "usd_tf.dll"
+    },
+    {
+      "sha256": "428B2AF9333D0BE23D99AFB49E6F164753B129E1571B3B66401816631803CBF1",
+      "path": "usd_trace.dll"
+    },
+    {
+      "sha256": "9E2589E37CF982D98984BA92E07F1ADCCFC628D56E2C86E958D01CCE7BBA7328",
+      "path": "usd_ts.dll"
+    },
+    {
+      "sha256": "46AD9D84448670F8F2DA9AD72D3B935957F6C18728D38FEAAD52E0F779A84A4A",
+      "path": "usd_usd.dll"
+    },
+    {
+      "sha256": "5F78183360DD47F739ECEE9601E44A5B5C78566631FEABF09B02AFF72236EF61",
+      "path": "usd_usdGeom.dll"
+    },
+    {
+      "sha256": "5137849622C7118206062A5D3A9FF7B48F292B9E88B3C6850BDFAF975264F505",
+      "path": "usd_usdLux.dll"
+    },
+    {
+      "sha256": "AD166A9F3C4625B821872C2849414673E12598F051DE056D445571852F4A1C51",
+      "path": "usd_usdRender.dll"
+    },
+    {
+      "sha256": "5A6EBFC22BC65001083C5FFBDC9216EA3E0A47732BBD3BCE7795015E90DBB640",
+      "path": "usd_usdShade.dll"
+    },
+    {
+      "sha256": "E5C63520AE7D8EAE465993DD506CFAC013EC14378FB4C48B1C5519FDF55884DC",
+      "path": "usd_usdSkel.dll"
+    },
+    {
+      "sha256": "7A7EC832639D979F1D31652075D5507B338CE965E85051ED0CC6F8B14AACCAA2",
+      "path": "usd_vt.dll"
+    },
+    {
+      "sha256": "121205E9A8E27E02BFCDB9C0D17A99ADBD58059180433A0E93C6AF84A6290B0D",
+      "path": "usd_work.dll"
+    },
+    {
+      "sha256": "C285A05D159154E3AE201FA383C61766BC57C58AAE6D5A70B7463B49E2DCBB2D",
+      "path": "usd\\plugInfo.json"
+    },
+    {
+      "sha256": "E921CBD07D6A7CFB7E90AAB265E73686A1BA8C5C9D60C4E1AC1536F3C5988C5E",
+      "path": "usd\\ar\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "ADF069086105F37E4BB7D1024A5849FB806836785DF50A98E5D65EE53EA07728",
+      "path": "usd\\esf\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "91983EF4BF805E2DE3EE8EA763BE46FEF897AD1BE6C636D733CE2CAFA7FB244F",
+      "path": "usd\\esfUsd\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "C3AC97443CBB9F5077EB5C7E33DE58FB352C5CC8AA376948F2B33644C007310E",
+      "path": "usd\\exec\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "FD2CA005253D4E35F121631C27075813397B4FAED3E777A7C73B9A4A0D242A91",
+      "path": "usd\\execGeom\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "277C06847695AC92DE762FC78AA5C63CC96C1FBEB28440C9C2BD3FBDBFC9998A",
+      "path": "usd\\execUsd\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "787B12B42F7844B75F41A4F320B140963A87DCA12E47F03DB9E31C829A29AB63",
+      "path": "usd\\glf\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "8236E32C508EF0C5C8CD3CC610A3CE04C77CAD7B63C265C257D16927302B4E05",
+      "path": "usd\\glf\\resources\\shaders\\pcfShader.glslfx"
+    },
+    {
+      "sha256": "DEAB1C86845915D9F4ECEE82162D142867EFDC345372E5109257C984BBE9DE83",
+      "path": "usd\\glf\\resources\\shaders\\simpleLighting.glslfx"
+    },
+    {
+      "sha256": "FC915E68ED4834560D70D53FE93DE09D9D32122519B560B170084C7B8814F64F",
+      "path": "usd\\hd\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "9D86533FF93200D25B9E2CB0003A42ED35A24504158C0F84C1CDA3AA7BFE59B8",
+      "path": "usd\\hd\\resources\\codegenTemplates\\schemaClass.cpp"
+    },
+    {
+      "sha256": "4769D531A6495115ECE1648FCBF820B517E62743F843022603962BE6364C8A5D",
+      "path": "usd\\hd\\resources\\codegenTemplates\\schemaClass.h"
+    },
+    {
+      "sha256": "95AFEEAB2FDA9AEAC5C379B94C8907AAD2447EA51B3731CD28BE06A0EA91E9E7",
+      "path": "usd\\hdGp\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "DA4ABBAED4858062BFD88ECAB67F28252FA8AFBE3976796157F1CF55F27AEDC3",
+      "path": "usd\\hdsi\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "F3DFD7BBC0A172B99A036A3BA8EF0115B3EC2AD13C3574411127B495D1FA2EA2",
+      "path": "usd\\hdSt\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "61BDA3819508E6D26D88057F2961B34197114A12A86A85A75ABA341D8DA8C439",
+      "path": "usd\\hdSt\\resources\\shaders\\basisCurves.glslfx"
+    },
+    {
+      "sha256": "22B2689ACD0DC8BA6FA04A0BF6D2541B95137035D3400FC95716C352DF30F1BA",
+      "path": "usd\\hdSt\\resources\\shaders\\compute.glslfx"
+    },
+    {
+      "sha256": "98A65F74B72C4BE9905140343126E78435ED54AE7E6844775FC3802F60314CE0",
+      "path": "usd\\hdSt\\resources\\shaders\\domeLight.glslfx"
+    },
+    {
+      "sha256": "C928ABF93E38F4F2246CE6FAECDCDFBAC5AEC3BBEBD4D23AEE8894F0DECB1380",
+      "path": "usd\\hdSt\\resources\\shaders\\edgeId.glslfx"
+    },
+    {
+      "sha256": "9762B9E4B06E083C0ADBDFD5F7D0E7110BFECC77F510731219EA898AB8D20F16",
+      "path": "usd\\hdSt\\resources\\shaders\\fallbackLighting.glslfx"
+    },
+    {
+      "sha256": "92A8F30C15D15BE1D307D487851753DBB0DBFE9B897E29DDD41204899B1ABD9D",
+      "path": "usd\\hdSt\\resources\\shaders\\fallbackLightingShader.glslfx"
+    },
+    {
+      "sha256": "1BCF869BCC05FCE5BDDBD2DCCDA650977555089346A7AB2610249F288DAF64F3",
+      "path": "usd\\hdSt\\resources\\shaders\\fallbackMaterialNetwork.glslfx"
+    },
+    {
+      "sha256": "3A9EEF80CF16CCED238EC5343C27356F0C07E125F9EA9B2A1EF06EBEA31CB54E",
+      "path": "usd\\hdSt\\resources\\shaders\\fallbackVolume.glslfx"
+    },
+    {
+      "sha256": "7FA01CC9A75B87967D4E0AC5D190B41F36EE57138ABB7503C9481B3D2C58631F",
+      "path": "usd\\hdSt\\resources\\shaders\\frustumCull.glslfx"
+    },
+    {
+      "sha256": "B1974EB6DA2CB82DCE79FEAB512B1EFA5E722EC880FB7CC46A11FFFED1CCD154",
+      "path": "usd\\hdSt\\resources\\shaders\\imageShader.glslfx"
+    },
+    {
+      "sha256": "87CA555F1140E899D44017AE49CBC95B67503BF2417C035BFBEE7F9BF434976B",
+      "path": "usd\\hdSt\\resources\\shaders\\instancing.glslfx"
+    },
+    {
+      "sha256": "FDED37339ED76329319F166AE71421B157EA201129E3E659241E5CEBF5832EE6",
+      "path": "usd\\hdSt\\resources\\shaders\\invalidMaterialNetwork.glslfx"
+    },
+    {
+      "sha256": "CB9B0FCC2D3749E9110AE4B767E149472314CC333D33CAC4CB9C7A488D6019FB",
+      "path": "usd\\hdSt\\resources\\shaders\\mesh.glslfx"
+    },
+    {
+      "sha256": "3D413B93D2423A215973EE5D7EF3EAF4BE0708A7F58E997B2AEB22E313239356",
+      "path": "usd\\hdSt\\resources\\shaders\\meshFaceCull.glslfx"
+    },
+    {
+      "sha256": "C7A9B83F8D69D4A8A9C5429FE78E422F942067FD9659338B4CFC25393D26387F",
+      "path": "usd\\hdSt\\resources\\shaders\\meshNormal.glslfx"
+    },
+    {
+      "sha256": "DCA043D5A98D26B32D50DC3074F047EA04B4348455D0AADE4E7DB25DFA873AF2",
+      "path": "usd\\hdSt\\resources\\shaders\\meshWire.glslfx"
+    },
+    {
+      "sha256": "93E7EBE072DE6DC30E23290F878C31565A4EC8B4D472F54AC9572023BA5FF35B",
+      "path": "usd\\hdSt\\resources\\shaders\\overlayShader.glslfx"
+    },
+    {
+      "sha256": "8BF8981683806BF450F9E1F38DF0E1957D2176FA6E45F0B725885E585B297023",
+      "path": "usd\\hdSt\\resources\\shaders\\pointDisk.glslfx"
+    },
+    {
+      "sha256": "95F7B8E91E7F97B7D9E898755478BB6B064B37CE37660F8100BC12198010F393",
+      "path": "usd\\hdSt\\resources\\shaders\\pointId.glslfx"
+    },
+    {
+      "sha256": "67689F9932E27FD4CA5B8482DFD4EE0AAB70D1AE147BFBF7F71A0F374265CB93",
+      "path": "usd\\hdSt\\resources\\shaders\\points.glslfx"
+    },
+    {
+      "sha256": "BB8256E5DA85DB23D0151A8E03B061B714451CDB7025AB142BD1CD826B0E6E42",
+      "path": "usd\\hdSt\\resources\\shaders\\ptexTexture.glslfx"
+    },
+    {
+      "sha256": "9203C5C00B1E5DFB1388A4C73B7C18DB1E62F1FAB4F5BBDA641F83669BC014ED",
+      "path": "usd\\hdSt\\resources\\shaders\\renderPass.glslfx"
+    },
+    {
+      "sha256": "A982DD937DA2BE54C5214FC6BA2A1D206DA42EAC151DF674C89AEBADBEEE3CC5",
+      "path": "usd\\hdSt\\resources\\shaders\\renderPassShader.glslfx"
+    },
+    {
+      "sha256": "9AD1FA35F04D6BB0BE28A56668B180A882EF541C1585152B3F0D578FD7F3DB85",
+      "path": "usd\\hdSt\\resources\\shaders\\simpleLightingShader.glslfx"
+    },
+    {
+      "sha256": "E2600303F2A165643509EE0816B4682AFC42996AC0F378DD1D9E30B6E62199BC",
+      "path": "usd\\hdSt\\resources\\shaders\\surfaceHelpers.glslfx"
+    },
+    {
+      "sha256": "4DE963AC130C0C858D9C552E0B62EC4D84840C99A5EC74940ADE169F513C7152",
+      "path": "usd\\hdSt\\resources\\shaders\\terminals.glslfx"
+    },
+    {
+      "sha256": "25676F7F175F61F1AA2C5B0BB5E6FDC13F473093DBED49F32AEA91B8A0648D01",
+      "path": "usd\\hdSt\\resources\\shaders\\visibility.glslfx"
+    },
+    {
+      "sha256": "80FCEE985D65FA3C368C373CE23DD4749A67FA7FA9DA9B4DE3C8F8C271CBC86E",
+      "path": "usd\\hdSt\\resources\\shaders\\volume.glslfx"
+    },
+    {
+      "sha256": "16E067F64E1F157326AA23EC45DB2550F3C372B322B4075166173148E3047CD0",
+      "path": "usd\\hdSt\\resources\\textures\\fallbackBlackDomeLight.png"
+    },
+    {
+      "sha256": "368E23EE8745578A586D35C279A08E90134084F547901BBDA24A6BC9E2B5A7BC",
+      "path": "usd\\hdx\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "2C03136F635EE9CB9672AFD912C99987C7E8B0534D5E0C53B407F8C93BB298E7",
+      "path": "usd\\hdx\\resources\\shaders\\boundingBox.glslfx"
+    },
+    {
+      "sha256": "D329AB86F5AC8675A998D33D4E71EB83854474A9D9B4D49CA509E239125E5A1D",
+      "path": "usd\\hdx\\resources\\shaders\\colorChannel.glslfx"
+    },
+    {
+      "sha256": "73BE0F0EAF1E9682E6EDE614DADDCCC167BA06B26425B33369B410D7BE880992",
+      "path": "usd\\hdx\\resources\\shaders\\colorCorrection.glslfx"
+    },
+    {
+      "sha256": "2BF473022CBE2824024BBD31A85CDC469CD3E53C3790E568BBA460F3E8A2DB64",
+      "path": "usd\\hdx\\resources\\shaders\\fullscreen.glslfx"
+    },
+    {
+      "sha256": "2030EF96489A18F29B13C614CE024444B19FAC1E34FEF7C9DEAF5A622BDA9CF4",
+      "path": "usd\\hdx\\resources\\shaders\\oitResolveImageShader.glslfx"
+    },
+    {
+      "sha256": "58E696205072D3B9BBB4D41716F9261F5855FA5C415ED79F8F90266EB11EDB32",
+      "path": "usd\\hdx\\resources\\shaders\\outline.glslfx"
+    },
+    {
+      "sha256": "7CEBCBA773D02858866A2EC6AAAD016A13E406B032CB8BC84EC6DD7C5E9AD06A",
+      "path": "usd\\hdx\\resources\\shaders\\renderPass.glslfx"
+    },
+    {
+      "sha256": "844DB4E0A2D3080676739650A2B11166C55E868DD4FC5EAD19DD319BB8F4281A",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassColorAndSelectionShader.glslfx"
+    },
+    {
+      "sha256": "EDC0895EE7A65AEBD63E08F1E29AC721987169E2972C8AE44613F9E743A23336",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassColorShader.glslfx"
+    },
+    {
+      "sha256": "3E0D27CDDF37882AFC1CE1AABD6516EAC5163D6865DC53494D605581C42A67F0",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassColorWithOccludedSelectionShader.glslfx"
+    },
+    {
+      "sha256": "A9B8C2E8ED3B9FC6921D24DE6C7C2E283DCDEAD2A7643991DD783C57085B7A11",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassOitOpaqueShader.glslfx"
+    },
+    {
+      "sha256": "3B905C06349C645A193C86195FBD15E19A717C0AE4ED1B1651DBA973C0B40494",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassOitShader.glslfx"
+    },
+    {
+      "sha256": "4708710333F82763C8C3B6A30743E42BA6288EE07553DC563490C0397B29B14F",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassOitVolumeShader.glslfx"
+    },
+    {
+      "sha256": "575DC9647070308E52D33BBE15F6C71D74A89A20BFB9B1B4CDB2F61683545514",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassPickingShader.glslfx"
+    },
+    {
+      "sha256": "4629C0D892479406857120BA42292B699BD9DA209ED3252219D98D30C2878D93",
+      "path": "usd\\hdx\\resources\\shaders\\renderPassShadowShader.glslfx"
+    },
+    {
+      "sha256": "084EAC18AE3DCF8DFC2CFC4A7179D47F5442AE296A6AC6983BB3E70B53EFC432",
+      "path": "usd\\hdx\\resources\\shaders\\selection.glslfx"
+    },
+    {
+      "sha256": "7749FE3CE9354B5A109651178D00761767567C8ED365D724458C47A4FC7102D0",
+      "path": "usd\\hdx\\resources\\shaders\\skydome.glslfx"
+    },
+    {
+      "sha256": "B28A77871DDCA545A896C08F24B5C278FE89EF142800378D6CB3B23E3DD61F43",
+      "path": "usd\\hdx\\resources\\shaders\\visualize.glslfx"
+    },
+    {
+      "sha256": "4897697C757EDC524DC9B7BCC692E8E05A7F02DBEDE3E30D2291DC0831DECE17",
+      "path": "usd\\hdx\\resources\\textures\\StinsonBeach.hdr"
+    },
+    {
+      "sha256": "B7F29695CE58AE27C5124F09F0A254B6326BFD51C6B615B1DD9FBAE796800D00",
+      "path": "usd\\hdx\\resources\\textures\\StinsonBeach.tex"
+    },
+    {
+      "sha256": "83729DA0FEE403F5001031F6CAA73F918F6A040963F001940CA682C61FF0F516",
+      "path": "usd\\hgiGL\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "4D42EBA3A94AFA87A71CD25824D6A44DE651D10AC19C3DF781FB63494011F8ED",
+      "path": "usd\\hio\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "C285A05D159154E3AE201FA383C61766BC57C58AAE6D5A70B7463B49E2DCBB2D",
+      "path": "usd\\plugins\\plugInfo.json"
+    },
+    {
+      "sha256": "82C737D404936416C86F8B3D44DAA2E5061C1053B16B83D97251C85A5641EC2A",
+      "path": "usd\\plugins\\RemixCategories\\generatedSchema.usda"
+    },
+    {
+      "sha256": "33A12D42667F9125F56D092266E979816576FA83FE555B9DB667679D43504D28",
+      "path": "usd\\plugins\\RemixCategories\\RemixCategories.dll"
+    },
+    {
+      "sha256": "AC639CB9CFEE37D50167E24D3A7132317BCB261C06115F78E13FDA31FF9D9F5B",
+      "path": "usd\\plugins\\RemixCategories\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "9169769B84E0F5FBA757434CF0B5BD0BE476BF215FFEDCA944E208C89F795027",
+      "path": "usd\\plugins\\RemixParticleSystem\\generatedSchema.usda"
+    },
+    {
+      "sha256": "04503614113527A36673D6665C745A673AA148B381A5BD68009B62FD7BB263EB",
+      "path": "usd\\plugins\\RemixParticleSystem\\RemixParticleSystem.dll"
+    },
+    {
+      "sha256": "6FDD2E0E2F13645C4EA2DF5E56D55BF2084532BE56B676C446639653EEE7E1F6",
+      "path": "usd\\plugins\\RemixParticleSystem\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "CC1DF94FBF49F456D7106103F574D8531B6AB39C83BE6688CA92FB194D5DD27E",
+      "path": "usd\\sdf\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "5409127CBCF6FED26EDFD30998D71950372F33A65B80ADF094813B08C644C344",
+      "path": "usd\\sdr\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "372C8DD3995CCAF37F69F4A4B4367DD001DE64A9BFB7BE3282596946B1A6030A",
+      "path": "usd\\usd\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "D5DA46225C5D75D3196F197F513018444E628C75BBEB37EDA1485F72B8818070",
+      "path": "usd\\usd\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "F457D6323FD7A0C9F46A4BFE3198A1FB3A3326AB57C41C47D9CD0DF26187F929",
+      "path": "usd\\usd\\resources\\codegenTemplates\\__init__.py"
+    },
+    {
+      "sha256": "F8946EB7696FA95A23D50A32FFA422369012256E9A79B872A05920FA6A88C582",
+      "path": "usd\\usd\\resources\\codegenTemplates\\api.h"
+    },
+    {
+      "sha256": "743F0F421BE48B7B0BEF45FB31E966803AE52624B3AB5D25D1C7611F3D4B9C97",
+      "path": "usd\\usd\\resources\\codegenTemplates\\CMakeLists.txt"
+    },
+    {
+      "sha256": "8E26576A2450B43F259B593FE62DF7133EF052009DB52786887557CBAEED96CE",
+      "path": "usd\\usd\\resources\\codegenTemplates\\generatedSchema.classes.txt"
+    },
+    {
+      "sha256": "6B0D530FFD28A498E2331E5BC1EB645DD8E19214901C64CA30568DB88C5CBEFF",
+      "path": "usd\\usd\\resources\\codegenTemplates\\generatedSchema.module.h"
+    },
+    {
+      "sha256": "7CC98C781F950C17138CE6C0FF6B8D7BC9553F0F46713CBEDA706253C1D8A4AC",
+      "path": "usd\\usd\\resources\\codegenTemplates\\module.cpp"
+    },
+    {
+      "sha256": "F4342C7D89FC41B3C7E34F461660EF702147EC8C2E53C06228317DAFD7430BF2",
+      "path": "usd\\usd\\resources\\codegenTemplates\\moduleDeps.cpp"
+    },
+    {
+      "sha256": "4A3704B9A0037EDD2FC916117ACA8E7230B7D685E361B1A6ADDD8740EEB19878",
+      "path": "usd\\usd\\resources\\codegenTemplates\\plugInfo.json"
+    },
+    {
+      "sha256": "B6CF979E06BF2881F4D3D3622D54393D497EC6AB683B7C6C6D6D46840E2AA69F",
+      "path": "usd\\usd\\resources\\codegenTemplates\\schema.usda"
+    },
+    {
+      "sha256": "2EE1A5606B79A8595F40EB8C5292F06CD5B0F28275EFADFB626A07DBD459933E",
+      "path": "usd\\usd\\resources\\codegenTemplates\\schemaClass.cpp"
+    },
+    {
+      "sha256": "743BF030306F36827988A22EDF02167E27E288FEA590F136E23122F1920A6F30",
+      "path": "usd\\usd\\resources\\codegenTemplates\\schemaClass.h"
+    },
+    {
+      "sha256": "A1257ECF4C158D21147656058C81EAAA2A615E54FD55B87DEC727D7E94D7A0CF",
+      "path": "usd\\usd\\resources\\codegenTemplates\\schemaUserDoc.usda"
+    },
+    {
+      "sha256": "C26A874AC4357BA8C7D189F252B6E9956711B0E884E0CEA248A81B6BEEDD56BD",
+      "path": "usd\\usd\\resources\\codegenTemplates\\tokens.cpp"
+    },
+    {
+      "sha256": "DF6D318523C6CC7D4824B1643712D85DB1E8FFEF0BB6B0EFC776E17E88373CB9",
+      "path": "usd\\usd\\resources\\codegenTemplates\\tokens.h"
+    },
+    {
+      "sha256": "50969F88325D8089B05B33FC5C582D2C06BB75102A72605B215D1CD5407995A8",
+      "path": "usd\\usd\\resources\\codegenTemplates\\wrapSchemaClass.cpp"
+    },
+    {
+      "sha256": "1928432CB6CB0183B5ECFCB41E940735134E893C7EBC82E50AC5BB74D5AF64C8",
+      "path": "usd\\usd\\resources\\codegenTemplates\\wrapTokens.cpp"
+    },
+    {
+      "sha256": "A698B05CE8E673EBC75E85DA2D2E0BC3C6416EFA6528F6447A448F0C26E707A1",
+      "path": "usd\\usd\\resources\\usd\\schema.usda"
+    },
+    {
+      "sha256": "4BC9B0C0CAE9208BEF0CBE106C40A32EBEDB6FCECE66A0E0DB881A84D200847B",
+      "path": "usd\\usdGeom\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "D0E33573D9A7BF4FF44586AD3047CFFF8145D19F3DAE747EA9B25504FB9E4B25",
+      "path": "usd\\usdGeom\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "662D4970360C026DF250CCEB8E7AA19DFA74DFA499D63CAC7C21B6E34CCEBB40",
+      "path": "usd\\usdGeom\\resources\\usdGeom\\schema.usda"
+    },
+    {
+      "sha256": "DC6D0751AD33092DE356C6093690A8CCB061798BFECC97AABC62527702F35BB3",
+      "path": "usd\\usdGeomValidators\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "7CD88E4F07C980C86CD578A90A4889DF31EEF92A9B06FCB809F1C03EB4CA609F",
+      "path": "usd\\usdHydra\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "0B4FDC5B72426E382E1719EF1D7EEB5EE27649C829D23D94D6C2A7B27AABDE52",
+      "path": "usd\\usdHydra\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "2A1DE94DFA6754EEFD6FFDF1041F3BABD4A743654E04F4E68697D1C93C95DD58",
+      "path": "usd\\usdHydra\\resources\\shaders\\empty.glslfx"
+    },
+    {
+      "sha256": "1AC9CCB54418938F986BEC36A85D0D5F2A3F625C28A8896CD6207D52AD47C609",
+      "path": "usd\\usdHydra\\resources\\shaders\\shaderDefs.usda"
+    },
+    {
+      "sha256": "C35A9E6BAC8148D373C2C6107111AC71262CC1089EE8540AD28D2BB77020A9BB",
+      "path": "usd\\usdHydra\\resources\\usdHydra\\schema.usda"
+    },
+    {
+      "sha256": "4FC55041F4D804B1A5C6DE96A8E347AF9229D06CD52025528394C37358DAFB21",
+      "path": "usd\\usdImaging\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "098DC06878FFCB5219A1C9C0F6B73856935BD8CED93ED57FC7D579E322E4E851",
+      "path": "usd\\usdImagingGL\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "79C9FEB33072156DEF2B625E84A3F2455B26BF1EE93A44AFC45A32AEDD4750E9",
+      "path": "usd\\usdLux\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "1DDF6A521643804F568651CBC9E1774418CEE08D8FD687FAD8A2929D6C21CCD7",
+      "path": "usd\\usdLux\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "64D9366D21B9A9B4329B68BF4638789B6D30BD495C91A2B2020D96A7A52847C0",
+      "path": "usd\\usdLux\\resources\\usdLux\\schema.usda"
+    },
+    {
+      "sha256": "7A2889E99F19C717846D165FA86A7A97726B15DE07DCE6AD4EAA6D33D76423BB",
+      "path": "usd\\usdMedia\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "CFCC1925A77047F0924B580972750EBF5483862FD46A2C386BC4084E88E20B8E",
+      "path": "usd\\usdMedia\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "1434ED6C64405D7244732267E061191B462512C771855EA5976CD02B7A94138A",
+      "path": "usd\\usdMedia\\resources\\usdMedia\\schema.usda"
+    },
+    {
+      "sha256": "681CAC0463546C032BA903AE77E0DD245265BBB75D2DB4719FE6696DEBE9BF47",
+      "path": "usd\\usdPhysics\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "143CD3DCB6E28828EE226FF7244CB2BCD4CFB41CF79AD5A228D987380937B8AF",
+      "path": "usd\\usdPhysics\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "1C7983C65001B1D7F7AEB1588F6F13EEDD30CF16ABD2C8F8B8E1867095BCE063",
+      "path": "usd\\usdPhysics\\resources\\usdPhysics\\schema.usda"
+    },
+    {
+      "sha256": "729E0B57DDFFB85F35978E4BBBDCB2390F31F3D4F24F9B7242788847D14D1C00",
+      "path": "usd\\usdPhysicsValidators\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "4488DC6A9A7BE63A46928A28B86CC826A074A4C6E5C2833626FB87AED0259B28",
+      "path": "usd\\usdProc\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "52773362523D5607C15AEBABFC3EE6372FE5FB55139F1991257C1A6C703856AA",
+      "path": "usd\\usdProc\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "14A45DBF085F796AB94C15E5D8E67EBA29DAFFA3F5950003DA00E258DC141E28",
+      "path": "usd\\usdProc\\resources\\usdProc\\schema.usda"
+    },
+    {
+      "sha256": "2C8E8D0E008C516F0AFF6EB9DBCBB51A7D5A2C8CEA369D3416061F582D865224",
+      "path": "usd\\usdProcImaging\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "D16CC289E3186F7FB595CF69399B3ACD7EC4EDE9367EB31F877E49B5FF834DC5",
+      "path": "usd\\usdRender\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "824F8E2FBFDAC014B955A7A73A5C9A4278FD13DC0BFB3EE44412EFB308252680",
+      "path": "usd\\usdRender\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "A3B9E5994C9AA51C11CA220C7239C37C740C4FBACA9E215C6AD263D80DBB0B4D",
+      "path": "usd\\usdRender\\resources\\usdRender\\schema.usda"
+    },
+    {
+      "sha256": "35AFD0FC35CE5607188AA16AE8E2BD8F843BDAFA0F4A334358A212FD8D5824E0",
+      "path": "usd\\usdRi\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "8E207E9E648346255BC526B83E62C78FB0271D05DCEE29C38AE379511DE93656",
+      "path": "usd\\usdRi\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "24580136E1939878F94ECD5B2B9FDFC5D141DC4C9E0E283AE68A4847A2D9572B",
+      "path": "usd\\usdRi\\resources\\usdRi\\schema.usda"
+    },
+    {
+      "sha256": "49787DF8DC71FBD8D316EE7BE222238010BE9C04B400114CA342475300131D75",
+      "path": "usd\\usdRiPxrImaging\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "0184B76290A4120D06F8CD7170BB496CB70CEBF966FA5F43FEAF93349043A7FF",
+      "path": "usd\\usdSemantics\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "2BD6E261C166639F5675582589644B7508D097FE26F3C778AF5D52713D39EB6A",
+      "path": "usd\\usdSemantics\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "7E7B307703900EF30C756BD050FFB85B44E447A2AEEBEECACE1DDD575986838D",
+      "path": "usd\\usdSemantics\\resources\\usdSemantics\\schema.usda"
+    },
+    {
+      "sha256": "AEF8C58040043E586BCF7F3B8DEC116D0B5C0E5E224ABC058235F33B6D77BBDA",
+      "path": "usd\\usdShade\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "6A9B7CBA785673D2A79F89EB9374179F9DA345EF0AC84A538554F8BE279D8C3A",
+      "path": "usd\\usdShade\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "CE83CBB8EABB18BE672204A7AC58FB5BA79C5D0F3F35B5F38BB6B7A69FC525A4",
+      "path": "usd\\usdShade\\resources\\usdShade\\schema.usda"
+    },
+    {
+      "sha256": "CABEBBC1E1518BEC0A9F023727504257F887197A134FDC6F381A08BD17A88987",
+      "path": "usd\\usdShadeValidators\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "43FC5E5B73EA3B6362B26E813ACBE6F0C1C450DAFA4313A6F3E6C0AB04A0C7A7",
+      "path": "usd\\usdSkel\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "79A6547F5D751E5107619CE651245205EAA7E6D5E1154EF0CCDE0C314F4DED70",
+      "path": "usd\\usdSkel\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "27EBE73D46B072C49E4705E3771FC0268892E746A9F9CAC75A23C64E728DCDE9",
+      "path": "usd\\usdSkel\\resources\\usdSkel\\schema.usda"
+    },
+    {
+      "sha256": "3F15ECA9393B3CC0667DCEA40247D093F1C6BAC35FE779E301EDCB5590006236",
+      "path": "usd\\usdSkelImaging\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "6F14DA45457DC2E428D2978F0090DF6368E479F7D230E8ED745CC07850F57658",
+      "path": "usd\\usdSkelImaging\\resources\\shaders\\skinning.glslfx"
+    },
+    {
+      "sha256": "4DA745E3730C214E858D2408C345807DBCAF1BEE31F1411CCC3B95F8F1F6BC11",
+      "path": "usd\\usdSkelValidators\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "41E3C4A5CB04F45052479F4B03E8D4430D38605E78387460920614CBECD7999F",
+      "path": "usd\\usdUI\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "CC0DBD584B2806DD8D9683913AA55729E80C489753AB53256D7C55BB91BFF94D",
+      "path": "usd\\usdUI\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "221F9D7FA6FB689558EDD5D62D1440F339BD7D38FE18950576BD13053DE65A16",
+      "path": "usd\\usdUI\\resources\\usdUI\\schema.usda"
+    },
+    {
+      "sha256": "27FDC42B3BB631D63FD11A2AFA423E022332488AACD4A27D82AF72DE05CF0AE4",
+      "path": "usd\\usdUtilsValidators\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "A45F77638EA7F89E6D22D8589E400FE41D3B04C8DDC6F4C1B1661EE09EEA4970",
+      "path": "usd\\usdValidation\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "073DEC481492DE4B3DDBF78921DE549FD6D0158F2B13865AA6D6AF5FCFA432A3",
+      "path": "usd\\usdVol\\resources\\generatedSchema.usda"
+    },
+    {
+      "sha256": "96AE6E72B7B572AAD7014813C177B16344CA1AC50AF612D45F2EACD5C2472D9A",
+      "path": "usd\\usdVol\\resources\\plugInfo.json"
+    },
+    {
+      "sha256": "AF512EC904D5897DCA96559CF72382396AA70FCEB1171395173C2731224B8E6B",
+      "path": "usd\\usdVol\\resources\\usdVol\\schema.usda"
+    },
+    {
+      "sha256": "858B307C812980E8D09E0DAB1C3C895339373A051D24E253DBBD97A863CABE0E",
+      "path": "usd\\usdVolImaging\\resources\\plugInfo.json"
+    }
+  ],
+  "retained": {
+    "d3d9.dll": "3F5A68152B359F80FF60C7BC5C6AFE9D12A812B1D6DD6567F4C3223D54E12C29",
+    ".trex\\NvRemixBridge.exe": "C9B5237820351280A85070F2B5692207C1885AF3667F8B5AC4F00E73F3ACA288",
+    "rtx.conf": "646C838B19111FDB2605855BB729B79C32188CB8AE97CCAD17F7B7C7E11FEC57",
+    "jpog_view_fix.asi": "30B085290B6A2A4B5BD5D449D5731DBD2624FB53162B98A502086F57F9E11556",
+    "proxy.ini": "45C46CE9CEE68DC444AC288F967B256234CA462C0AECFA99055BDBC82E02995A",
+    "d3d9_remix.dll": "95F40E234992DE06931B1E736A9F1C8D6AD7C077223E76879F44DBC7C941A3E4"
+  },
+  "backup": "D:\\Unity\\Vibe-Reverse-Engineering_JPOG_BetaTools\\backups\\JPOG\\2026-10-09_233550_pom-deploy-test-game",
+  "target": "D:\\Unity\\Vibe-Reverse-Engineering_JPOG_BetaTools\\test-artifacts\\JPOG\\terrain-blend\\test-game",
+  "preset": "D:\\Unity\\Vibe-Reverse-Engineering_JPOG_BetaTools\\test-artifacts\\JPOG\\terrain-blend\\test-game\\rtx-remix\\mods\\terrain-blend-smoke\\mod.usda"
+}

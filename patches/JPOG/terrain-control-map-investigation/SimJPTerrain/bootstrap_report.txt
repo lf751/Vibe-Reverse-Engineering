@@ -1,0 +1,14 @@
+Bootstrap Report
+================
+
+Binary: D:\Games\JPOGRTX\JPOG\SimJPTerrain.dll
+Compiler: msvc (confidence: 70%)
+
+Signature DB matches: 0
+RTTI classes found: 0
+Imports cataloged: 107
+Strings indexed: 1515
+Propagated labels: 14
+Functions identified: 14
+KB entries written: 14
+

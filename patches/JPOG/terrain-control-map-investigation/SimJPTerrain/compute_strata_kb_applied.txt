@@ -1,0 +1,91 @@
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* public: virtual void __thiscall ASimJPTerrain::ComputeStrataBuffer(class
+   Toshi::TStrataFieldBuffer &,unsigned int,unsigned int,unsigned int,unsigned int) */
+
+void __thiscall
+ASimJPTerrain::ComputeStrataBuffer
+          (ASimJPTerrain *this,TStrataFieldBuffer *param_1,uint param_2,uint param_3,uint param_4,
+          uint param_5)
+
+{
+  float fVar1;
+  float fVar2;
+  float fVar3;
+  float fVar4;
+  float fVar5;
+  byte bVar6;
+  uchar *puVar7;
+  float *pfVar8;
+  uint uVar9;
+  int iVar10;
+  float *pfVar11;
+  byte *pbVar12;
+  TStrataFieldBuffer TStack_7c;
+  uint uStack_5c;
+  int iStack_58;
+  
+                    /* 0x17820  64
+                       ?ComputeStrataBuffer@ASimJPTerrain@@UAEXAAVTStrataFieldBuffer@Toshi@@IIII@Z
+                        */
+  Toshi::TTerrainInterface::CacheSectionHeights((TTerrainInterface *)this,param_2,param_3);
+  fVar2 = _DAT_1003c56c / *(float *)(this + 0x680);
+  fVar3 = _DAT_1003c56c / (*(float *)(this + 0x674) - *(float *)(this + 0x668));
+  fVar4 = _DAT_1003c56c / (*(float *)(this + 0x66c) - *(float *)(this + 0x674));
+  puVar7 = APerlinNoise::GetSectionTexture((APerlinNoise *)(this + 0x5b8),param_2,param_3);
+  iVar10 = 1 << ((byte)param_4 & 0x1f);
+  pfVar8 = Toshi::TTerrainInterface::GetHeightCache((TTerrainInterface *)this);
+  uVar9 = 0;
+  do {
+    iStack_58 = uVar9 * 0x11;
+    pbVar12 = puVar7 + iStack_58;
+    pfVar11 = (float *)((int)pfVar8 +
+                       *(int *)(this + 0x74) * 4 * uVar9 + *(int *)(this + 0x74) * 4 + 4);
+    uStack_5c = 0;
+    do {
+      fVar1 = *pfVar11;
+      if (*(float *)(this + 0x674) <= fVar1) {
+        if (*(float *)(this + 0x67c) < fVar1) {
+          fVar1 = (fVar1 - *(float *)(this + 0x67c)) * fVar2;
+          bVar6 = APerlinNoise::GetCurSectionTextureValue
+                            ((APerlinNoise *)(this + 0x5b8),param_2 * 2,param_3 * 2,uStack_5c * 2,
+                             uVar9 * 2);
+          fVar5 = _DAT_1003c56c;
+          if ((fVar1 < _DAT_1003c56c) &&
+             (fVar5 = (_DAT_1003c56c - fVar1) *
+                      ((float)*pbVar12 * *(float *)(this + 0x698) + *(float *)(this + 0x69c)) +
+                      fVar1 * ((float)bVar6 * *(float *)(this + 0x6a8) + *(float *)(this + 0x6ac)),
+             _DAT_1003c56c < fVar5)) {
+            fVar5 = _DAT_1003c56c;
+          }
+        }
+        else {
+          fVar5 = (float)*pbVar12 * *(float *)(this + 0x698) + *(float *)(this + 0x69c);
+          if (fVar1 < *(float *)(this + 0x66c)) {
+            fVar5 = (fVar1 - *(float *)(this + 0x674)) * fVar4 * fVar5;
+            if (fVar5 < *(float *)(this + 0x690)) {
+              fVar5 = *(float *)(this + 0x690);
+            }
+          }
+        }
+      }
+      else {
+        fVar5 = (float)*pbVar12 * *(float *)(this + 0x688) + *(float *)(this + 0x68c);
+        if (*(float *)(this + 0x668) < fVar1) {
+          fVar1 = (fVar1 - *(float *)(this + 0x668)) * fVar3;
+          fVar5 = *(float *)(this + 0x690) * fVar1 + (_DAT_1003c56c - fVar1) * fVar5;
+        }
+      }
+      TStack_7c = SUB81((longlong)ROUND(fVar5 * _DAT_1003c568),0);
+      param_1[iStack_58 + 0x10] = TStack_7c;
+      uStack_5c = uStack_5c + iVar10;
+      pfVar11 = pfVar11 + iVar10;
+      pbVar12 = pbVar12 + iVar10;
+      iStack_58 = iStack_58 + iVar10;
+    } while (uStack_5c < 0x11);
+    uVar9 = uVar9 + iVar10;
+  } while (uVar9 < 0x11);
+  return;
+}
+
+

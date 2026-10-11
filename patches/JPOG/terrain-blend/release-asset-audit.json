@@ -1,0 +1,1402 @@
+{
+  "references": [
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Bark_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Bark_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Bark_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Leaf_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Leaf_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Leaf_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_02_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_02_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_02_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_03_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_03_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_03_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_04_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_04_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_04_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_05_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_05_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_05_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_06_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_06_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Petiole_06_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Trunk_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Trunk_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "./textures/MT_PM_V98_Angiopteris_fokiensis_01_Trunk_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Angiopteris_fokiensis_01_02.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\BananaPlant_Med.usd",
+      "asset": "./textures/BananaPlant_Med_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BananaPlant_Med.usd",
+      "asset": "./textures/BananaPlant_Med_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BananaPlant_Med.usd",
+      "asset": "./textures/BananaStalk_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BananaPlant_Med.usd",
+      "asset": "./textures/BananaStalk_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BananaPlant_Med.usd",
+      "asset": "./textures/FrondStem_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BananaPlant_Med.usd",
+      "asset": "./textures/FrondStem_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BananaPlant_Med.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\BostonFern_Med.usd",
+      "asset": "./textures/BostonFern_Med_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BostonFern_Med.usd",
+      "asset": "./textures/BostonFern_Med_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BostonFern_Med.usd",
+      "asset": "./textures/FrondStem_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BostonFern_Med.usd",
+      "asset": "./textures/FrondStem_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\BostonFern_Med.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Leaf_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Leaf_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Leaf_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_02_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_02_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_02_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_03_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_03_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_03_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_04_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_04_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Petiole_04_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Sheath_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Sheath_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Sheath_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Trunk_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Trunk_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "./textures/MT_PM_V154_Butia_capitata_01_Trunk_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Butia_01_1.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DatePalmBark_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DatePalmBark_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DatePalm_Med_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DatePalm_Med_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DateSkin_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DateSkin_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DateStem_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/DateStem_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/FrondStem_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "./textures/FrondStem_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\DatePalm_Med.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\Dryopteris_01.usd",
+      "asset": "./textures/MT_PM_V158_Dryopteris_erythrosora_01_Leaf_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Dryopteris_01.usd",
+      "asset": "./textures/MT_PM_V158_Dryopteris_erythrosora_01_Leaf_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Dryopteris_01.usd",
+      "asset": "./textures/MT_PM_V158_Dryopteris_erythrosora_01_Leaf_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Dryopteris_01.usd",
+      "asset": "./textures/MT_PM_V158_Dryopteris_erythrosora_01_Petiole_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Dryopteris_01.usd",
+      "asset": "./textures/MT_PM_V158_Dryopteris_erythrosora_01_Petiole_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Dryopteris_01.usd",
+      "asset": "./textures/MT_PM_V158_Dryopteris_erythrosora_01_Petiole_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Dryopteris_01.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\FenceCable.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Bark_1_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Bark_1_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Bark_2_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Bark_2_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Palm_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Palm_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Twig_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "./textures/Twig_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Palm.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Leaf_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Leaf_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Leaf_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Petiole_03_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Petiole_03_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Petiole_03_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Petiole_04_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Petiole_04_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Petiole_04_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Trunk_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Trunk_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Trunk_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Trunk_03_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Trunk_03_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "./textures/MT_PM_V154_Ravenea_rivularis_01_Trunk_03_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Ravenea_04.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Leaf_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Leaf_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Leaf_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_02_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_02_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_02_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_03_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_03_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Petiole_03_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Sheath_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Sheath_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Sheath_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Trunk_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Trunk_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "./textures/MT_PM_V154_Sabal_palmetto_01_Trunk_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Sabal_06.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalm_High.usd",
+      "asset": "./textures/FrondStem_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalm_High.usd",
+      "asset": "./textures/FrondStem_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalm_High.usd",
+      "asset": "./textures/SagoPalmBark_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalm_High.usd",
+      "asset": "./textures/SagoPalmBark_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalm_High.usd",
+      "asset": "./textures/SagoPalm_High_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalm_High.usd",
+      "asset": "./textures/SagoPalm_High_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalm_High.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalmTall.usd",
+      "asset": "./textures/FrondStem_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalmTall.usd",
+      "asset": "./textures/FrondStem_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalmTall.usd",
+      "asset": "./textures/SagoPalmBark_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalmTall.usd",
+      "asset": "./textures/SagoPalmBark_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalmTall.usd",
+      "asset": "./textures/SagoPalmTall_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalmTall.usd",
+      "asset": "./textures/SagoPalmTall_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\SagoPalmTall.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Leaf_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Leaf_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Leaf_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Leaf_02_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Leaf_02_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Leaf_02_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Thorn_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Thorn_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Thorn_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Thorn_02_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Thorn_02_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Thorn_02_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Trunk_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Trunk_01_glossiness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "./textures/MT_PM_V158_Salacca_zalacca_01_Trunk_01_normal_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "assets\\ingested\\Salacca_05.usd",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/Grass002_2K-PNG_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/Grass002_2K-PNG_Displacement.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/Grass002_2K-PNG_NormalGL_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/Grass002_2K-PNG_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/aerial_rocks_04_diff_2k.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/aerial_rocks_04_disp_2k.h.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/aerial_rocks_04_nor_gl_2k_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/aerial_rocks_04_rough_2k.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_land_rocks_01_diff_2k.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_land_rocks_01_disp_2k.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_land_rocks_01_nor_gl_2k_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_land_rocks_01_rough_2k.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_sand_02_diff_2k.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_sand_02_disp_2k.h.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_sand_02_nor_gl_2k_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "./SubUSDs/coast_sand_02_rough_2k.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "Ground.usda",
+      "asset": "AperturePBR_Opacity.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "materials\\AperturePBR_Translucent.usda",
+      "asset": "AperturePBR_Translucent.mdl",
+      "status": "runtime-mdl"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./Ground.usda",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/2A678903EE1DDEB7.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/2AC2DDF0DE63CC5F_Emission.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/2AC2DDF0DE63CC5F_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/34F01F15E541C0BE_Emission.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/46A02C7218637F02_emissive.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/4C3C8451503D0A92_emission.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/63AED73FB724C002_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/ABCA36EB3122CAB6_emission.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/AF1F58D9C6FEF956_emissive.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/B583017FE3F481D6_emissive.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/C5AFC345F16053E9_Emission.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/Dilo_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/Dilo_SSS.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/Dilo_Scan1.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/Dilo_SpecularRoughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/FE3DF4AEC118F4FF_emissive.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/FFD08A055F85A06F_emissive.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/FenceCable.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/FenceCable_Base_color_sRGB.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/FenceCable_Base_metalness_Raw.m.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/FenceCable_Normal_OpenGL_Raw_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/FenceCable_Specular_roughness_Raw.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/JPOGPath_GeometryHeight.h.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/JPOGPath_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/JPOGPath_SpecularRoughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/PropsEmission.e.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/Spino_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/Spino_SpecularRoughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./assets/ingested/calm_OTH_Normal.n.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./materials/AperturePBR_Translucent.usda",
+      "status": "ok"
+    },
+    {
+      "layer": "mod.usd",
+      "asset": "./vegetation.usda",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Angiopteris_fokiensis_01_02.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BananaPlant_Med.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BananaPlant_Med_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BananaPlant_Med_Subsurface.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BananaStalk_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Bark_1_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Bark_2_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BostonFernFiddlehead_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BostonFern_Med.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BostonFern_Med_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/BostonFern_Med_Subsurface.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Butia_01_1.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/DatePalmBark_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/DatePalm_Med.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/DatePalm_Med_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/DateSkin_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/DateStem_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Dryopteris_01.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/FrondStem_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/FrondStem_Subsurface.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Leaf_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Leaf_01_translucency.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Petiole_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Petiole_02_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Petiole_03_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Petiole_04_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Sheath_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Butia_capitata_01_Trunk_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V154_Sabal_palmetto_01_Leaf_01_translucency.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Dryopteris_erythrosora_01_Leaf_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Dryopteris_erythrosora_01_Leaf_01_translucency.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Dryopteris_erythrosora_01_Petiole_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Salacca_zalacca_01_Leaf_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Salacca_zalacca_01_Leaf_01_translucency.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Salacca_zalacca_01_Leaf_02_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Salacca_zalacca_01_Leaf_02_translucency.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Salacca_zalacca_01_Thorn_02_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/MT_PM_V158_Salacca_zalacca_01_Trunk_01_roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Palm.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Palm_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Palm_Subsurface.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Ravenea_04.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Sabal_06.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/SagoPalmBark_Height.h.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/SagoPalmBark_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/SagoPalmTall.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/SagoPalmTall_Subsurface.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/SagoPalm_High.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/SagoPalm_High_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/SagoPalm_High_Subsurface.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Salacca_05.usd",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/Twig_Roughness.r.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/textures/FrondStem_Color.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/textures/MT_PM_V154_Ravenea_rivularis_01_Leaf_01_albedo.a.rtex.dds",
+      "status": "ok"
+    },
+    {
+      "layer": "vegetation.usda",
+      "asset": "./assets/ingested/textures/SagoPalm_High_Color.a.rtex.dds",
+      "status": "ok"
+    }
+  ],
+  "terrain": [
+    {
+      "asset": "./SubUSDs/Grass002_2K-PNG_Color.a.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/Grass002_2K-PNG_Displacement.a.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/Grass002_2K-PNG_NormalGL_OTH_Normal.n.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/Grass002_2K-PNG_Roughness.r.rtex.dds",
+      "exists": true,
+      "bytes": 2752640,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/aerial_rocks_04_diff_2k.a.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/aerial_rocks_04_disp_2k.h.rtex.dds",
+      "exists": true,
+      "bytes": 2796364,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/aerial_rocks_04_nor_gl_2k_OTH_Normal.n.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/aerial_rocks_04_rough_2k.r.rtex.dds",
+      "exists": true,
+      "bytes": 2796364,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_land_rocks_01_diff_2k.a.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_land_rocks_01_disp_2k.a.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_land_rocks_01_nor_gl_2k_OTH_Normal.n.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_land_rocks_01_rough_2k.r.rtex.dds",
+      "exists": true,
+      "bytes": 2796364,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_sand_02_diff_2k.a.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_sand_02_disp_2k.h.rtex.dds",
+      "exists": true,
+      "bytes": 2796364,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_sand_02_nor_gl_2k_OTH_Normal.n.rtex.dds",
+      "exists": true,
+      "bytes": 5592580,
+      "matches_working_mod": true
+    },
+    {
+      "asset": "./SubUSDs/coast_sand_02_rough_2k.r.rtex.dds",
+      "exists": true,
+      "bytes": 2796364,
+      "matches_working_mod": true
+    }
+  ]
+}

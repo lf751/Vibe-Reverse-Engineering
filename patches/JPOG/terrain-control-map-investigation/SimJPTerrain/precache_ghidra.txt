@@ -1,0 +1,213 @@
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* public: virtual void __thiscall ASimJPTerrain::Precache(void) */
+
+void __thiscall ASimJPTerrain::Precache(ASimJPTerrain *this)
+
+{
+  double dVar1;
+  float fVar2;
+  char cVar3;
+  uint uVar4;
+  uint uVar5;
+  int iVar6;
+  TTerrainSection *pTVar7;
+  int *piVar8;
+  uint uVar9;
+  TTerrainSection *this_00;
+  uint uVar10;
+  float fStack_1cc;
+  float fStack_1c8;
+  undefined4 uStack_1c4;
+  undefined4 uStack_1c0;
+  int iStack_1bc;
+  undefined4 uStack_1b8;
+  undefined4 uStack_1b4;
+  undefined4 uStack_1b0;
+  undefined4 uStack_1ac;
+  undefined4 uStack_1a8;
+  undefined4 uStack_1a4;
+  undefined4 uStack_1a0;
+  undefined4 uStack_19c;
+  undefined4 uStack_198;
+  char acStack_194 [292];
+  ushort *puStack_70;
+  uint uStack_6c;
+  int iStack_68;
+  ushort *puStack_64;
+  ASimJPTerrain *pAStack_60;
+  ASimJPTerrain *pAStack_5c;
+  undefined4 uStack_58;
+  undefined4 uStack_54;
+  TStrataFieldBuffer *pTStack_50;
+  TShadowFieldBuffer *pTStack_4c;
+  int iStack_48;
+  int *piStack_44;
+  uint uStack_40;
+  uint uStack_3c;
+  uint uStack_38;
+  TTerrainSection *pTStack_34;
+  uint uStack_30;
+  TTerrainMeshEx *pTStack_2c;
+  TStrataFieldBuffer *pTStack_28;
+  TShadowFieldBuffer *pTStack_24;
+  TShadowFieldBuffer *pTStack_20;
+  int iStack_1c;
+  
+                    /* 0x17300  230  ?Precache@ASimJPTerrain@@UAEXXZ */
+  piVar8 = *(int **)(this + 0x3c);
+  (**(code **)(*piVar8 + 0x18))();
+  puStack_64 = Toshi::TTerrainInterface::GetVRemapTable((TTerrainInterface *)this);
+  uVar5 = 0;
+  iVar6 = *(int *)(this + 0x28);
+  uVar9 = *(uint *)(iVar6 + 0x30);
+  if (uVar9 != 0) {
+    uVar4 = *(uint *)(iVar6 + 0x2c);
+    uVar10 = 0;
+    piStack_44 = piVar8;
+    do {
+      if (uVar4 != 0) {
+        dVar1 = (double)(int)uVar10;
+        if ((int)uVar10 < 0) {
+          dVar1 = dVar1 + _DAT_1003c558;
+        }
+        pAStack_60 = (ASimJPTerrain *)0x0;
+        pTStack_34 = (TTerrainSection *)0x0;
+        uStack_38 = 0;
+        uStack_54 = SUB84(dVar1,0);
+        pTStack_50 = (TStrataFieldBuffer *)((ulonglong)dVar1 >> 0x20);
+        uStack_6c = uVar10;
+        pAStack_5c = this;
+        uStack_40 = uVar5;
+        uStack_3c = uVar10;
+        do {
+          pTVar7 = pTStack_34 + *(int *)(this + 0x30);
+          iStack_48 = uVar4 * 0x50 * uStack_40;
+          this_00 = pTVar7 + iStack_48;
+          if (this_00 != (TTerrainSection *)0x0) {
+            Toshi::TTerrainSection::SetDirty(this_00,true);
+            uStack_30 = (**(code **)(*(int *)this + 0x38))(this_00);
+            Toshi::TTerrainSection::SetGrass(this_00,uStack_30 < 0xf);
+            pTStack_2c = Toshi::TTerrainInterface::GetFreeMesh((TTerrainInterface *)this);
+            uVar9 = uStack_3c;
+            piVar8 = piStack_44;
+            *(TTerrainSection **)(pTStack_2c + 8) = this_00;
+            *(undefined4 *)(pTStack_2c + 0x10) = *(undefined4 *)(pTStack_4c + 0x2c + (int)pTVar7);
+            *(TTerrainMeshEx **)(pTStack_4c + 0x2c + (int)pTVar7) = pTStack_2c;
+            iVar6 = *(int *)(pTStack_2c + 0xc);
+            if (iVar6 != 0) {
+              puStack_70 = puStack_64;
+              fVar2 = (float)(int)puStack_64;
+              if ((int)puStack_64 < 0) {
+                fVar2 = fVar2 + (float)_DAT_1003c558;
+              }
+              fStack_1cc = 0.0;
+              fStack_1c8 = (float)(double)CONCAT44(uStack_54,uStack_58);
+              *(float *)(iVar6 + 0x38) = fVar2;
+              *(undefined4 *)(iVar6 + 0x3c) = 0;
+              *(float *)(iVar6 + 0x40) = fStack_1c8;
+              pTStack_50 = Toshi::TTerrainInterface::CacheStrataBuffer
+                                     ((TTerrainInterface *)this,uStack_3c,(uint)piStack_44,this_00);
+              pTStack_4c = Toshi::TTerrainInterface::CacheShadowBuffer
+                                     ((TTerrainInterface *)this,uVar9,(uint)piVar8,this_00);
+              if ((pTStack_50 != (TStrataFieldBuffer *)0x0) &&
+                 (pTStack_4c != (TShadowFieldBuffer *)0x0)) {
+                Toshi::TTerrainSection::SetDirty(this_00,false);
+                cVar3 = (**(code **)(**(int **)(this + 0xd8) + 0xcc))();
+                if (cVar3 == '\0') {
+                  pTStack_28 = pTStack_50 + 0x10;
+                  pTStack_24 = pTStack_4c + 0x131;
+                  pTStack_20 = pTStack_4c + 0x10;
+                }
+                else {
+                  uStack_1c4 = 0;
+                  uStack_1c0 = 0;
+                  iStack_1bc = 0;
+                  uStack_1b8 = 0;
+                  uStack_1b4 = 0;
+                  uStack_1b0 = 0;
+                  uStack_1ac = 0;
+                  uStack_1a8 = 0;
+                  uStack_1a4 = 0;
+                  uStack_1a0 = 0;
+                  uStack_198 = 0;
+                  uStack_19c = 0;
+                  cVar3 = (**(code **)(**(int **)(pTStack_2c + 0xc) + 0x34))(&uStack_1c4);
+                  if (cVar3 == '\0') {
+                    pTStack_28 = pTStack_50 + 0x10;
+                    pTStack_24 = pTStack_4c + 0x131;
+                    pTStack_20 = pTStack_4c + 0x10;
+                  }
+                  else {
+                    iStack_1c = iStack_1bc;
+                    Toshi::THeightField::GetSectionDataRaw
+                              (*(THeightField **)(this + 0x28),uStack_3c,(uint)piStack_44,
+                               &fStack_1cc,acStack_194);
+                    pTStack_28 = pTStack_50 + 0x10;
+                    pTStack_24 = pTStack_4c + 0x131;
+                    pTStack_20 = pTStack_4c + 0x10;
+                    uVar9 = 0;
+                    do {
+                      uVar5 = uVar9;
+                      *(uint *)(iStack_1c + (uint)*(ushort *)(iStack_68 + uVar5 * 2) * 4) =
+                           (uint)(byte)pTStack_4c[uVar5 + 0x10] << 0x18 |
+                           (uint)(byte)pTStack_4c[uVar5 + 0x131] << 0x10 |
+                           (acStack_194[uVar5] + 0x80) * 0x100 |
+                           (uint)(byte)pTStack_50[uVar5 + 0x10];
+                      uVar9 = uVar5 + 2;
+                      *(uint *)(iStack_1c + (uint)*(ushort *)(iStack_68 + 2 + uVar5 * 2) * 4) =
+                           (uint)(byte)pTStack_4c[uVar5 + 0x11] << 0x18 |
+                           (uint)(byte)pTStack_4c[uVar5 + 0x132] << 0x10 |
+                           (acStack_194[uVar5 + 1] + 0x80) * 0x100 |
+                           (uint)(byte)pTStack_50[uVar5 + 0x11];
+                    } while (uVar9 < 0x11f);
+                    *(uint *)(iStack_1c + (uint)*(ushort *)(iStack_68 + uVar9 * 2) * 4) =
+                         (uint)(byte)pTStack_4c[uVar5 + 0x12] << 0x18 |
+                         (uint)(byte)pTStack_4c[uVar5 + 0x133] << 0x10 |
+                         (acStack_194[uVar5 + 2] + 0x80) * 0x100 |
+                         (uint)(byte)pTStack_50[uVar5 + 0x12];
+                    pAStack_60 = this;
+                    pTStack_34 = this_00;
+                    (**(code **)(**(int **)(pTStack_2c + 0xc) + 0x38))(0x121,0);
+                  }
+                }
+                (**(code **)(**(int **)(this + 0xd8) + 0x48))
+                          (*(undefined4 *)(pTStack_2c + 0xc),uStack_30,pTStack_28,pTStack_24,
+                           pTStack_20);
+              }
+            }
+            Toshi::TTerrainInterface::DeactivateTerrainSectionMesh
+                      ((TTerrainInterface *)this,this_00);
+            cVar3 = (**(code **)(**(int **)(this + 0xd8) + 0xcc))();
+            if (cVar3 == '\x01') {
+              Toshi::TTerrainInterface::DeactivateTerrainSectionShadow
+                        ((TTerrainInterface *)this,this_00);
+              Toshi::TTerrainInterface::DeactivateTerrainSectionStrata
+                        ((TTerrainInterface *)this,this_00);
+              iVar6 = *(int *)(this + 0x28);
+              uVar4 = *(uint *)(iVar6 + 0x2c);
+            }
+            else {
+              iVar6 = *(int *)(this + 0x28);
+              uVar4 = *(uint *)(iVar6 + 0x2c);
+            }
+          }
+          pAStack_60 = pAStack_60 + 0x10;
+          uStack_38 = uStack_38 + 1;
+          pTStack_34 = pTStack_34 + 0x50;
+        } while (uStack_38 < uVar4);
+        uVar9 = *(uint *)(iVar6 + 0x30);
+        uVar5 = uStack_40;
+        uVar10 = uStack_3c;
+      }
+      uVar10 = uVar10 + 0x10;
+      uVar5 = uVar5 + 1;
+      piVar8 = piStack_44;
+      pAStack_5c = this;
+    } while (uVar5 < uVar9);
+  }
+  (**(code **)(*piVar8 + 0x1c))();
+  return;
+}
+
+

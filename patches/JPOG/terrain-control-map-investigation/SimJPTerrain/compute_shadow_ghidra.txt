@@ -1,0 +1,105 @@
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* public: virtual void __thiscall ASimJPTerrain::ComputeShadowBuffer(class
+   Toshi::TShadowFieldBuffer &,unsigned int,unsigned int,unsigned int,unsigned int) */
+
+void __thiscall
+ASimJPTerrain::ComputeShadowBuffer
+          (ASimJPTerrain *this,TShadowFieldBuffer *param_1,uint param_2,uint param_3,uint param_4,
+          uint param_5)
+
+{
+  float fVar1;
+  float fVar2;
+  float fVar3;
+  TShadowFieldBuffer TVar4;
+  uchar *puVar5;
+  byte *pbVar6;
+  int iVar7;
+  float *pfVar8;
+  int iVar9;
+  ushort in_FPUControlWord;
+  float fStack_6c;
+  float fStack_68;
+  float fStack_64;
+  longlong lStack_5c;
+  uint uStack_4c;
+  double dStack_44;
+  uchar *puStack_3c;
+  float *pfStack_38;
+  int iStack_34;
+  uint uStack_30;
+  int iStack_2c;
+  ASimJPTerrain *pAStack_28;
+  uint uStack_24;
+  double dStack_1c;
+  
+                    /* 0x17af0  62
+                       ?ComputeShadowBuffer@ASimJPTerrain@@UAEXAAVTShadowFieldBuffer@Toshi@@IIII@Z
+                        */
+  Toshi::TTerrainInterface::CacheSectionHeights((TTerrainInterface *)this,param_2,param_3);
+  dStack_44 = (double)(_DAT_1003c590 / *(float *)(this + 0x6c4));
+  puVar5 = APerlinNoise::GetSectionTexture((APerlinNoise *)(this + 0x5b8),param_2 + 0xd,param_3 + 5)
+  ;
+  pfStack_38 = Toshi::TTerrainInterface::GetHeightCache((TTerrainInterface *)this);
+  iStack_34 = *(int *)(this + 0x74);
+  iStack_2c = 1 << ((byte)param_4 & 0x1f);
+  uStack_30 = 1;
+  iVar9 = iStack_34;
+  puStack_3c = puVar5;
+  pAStack_28 = this;
+  fVar2 = _DAT_1003c58c;
+  do {
+    pfVar8 = pfStack_38 + iStack_34 + 1;
+    iVar7 = uStack_30 * 0x11 + -0x11;
+    pbVar6 = puStack_3c + iVar7;
+    uStack_24 = 1;
+    while( true ) {
+      fVar1 = *pfVar8;
+      dStack_1c = (double)fVar1;
+      fStack_6c = fVar2 * (pfVar8[-iVar9] - pfVar8[iVar9]) +
+                  ((fVar1 - pfVar8[1]) - (fVar1 - pfVar8[-1])) * _DAT_1003c588;
+      fStack_64 = (pfVar8[-iVar9] - pfVar8[iVar9]) * _DAT_1003c588;
+      fStack_68 = -4.0;
+      Toshi::TVector4::Normalise((TVector4 *)&fStack_6c);
+      fVar3 = _DAT_1003c590;
+      fVar2 = _DAT_1003c58c;
+      fVar1 = fStack_64 * _DAT_10024718 + fStack_68 * _DAT_10024714;
+      if (fVar1 < _DAT_1003c58c) {
+        fVar1 = _DAT_1003c58c;
+      }
+      uStack_4c = in_FPUControlWord | 0xc00;
+      lStack_5c = (longlong)ROUND(fVar1 * fVar1 * fVar1 * _DAT_1003c590);
+      param_1[iVar7 + 0x10] = lStack_5c._0_1_;
+      if ((double)*(float *)(pAStack_28 + 0x6c4) <= dStack_1c) {
+        uStack_4c = in_FPUControlWord | 0xc00;
+        lStack_5c = (longlong)ROUND(fStack_68 * fStack_68 * fStack_68 * fStack_68 * fVar3);
+        TVar4 = lStack_5c._0_1_;
+        if (*pbVar6 < 100) {
+          TVar4 = (TShadowFieldBuffer)((char)lStack_5c._0_1_ - (*pbVar6 * -2 + -0x38));
+        }
+      }
+      else if (fVar2 < (float)dStack_1c) {
+        uStack_4c = in_FPUControlWord | 0xc00;
+        lStack_5c = (longlong)ROUND(dStack_1c * dStack_44);
+        TVar4 = lStack_5c._0_1_;
+      }
+      else {
+        TVar4 = (TShadowFieldBuffer)0x0;
+      }
+      param_1[iVar7 + 0x131] = TVar4;
+      uStack_24 = uStack_24 + iStack_2c;
+      pbVar6 = pbVar6 + iStack_2c;
+      pfVar8 = pfVar8 + iStack_2c;
+      iVar7 = iVar7 + iStack_2c;
+      if (0x11 < uStack_24) break;
+      iVar9 = *(int *)(pAStack_28 + 0x74);
+    }
+    uStack_30 = uStack_30 + iStack_2c;
+    iVar9 = *(int *)(pAStack_28 + 0x74);
+    iStack_34 = iStack_34 + iVar9 * iStack_2c;
+  } while (uStack_30 < 0x12);
+  return;
+}
+
+

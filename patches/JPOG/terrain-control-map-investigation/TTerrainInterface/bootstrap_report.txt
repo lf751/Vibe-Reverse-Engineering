@@ -1,0 +1,14 @@
+Bootstrap Report
+================
+
+Binary: D:\Games\JPOGRTX\JPOG\TTerrainInterface.dll
+Compiler: msvc (confidence: 70%)
+
+Signature DB matches: 0
+RTTI classes found: 0
+Imports cataloged: 56
+Strings indexed: 706
+Propagated labels: 2
+Functions identified: 2
+KB entries written: 2
+

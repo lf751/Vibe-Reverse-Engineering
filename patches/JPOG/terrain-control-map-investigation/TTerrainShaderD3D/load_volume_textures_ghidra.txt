@@ -1,0 +1,142 @@
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* public: bool __thiscall Toshi::TTerrainShaderHAL::LoadVolumeTextures(void) */
+
+bool __thiscall Toshi::TTerrainShaderHAL::LoadVolumeTextures(TTerrainShaderHAL *this)
+
+{
+  int iVar1;
+  TCString *pTVar2;
+  long lVar3;
+  LPCWSTR pWVar4;
+  TCString *pTVar5;
+  void *pvVar6;
+  int *piVar7;
+  uint uVar8;
+  TTerrainShaderHAL *pTVar9;
+  void *pvVar10;
+  float fVar11;
+  uint local_140;
+  TCString local_b4 [8];
+  int *local_ac;
+  int local_88;
+  int local_84;
+  int local_80;
+  int local_7c;
+  int *local_78 [8];
+  uint local_58;
+  uint local_54;
+  void *local_50;
+  int local_4c;
+  TCString *local_44;
+  TCString *local_3c;
+  double local_34;
+  TTerrainShaderHAL *local_2c;
+  int local_28;
+  uint local_24;
+  int *local_20;
+  TCString *local_1c;
+  TTerrainShaderHAL *local_18;
+  
+                    /* 0x8d30  212  ?LoadVolumeTextures@TTerrainShaderHAL@Toshi@@QAE_NXZ */
+  local_28 = (**(code **)(*(int *)this + 0x134))();
+  if (local_28 == 0) {
+    return false;
+  }
+  uVar8 = 0;
+  local_2c = this;
+  do {
+    iVar1 = local_28;
+    local_2c[0x3b0] = (TTerrainShaderHAL)0x1;
+    (**(code **)(**(int **)(local_28 + 0x178) + 0x1c))();
+    if ((local_140 & 0x20000) == 0) {
+      local_2c[0x3b0] = (TTerrainShaderHAL)0x0;
+    }
+    Toshi::TCString::TCString(local_b4);
+    if (local_2c[0x3b0] == (TTerrainShaderHAL)0x0) {
+      piVar7 = *(int **)(iVar1 + 0x178);
+      local_3c = (TCString *)(uVar8 << 2);
+      pTVar9 = local_2c + uVar8 * 4;
+      local_18 = pTVar9;
+      iVar1 = (**(code **)(*piVar7 + 0x54))(piVar7,(&DAT_10042264)[uVar8]);
+    }
+    else {
+      piVar7 = *(int **)(iVar1 + 0x178);
+      local_3c = (TCString *)(uVar8 << 2);
+      pTVar9 = local_2c + uVar8 * 4;
+      iVar1 = (**(code **)(*piVar7 + 0x54))(piVar7,(&DAT_10042264)[uVar8]);
+    }
+    Toshi::TRenderD3DInterface::TD3DAssert(iVar1,s_Failure_to_create_colume_texture_1014f1c0);
+    if (-1 < iVar1) {
+      piVar7 = *(int **)(pTVar9 + 500);
+      pTVar5 = (TCString *)0x0;
+      local_24 = uVar8;
+      while( true ) {
+        if (local_2c[0x3b0] == (TTerrainShaderHAL)0x0) {
+          pTVar2 = (TCString *)0x1;
+        }
+        else {
+          pTVar2 = (TCString *)0x4;
+        }
+        uVar8 = local_24;
+        if (pTVar2 <= pTVar5) break;
+        (**(code **)(*piVar7 + 0x3c))();
+        (**(code **)(*local_ac + 0x20))();
+        lVar3 = (**(code **)(*local_ac + 0x24))();
+        Toshi::TRenderD3DInterface::TD3DAssert(lVar3,s_Failure_to_lock_a_volume_texture_1014f200);
+        pTVar9 = (TTerrainShaderHAL *)0x0;
+        local_34 = (double)(int)pTVar5;
+        if ((int)pTVar5 < 0) {
+          local_34 = local_34 + _DAT_1014e690;
+        }
+        local_44 = pTVar5;
+        fVar11 = Toshi::TMath::Pow(2.0,_DAT_1014e684 - (float)local_34);
+        local_7c = (int)ROUND(fVar11);
+        if (0 < local_7c) {
+          do {
+            local_1c = pTVar5;
+            local_20 = piVar7;
+            pvVar6 = (void *)((int)pTVar9 * local_84 + local_80);
+            if (local_1c == (TCString *)0x0) {
+              Toshi::TCString::Format(local_3c,(char *)local_b4);
+            }
+            else {
+              Toshi::TCString::Format(local_1c,(char *)local_b4);
+            }
+            piVar7 = *(int **)(local_28 + 0x178);
+            pWVar4 = (LPCWSTR)Toshi::TCString::GetString(local_b4,0);
+            FUN_10018a4e(piVar7,pWVar4,local_78);
+            (**(code **)(*local_78[0] + 0x38))(local_78[0],0);
+            (**(code **)(*local_78[0] + 0x40))(local_78[0],0,&local_54,0,0x10);
+            uVar8 = 0;
+            pvVar10 = local_50;
+            if (local_58 != 0) {
+              do {
+                local_18 = pTVar9;
+                Toshi::TSystem::MemCopy(pvVar6,pvVar10,local_54);
+                pvVar6 = (void *)((int)pvVar6 + local_88);
+                uVar8 = uVar8 + 1;
+                pTVar9 = local_18;
+                pvVar10 = (void *)((int)pvVar10 + local_54);
+              } while (uVar8 < local_58);
+            }
+            (**(code **)(*local_78[0] + 0x44))(local_78[0],0);
+            (**(code **)(*local_78[0] + 8))(local_78[0]);
+            pTVar9 = pTVar9 + 1;
+            fVar11 = Toshi::TMath::Pow(2.0,_DAT_1014e684 - (float)local_34);
+            local_4c = (int)ROUND(fVar11);
+            pTVar5 = local_1c;
+            piVar7 = local_20;
+          } while ((int)pTVar9 < local_4c);
+        }
+        (**(code **)(*local_ac + 0x28))(local_ac);
+        pTVar5 = pTVar5 + 1;
+      }
+    }
+    Toshi::TCString::~TCString(local_b4);
+    uVar8 = uVar8 + 1;
+  } while (uVar8 < 4);
+  return true;
+}
+
+

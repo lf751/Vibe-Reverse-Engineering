@@ -1,0 +1,21 @@
+{
+  "shader": "0x356a1e0",
+  "texture": "0xfe95b20",
+  "getter": "0xf500d60",
+  "lowEndTexture": "0xfe95b20",
+  "highEndTexture": "0x0",
+  "configuredSize": 1024,
+  "descResult": 0,
+  "descriptor": [
+    25,
+    1,
+    0,
+    1,
+    2097152,
+    0,
+    1024,
+    1024
+  ],
+  "lockResult": 0,
+  "pitch": 2048
+}
