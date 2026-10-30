@@ -1,4 +1,10 @@
 @echo off
+setlocal
+if not defined REMIX_RUNTIME_SOURCE set "REMIX_RUNTIME_SOURCE=%~dp0..\..\..\..\dxvk-remix_numos"
+if not exist "%REMIX_RUNTIME_SOURCE%\public\include\remix\remix_c.h" (
+    echo ERROR: REMIX_RUNTIME_SOURCE must contain public\include\remix\remix_c.h.
+    exit /b 1
+)
 REM ================================================================
 REM DX9 FFP Proxy - Build Script (MSVC x86, no CRT)
 REM
@@ -35,7 +41,7 @@ cl.exe /nologo /O2 /Oi /Gy /GS- /W3 /Zl /c /D "WIN32" /D "NDEBUG" d3d9_wrapper.c
 if errorlevel 1 goto :error
 
 echo Compiling d3d9_device.c...
-cl.exe /nologo /O2 /Oi /Gy /GS- /W3 /Zl /c /D "WIN32" /D "NDEBUG" /I"..\..\..\..\dxvk-remix_numos\public\include" d3d9_device.c
+cl.exe /nologo /O2 /Oi /Gy /GS- /W3 /Zl /c /D "WIN32" /D "NDEBUG" /I"%REMIX_RUNTIME_SOURCE%\public\include" d3d9_device.c
 if errorlevel 1 goto :error
 
 echo Linking d3d9.dll...

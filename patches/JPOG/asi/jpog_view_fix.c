@@ -76,7 +76,7 @@ static int InitializeRemixApi(void) {
     PFN_remixapi_InitializeLibrary initializeLibrary;
     remixapi_InitializeLibraryInfo info;
 
-    if (g_remix.SetGameValue)
+    if (g_remix.SetConfigVariable)
         return 1;
 
     hRemix = GetModuleHandleA("d3d9_remix.dll");
@@ -99,16 +99,16 @@ static int InitializeRemixApi(void) {
 
     if (initializeLibrary(&info, &g_remix) != REMIXAPI_ERROR_CODE_SUCCESS)
         return 0;
-    return g_remix.SetGameValue != NULL;
+    return g_remix.SetConfigVariable != NULL;
 }
 
 static void SyncRemixWeather(void *weatherController) {
     static const char *presets[] = {
-        "partlyCloudy",
-        "rainstorm",
-        "thunderstorm",
-        "thunderstorm",
-        "sandstorm"
+        "jpog.clear",
+        "jpog.rain",
+        "jpog.storm",
+        "jpog.tornado",
+        "jpog.sandstorm"
     };
     int weatherIndex;
 
@@ -117,9 +117,7 @@ static void SyncRemixWeather(void *weatherController) {
         return;
     if (!InitializeRemixApi())
         return;
-    if (g_remix.SetGameValue("__weather.blend_seconds", "11.0") != REMIXAPI_ERROR_CODE_SUCCESS)
-        return;
-    if (g_remix.SetGameValue("__weather.target", presets[weatherIndex]) != REMIXAPI_ERROR_CODE_SUCCESS)
+    if (g_remix.SetConfigVariable("rtx.weather.gameWeather", presets[weatherIndex]) != REMIXAPI_ERROR_CODE_SUCCESS)
         return;
 
     g_lastWeatherIndex = weatherIndex;

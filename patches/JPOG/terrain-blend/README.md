@@ -4,6 +4,19 @@ The authoring extension and custom runtime use one USD terrain preset for all te
 draws identified by the existing JPOG terrain hook. No generated terrain texture must
 be selected in the Toolkit.
 
+## Remix Plus 2.0 deployment
+
+Use [deploy-share.ps1](deploy-share.ps1) for the complete runtime, matching bridge,
+proxy and ASI deployment. Set `-TargetRoot` for an isolated game and
+`-RuntimeSourceRoot` for the built runtime checkout. The script backs up the target,
+checks build freshness and package hashes, migrates that target's legacy weather
+configuration once into `rtx-remix/weather`, and verifies existing mods and saves
+remain unchanged. Each deployment requires a new recovery backup directory.
+Repeat deployment preserves converted weather profiles and authored settings.
+See [Plus 2.0 migration notes](../plus2-migration/Migration.md) for compatibility
+and validation details. Historical feature deployment scripts remain as findings;
+use this canonical script for current releases.
+
 ## Author a preset
 
 1. Launch `D:\Unity\toolkit-remix\_build\windows-x86_64\release\lightspeed.app.trex.full.bat`.

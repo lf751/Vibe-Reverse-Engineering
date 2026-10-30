@@ -44,6 +44,10 @@ void * __cdecl memset(void *dst, int c, unsigned int n) {
 /* Logging (from d3d9_main.c) */
 extern void log_str(const char *s);
 extern void log_hex(const char *prefix, unsigned int val);
+extern FARPROC Proxy_GetChainExport(const char *name);
+extern int Proxy_IsWrapperInterface(const GUID *iid, int isDevice);
+
+typedef HRESULT (__stdcall *PFN_SetOuterDevice)(void *inner, void *outerDevice, void *outerDirect3D);
 
 /* ============================================================
  * JPOG VS Constant Register Layout
@@ -100,6 +104,8 @@ typedef struct WrappedDevice {
     void **vtbl;
     void *pReal;
     int refCount;
+    void *pOuterDirect3D;
+    PFN_SetOuterDevice setOuterDevice;
     /* MV from c17-c20 (transposed to D3D row-major) */
     float mvMatrix[16];
     int   mvDirty;
@@ -820,29 +826,53 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
 /* ---- Vtable method implementations ---- */
 
 static void *s_device_vtbl[DEVICE_VTABLE_SIZE];
+static unsigned long __stdcall WD_AddRef(WrappedDevice *self);
 
 /* 0: QueryInterface */
 static int __stdcall WD_QueryInterface(WrappedDevice *self, void *riid, void **ppv) {
     typedef int (__stdcall *FN)(void*, void*, void**);
+    if (!ppv) return (int)0x80004003;
+    if (Proxy_IsWrapperInterface((const GUID*)riid, 1)) {
+        WD_AddRef(self);
+        *ppv = self;
+        return 0;
+    }
     return ((FN)RealVtbl(self)[0])(self->pReal, riid, ppv);
 }
 
 /* 1: AddRef */
 static unsigned long __stdcall WD_AddRef(WrappedDevice *self) {
     typedef unsigned long (__stdcall *FN)(void*);
-    self->refCount++;
+    InterlockedIncrement((LONG*)&self->refCount);
     return ((FN)RealVtbl(self)[1])(self->pReal);
 }
 
 /* 2: Release */
 static unsigned long __stdcall WD_Release(WrappedDevice *self) {
     typedef unsigned long (__stdcall *FN)(void*);
-    unsigned long rc = ((FN)RealVtbl(self)[2])(self->pReal);
-    self->refCount--;
-    if (self->refCount <= 0) {
+    unsigned long rc;
+    const int finalRelease = InterlockedDecrement((LONG*)&self->refCount) == 0;
+    if (finalRelease && self->setOuterDevice) {
+        // The bridge borrows these pointers. Clear them while the inner device is still alive.
+        self->setOuterDevice(self->pReal, NULL, NULL);
+    }
+    rc = ((FN)RealVtbl(self)[2])(self->pReal);
+    if (finalRelease) {
+        void **ownerVtable = *(void***)self->pOuterDirect3D;
+        ((FN)ownerVtable[2])(self->pOuterDirect3D);
         HeapFree(GetProcessHeap(), 0, self);
     }
     return rc;
+}
+
+static int __stdcall WD_GetDirect3D(WrappedDevice *self, void **result) {
+    typedef unsigned long (__stdcall *FN)(void*);
+    void **ownerVtable;
+    if (!result) return (int)0x80004003;
+    ownerVtable = *(void***)self->pOuterDirect3D;
+    ((FN)ownerVtable[1])(self->pOuterDirect3D);
+    *result = self->pOuterDirect3D;
+    return 0;
 }
 
 /* ---- Relay thunks for non-intercepted methods ---- */
@@ -860,7 +890,6 @@ static unsigned long __stdcall WD_Release(WrappedDevice *self) {
 RELAY_THUNK(Relay_03, 3)
 RELAY_THUNK(Relay_04, 4)
 RELAY_THUNK(Relay_05, 5)
-RELAY_THUNK(Relay_06, 6)
 RELAY_THUNK(Relay_07, 7)
 RELAY_THUNK(Relay_08, 8)
 RELAY_THUNK(Relay_09, 9)
@@ -1316,7 +1345,7 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
 
 /* ---- Build vtable ---- */
 
-WrappedDevice* WrappedDevice_Create(void *pRealDevice) {
+WrappedDevice* WrappedDevice_Create(void *pRealDevice, void *pOuterDirect3D) {
     WrappedDevice *w;
     int i;
 
@@ -1330,7 +1359,7 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice) {
     s_device_vtbl[3]  = (void*)Relay_03;
     s_device_vtbl[4]  = (void*)Relay_04;
     s_device_vtbl[5]  = (void*)Relay_05;
-    s_device_vtbl[6]  = (void*)Relay_06;
+    s_device_vtbl[6]  = (void*)WD_GetDirect3D;
     s_device_vtbl[7]  = (void*)Relay_07;
     s_device_vtbl[8]  = (void*)Relay_08;
     s_device_vtbl[9]  = (void*)Relay_09;
@@ -1447,6 +1476,17 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice) {
     w->vtbl = s_device_vtbl;
     w->pReal = pRealDevice;
     w->refCount = 1;
+    w->pOuterDirect3D = pOuterDirect3D;
+    {
+        typedef unsigned long (__stdcall *FN)(void*);
+        void **ownerVtable = *(void***)pOuterDirect3D;
+        ((FN)ownerVtable[1])(pOuterDirect3D);
+        w->setOuterDevice = (PFN_SetOuterDevice)Proxy_GetChainExport("BridgeClient_SetOuterDevice");
+        if (w->setOuterDevice && w->setOuterDevice(pRealDevice, w, pOuterDirect3D) < 0) {
+            log_str("Bridge outer-device registration failed\r\n");
+            w->setOuterDevice = NULL;
+        }
+    }
     w->mvDirty = 0;
     w->hasMVP = 0;
     w->hasRealView = 0;

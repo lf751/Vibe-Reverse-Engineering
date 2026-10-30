@@ -33,7 +33,7 @@ extern void log_hex(const char *prefix, unsigned int val);
 
 /* From d3d9_device.c */
 typedef struct WrappedDevice WrappedDevice;
-WrappedDevice* WrappedDevice_Create(void* pRealDevice);
+WrappedDevice* WrappedDevice_Create(void* pRealDevice, void* pOuterDirect3D);
 
 /* ---- WrappedD3D9 ---- */
 
@@ -45,24 +45,49 @@ typedef struct WrappedD3D9 {
 
 static void *s_d3d9_vtbl[17];
 
+int Proxy_IsWrapperInterface(const GUID *iid, int isDevice) {
+    static const GUID unknown = {0, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46}};
+    static const GUID direct3D9 = {0x81bdcbca, 0x64d4, 0x426d, {0xae, 0x8d, 0xad, 1, 0x47, 0xf4, 0x27, 0x5c}};
+    static const GUID device9 = {0xd0223b96, 0xbf7a, 0x43fd, {0x92, 0xbd, 0xa4, 0x3b, 0x0d, 0x82, 0xb9, 0xeb}};
+    const GUID *supported = isDevice ? &device9 : &direct3D9;
+    const unsigned char *bytes = (const unsigned char*)iid;
+    const unsigned char *unknownBytes = (const unsigned char*)&unknown;
+    const unsigned char *supportedBytes = (const unsigned char*)supported;
+    int matchesUnknown = 1, matchesSupported = 1, i;
+    if (!iid) return 0;
+    for (i = 0; i < sizeof(GUID); ++i) {
+        matchesUnknown &= bytes[i] == unknownBytes[i];
+        matchesSupported &= bytes[i] == supportedBytes[i];
+    }
+    return matchesUnknown || matchesSupported;
+}
+
+static unsigned long __stdcall W9_AddRef(WrappedD3D9 *self);
+
 #define REAL_VTBL(self) (*(void***)(((WrappedD3D9*)(self))->pReal))
 
 static int __stdcall W9_QueryInterface(WrappedD3D9 *self, void *riid, void **ppv) {
     typedef int (__stdcall *FN)(void*, void*, void**);
+    if (!ppv) return (int)0x80004003;
+    if (Proxy_IsWrapperInterface((const GUID*)riid, 0)) {
+        W9_AddRef(self);
+        *ppv = self;
+        return 0;
+    }
     return ((FN)REAL_VTBL(self)[0])(self->pReal, riid, ppv);
 }
 
 static unsigned long __stdcall W9_AddRef(WrappedD3D9 *self) {
-    self->refCount++;
+    InterlockedIncrement((LONG*)&self->refCount);
     typedef unsigned long (__stdcall *FN)(void*);
     return ((FN)REAL_VTBL(self)[1])(self->pReal);
 }
 
 static unsigned long __stdcall W9_Release(WrappedD3D9 *self) {
     typedef unsigned long (__stdcall *FN)(void*);
+    LONG references = InterlockedDecrement((LONG*)&self->refCount);
     unsigned long rc = ((FN)REAL_VTBL(self)[2])(self->pReal);
-    self->refCount--;
-    if (self->refCount <= 0) {
+    if (references == 0) {
         HeapFree(GetProcessHeap(), 0, self);
     }
     return rc;
@@ -151,7 +176,7 @@ static int __stdcall W9_CreateDevice(WrappedD3D9 *self, unsigned int adapter,
     }
 
     {
-        WrappedDevice *wrapped = WrappedDevice_Create(pRealDevice);
+        WrappedDevice *wrapped = WrappedDevice_Create(pRealDevice, self);
         if (!wrapped) {
             log_str("  ERROR: Failed to create wrapped device\r\n");
             *ppDevice = pRealDevice;

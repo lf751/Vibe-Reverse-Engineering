@@ -65,6 +65,10 @@ static HMODULE g_preloadDLL = NULL;
 static PFN_Direct3DCreate9 g_realDirect3DCreate9 = NULL;
 HINSTANCE g_hInstance = NULL;
 
+FARPROC Proxy_GetChainExport(const char *name) {
+    return g_realD3D9 ? GetProcAddress(g_realD3D9, name) : NULL;
+}
+
 typedef struct WrappedD3D9 WrappedD3D9;
 typedef struct WrappedDevice WrappedDevice;
 

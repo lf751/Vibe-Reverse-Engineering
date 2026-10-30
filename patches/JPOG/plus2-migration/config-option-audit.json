@@ -1,0 +1,11 @@
+{
+  "known": 63,
+  "unlisted": {
+    "rtx.sharc.footprintGate": "True",
+    "rtx.sharc.allowRayPortals": "True",
+    "rtx.tonemap.psycho17.contrast": "1.2",
+    "rtx.sharc.minRoughness": "0.05",
+    "rtx.sharc.minRoughnessSpecular": "0.7",
+    "rtx.atmosphere.moon0.brightness": "0.1"
+  }
+}
