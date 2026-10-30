@@ -37,5 +37,15 @@ and unmapped files unchanged. Weather migration did not rerun; authored profiles
 were preserved. Recovery backup:
 `backups/JPOG/2026-10-30_224109_sharing-release`.
 
-The corrected build is open for the same-save scene-load retest. Visual
-validation remains pending that load.
+The same save now loads and remains running. The active runtime log has no
+errors through the live checks. Off, Raymarched POM and Quadtree POM were
+hot-reloaded in sequence, then the original preset was restored byte for byte.
+The user confirmed the terrain looks correct, smooth normals refresh after a
+height edit, and dirt/grass exclusion follows an extended path.
+
+Automated window capture was unavailable (native pipe error 2), so visual and
+editing results are user-confirmed. Runtime stability, live mask binding and
+preset restoration are independently checked. Evidence is under
+`test-artifacts/JPOG/plus2-migration/smooth-fix-live-confirmed/`, with mode results
+in `live-pom-results.json` beside it. The installed game and Desktop release
+folder have not been upgraded by this migration.

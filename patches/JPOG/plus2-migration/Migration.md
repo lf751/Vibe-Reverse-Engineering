@@ -147,10 +147,15 @@ retain their hashes. Twelve profiles are under `rtx-remix/weather`. Backup:
 `test-artifacts/JPOG/plus2-migration/isolated-deployment/deployment.json`.
 The installed game and Desktop sharing folder have not been deployed.
 
-Live terrain rendering, landscaping/coverage, smoothing, both POM modes and
-weather still require the game check. The new deployment skill explicitly
-requires asking before a game launch/GPU replay; launch approval was requested
-after the verified isolated package was ready. No public pushes are authorized.
+The user approved launching the verified isolated package. The corrected build
+passes the same-save scene load and stays running without logged runtime errors.
+Off, Raymarched POM and Quadtree POM hot reload remain stable; the original
+preset is restored byte for byte. The user confirmed correct terrain appearance,
+smooth-normal updates after a height edit, and dirt/grass exclusion after a path
+extension. Visual checks are user-confirmed because automated window capture
+was unavailable. Weather profiles load and the live mask rebinds; exhaustive
+weather-transition and day/night appearance testing was not performed.
+No public pushes are authorized.
 
 The first approved scene load crashed in CPU normal generation. See
 [SmoothNormalsCrash.md](SmoothNormalsCrash.md) for the dump-backed diagnosis and
@@ -159,8 +164,9 @@ fresh full 29/29 unit run pass. The isolated package now contains the fix, with
 225 runtime/integration files verified and all unmapped files preserved. Native
 weather profiles were retained on this repeat deployment. Manifest:
 `test-artifacts/JPOG/plus2-migration/isolated-smooth-fix-deployment/deployment.json`.
-The original staged package is not visually validated; the corrected build is
-open to repeat the same save load.
+The original staged package failed its live test and is superseded by this
+corrected, tested package. The installed game and Desktop release folder remain
+on their prior builds; this migration deploys only the isolated test copy.
 
 Logs, patches, and reports: `test-artifacts/JPOG/plus2-migration/`.
 Recovery source snapshots: `backups/JPOG/*plus2*`.
