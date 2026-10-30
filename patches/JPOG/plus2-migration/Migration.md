@@ -145,7 +145,7 @@ verified files. Its 2752 pre-existing files were accounted for; unmapped files
 retain their hashes. Twelve profiles are under `rtx-remix/weather`. Backup:
 `backups/JPOG/2026-10-30_220550_sharing-release`. Manifest:
 `test-artifacts/JPOG/plus2-migration/isolated-deployment/deployment.json`.
-The installed game and Desktop sharing folder have not been deployed.
+This first deployment affected only the isolated copy.
 
 The user approved launching the verified isolated package. The corrected build
 passes the same-save scene load and stays running without logged runtime errors.
@@ -165,8 +165,22 @@ fresh full 29/29 unit run pass. The isolated package now contains the fix, with
 weather profiles were retained on this repeat deployment. Manifest:
 `test-artifacts/JPOG/plus2-migration/isolated-smooth-fix-deployment/deployment.json`.
 The original staged package failed its live test and is superseded by this
-corrected, tested package. The installed game and Desktop release folder remain
-on their prior builds; this migration deploys only the isolated test copy.
+corrected, tested package.
+
+## Installed game deployment
+
+At the user's request, `D:/Games/JPOGRTX/JPOG` received the tested build after
+the user backed up the game and removed its old logs and `.trex` directory.
+All 239 runtime/integration/configuration files are hash-verified. The 10708
+pre-existing files were accounted for, with unmapped mods, ingested textures,
+saves and settings preserved. Weather overrides were converted from this
+target's own config. The fresh bridge configuration enables the Remix API;
+the deploy script now installs the tracked JPOG bridge config when none exists.
+
+Recovery backup: `backups/JPOG/2026-10-30_225517_sharing-release`.
+Manifest: `test-artifacts/JPOG/plus2-migration/main-game-deployment/deployment.json`.
+The installed game was left closed for the user to test. The Desktop release
+folder remains on its prior build. No GitHub push was performed.
 
 Logs, patches, and reports: `test-artifacts/JPOG/plus2-migration/`.
 Recovery source snapshots: `backups/JPOG/*plus2*`.

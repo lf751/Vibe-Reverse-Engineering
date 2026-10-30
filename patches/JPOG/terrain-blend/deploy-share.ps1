@@ -61,7 +61,11 @@ $mappings['d3d9_remix.dll'] = Join-Path $bridgeRoot 'd3d9.dll'
 $mappings['NvRemixLauncher32.exe'] = Join-Path $bridgeRoot 'NvRemixLauncher32.exe'
 $mappings['.trex\NvRemixBridge.exe'] = Join-Path $bridgeRoot '.trex\NvRemixBridge.exe'
 # Target bridge settings and optional DLLs absent from the package remain authored locally.
-if (Test-Path -LiteralPath (Join-Path $releaseRoot '.trex/bridge.conf')) { $mappings.Remove('.trex\bridge.conf') }
+if (Test-Path -LiteralPath (Join-Path $releaseRoot '.trex/bridge.conf')) {
+  $mappings.Remove('.trex\bridge.conf')
+} else {
+  $mappings['.trex\bridge.conf'] = Join-Path $workspace 'patches/JPOG/bridge.conf'
+}
 $config = Join-Path $releaseRoot 'rtx.conf'
 $migrated = $false
 if (!(Test-Path -LiteralPath $config -PathType Leaf)) { throw 'Target rtx.conf is required for weather migration.' }

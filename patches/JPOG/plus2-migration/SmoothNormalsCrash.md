@@ -47,5 +47,7 @@ Automated window capture was unavailable (native pipe error 2), so visual and
 editing results are user-confirmed. Runtime stability, live mask binding and
 preset restoration are independently checked. Evidence is under
 `test-artifacts/JPOG/plus2-migration/smooth-fix-live-confirmed/`, with mode results
-in `live-pom-results.json` beside it. The installed game and Desktop release
-folder have not been upgraded by this migration.
+in `live-pom-results.json` beside it. The user subsequently requested deployment
+of this tested correction to `D:/Games/JPOGRTX/JPOG`; 239 files were verified and
+that game was left closed for their test. The Desktop release folder remains
+on its prior build.
