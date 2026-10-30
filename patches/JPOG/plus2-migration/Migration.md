@@ -5,7 +5,7 @@ Runtime integration worktree: `D:/Unity/feat-20261030-jpog-terrain`, branch
 `feat/20261030-jpog-terrain`. Original runtime branch remains recoverable as
 `backup/JPOGRemix-pre-plus2-20261030` at `ab48b452c`.
 The original `D:/Unity/dxvk-remix_numos` checkout's `JPOGRemix` branch is now
-`df15cca1a`. Feature port: `2093caa68`; history-preserving merge: `43d87ac61`;
+`f07264ab0`. Feature port: `2093caa68`; history-preserving merge: `43d87ac61`;
 build workflow follow-up: `df15cca1a`. The history join leaves the ported tree
 unchanged and makes a normal push possible. No force push or public push occurred.
 Three colliding ignored local files were backed up before the checkout advanced;
@@ -151,6 +151,16 @@ Live terrain rendering, landscaping/coverage, smoothing, both POM modes and
 weather still require the game check. The new deployment skill explicitly
 requires asking before a game launch/GPU replay; launch approval was requested
 after the verified isolated package was ready. No public pushes are authorized.
+
+The first approved scene load crashed in CPU normal generation. See
+[SmoothNormalsCrash.md](SmoothNormalsCrash.md) for the dump-backed diagnosis and
+the buffer-domain correction in `f07264ab0`. The corrected clean release and a
+fresh full 29/29 unit run pass. The isolated package now contains the fix, with
+225 runtime/integration files verified and all unmapped files preserved. Native
+weather profiles were retained on this repeat deployment. Manifest:
+`test-artifacts/JPOG/plus2-migration/isolated-smooth-fix-deployment/deployment.json`.
+The original staged package is not visually validated; the corrected build is
+open to repeat the same save load.
 
 Logs, patches, and reports: `test-artifacts/JPOG/plus2-migration/`.
 Recovery source snapshots: `backups/JPOG/*plus2*`.

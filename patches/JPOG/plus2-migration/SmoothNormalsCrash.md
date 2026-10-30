@@ -1,0 +1,41 @@
+# Smooth-normal crash on the first 2.0 scene load
+
+The isolated run on 2026-10-30 reached terrain auto-tagging and bound the live
+grass coverage mask, then crashed in the x64 runtime. Matching build symbols
+resolve exception RVA `0x586f5b` to `dxvk::smoothNormalsAccumulate+0x11b`,
+`smooth_normals.h:185`, loading the second vertex position.
+
+The exception context contains these smoothing arguments:
+
+- 9 vertices, 17 triangles; position offset 0 and stride 28 bytes.
+- 16-bit indices, index offset 0; hash table size 256.
+- The failing second vertex index is 19,711, outside the 9-vertex domain.
+
+The CPU dispatcher read original `RasterGeometry` buffers while configuring
+index width and triangle count from converted `RaytraceGeometry`. Those
+representations can differ in topology, index format and lifetime. In particular,
+a 19-index strip/fan expands to 51 triangle-list indices; the original stream
+cannot be read as that expanded list.
+
+Runtime commit `f07264ab0` makes both execution paths consume the converted
+ray-tracing buffers. CPU execution requires those same buffers to be mapped and
+free of pending GPU writes. The original-raster argument is removed from the
+dispatcher and both callers. Smoothing remains enabled and the shared algorithm
+is unchanged.
+
+The regression exercises 9 vertices and 17 triangles, fan conversion from
+32-bit raster indices to a rebased 16-bit triangle list, an invalid original
+index, padded vertex stride and nonzero buffer offsets. It checks resulting
+normals using the production conversion and smoothing functions.
+
+Evidence, including the dump and original matching DLL/PDB, is retained in
+`test-artifacts/JPOG/plus2-migration/crash-2026-10-30_2213/`.
+The focused regression, corrected release build and fresh full unit run pass
+(29/29 tests). The clean committed release was relinked and deployed to the
+isolated game: 225 files hash-verified, with 2817 existing files accounted for
+and unmapped files unchanged. Weather migration did not rerun; authored profiles
+were preserved. Recovery backup:
+`backups/JPOG/2026-10-30_224109_sharing-release`.
+
+The corrected build is open for the same-save scene-load retest. Visual
+validation remains pending that load.
