@@ -30,6 +30,8 @@
 #define REMIX_WINAPI_NO_LIBRARY_LOADER
 #include "remix/remix_c.h"
 
+int InstallTerrainWaterResetHook(HMODULE module);
+
 /* ---- No-CRT memcpy ---- */
 #pragma function(memcpy)
 void * __cdecl memcpy(void *dst, const void *src, unsigned int n) {
@@ -309,7 +311,7 @@ static DWORD WINAPI InitThread(LPVOID param) {
     HMODULE hSimJp;
     HMODULE hRenderD3D = NULL;
     HMODULE hTerrainShader = NULL;
-    int renderDone = 0, terrainDone = 0;
+    int renderDone = 0, terrainDone = 0, waterResetDone = 0;
     int i;
 
     (void)param;
@@ -330,7 +332,12 @@ static DWORD WINAPI InitThread(LPVOID param) {
                 terrainDone = InstallTerrainTagHook(hTerrainShader);
             }
         }
-        if (renderDone && terrainDone)
+        if (!waterResetDone) {
+            hTerrainShader = GetModuleHandleA("TTerrainShaderD3D.dll");
+            if (hTerrainShader)
+                waterResetDone = InstallTerrainWaterResetHook(hTerrainShader);
+        }
+        if (renderDone && terrainDone && waterResetDone)
             return 0;
         Sleep(100);
     }

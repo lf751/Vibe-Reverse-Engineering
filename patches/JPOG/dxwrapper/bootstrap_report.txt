@@ -1,0 +1,14 @@
+Bootstrap Report
+================
+
+Binary: test-artifacts/JPOG/plus2-regression-investigation/2026-10-31_dxwrapper-close/dxwrapper.dll
+Compiler: msvc (confidence: 40%)
+
+Signature DB matches: 19
+RTTI classes found: 26
+Imports cataloged: 505
+Strings indexed: 40962
+Propagated labels: 521
+Functions identified: 566
+KB entries written: 566
+

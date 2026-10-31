@@ -18,12 +18,12 @@ echo Setting up x86 build environment...
 call "%VCVARSALL%" x86 >nul 2>&1
 
 echo Compiling jpog_view_fix.c...
-cl /nologo /W3 /O2 /Oi /Gy /GL /GS- /Zl /I"%REMIX_RUNTIME_SOURCE%\public\include" /c jpog_view_fix.c
+cl /nologo /W3 /O2 /Oi /Gy /GL /GS- /Zl /I"%REMIX_RUNTIME_SOURCE%\public\include" /c jpog_view_fix.c terrain_water_reset.c
 if errorlevel 1 goto fail
 
 echo Linking jpog_view_fix.asi...
 link /nologo /DLL /LTCG /OPT:REF /OPT:ICF /NODEFAULTLIB /ENTRY:DllMain /OUT:jpog_view_fix.asi ^
-     jpog_view_fix.obj kernel32.lib
+     jpog_view_fix.obj terrain_water_reset.obj kernel32.lib
 if errorlevel 1 goto fail
 
 echo.
