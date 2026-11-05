@@ -1,8 +1,8 @@
 # Terrain blend displacement modes
 
-The Toolkit terrain editor exposes Off, Raymarched POM, and Quadtree POM in its
+The Toolkit terrain editor exposes Off and Quadtree POM in its
 Displacement mode dropdown. Keep Enable terrain displacement checked to use
-either POM algorithm. The existing inward/outward strengths, height ranges,
+Quadtree POM. The existing inward/outward strengths, height ranges,
 iteration controls, and self-shadow settings remain available.
 
 The exported integer attribute is `remix:terrainBlend:displacementMode`:
@@ -10,11 +10,11 @@ The exported integer attribute is `remix:terrainBlend:displacementMode`:
 | Value | Mode |
 | --- | --- |
 | 0 | Off |
-| 1 | Raymarched POM |
 | 2 | Quadtree POM |
 
-Presets without the attribute retain the previous raymarched behaviour. Invalid
-values are rejected by both authoring and runtime loading. The runtime maps Off
+Presets without the attribute default to Quadtree. Legacy value 1 is migrated to
+Quadtree on read without changing its other controls or the source USD. Toolkit
+writes value 2 on export. Other invalid values are rejected. The runtime maps Off
 to disabled displacement before pass selection, so self-shadowing is also off.
 
 The terrain quadtree traverses the maximum-height mipmaps of all active height
@@ -28,6 +28,13 @@ mips. Traversal-budget exhaustion does not fabricate a displaced hit.
 Use Toolkit-ingested height maps with MAX mip filtering, as required by Remix's
 regular quadtree POM. Normal averaged mipmaps do not provide conservative bounds.
 
+Terrain variants, including self-shadow lighting variants, join Remix's existing
+startup shader compilation queue and progress screen when the mod preset loads.
+They do not wait for the first terrain draw. The runtime shader contains no
+raymarched terrain POM traversal; ordinary material displacement is independent.
+
+## Earlier three-mode validation (historical)
+
 Toolkit authoring checks passed: 15 core, 3 widget, and 8 window Kit tests, plus
 formatting and full lint. The corrected release build and install passed, and
 four dedicated runtime regressions passed: hot reload, smooth normals, embedded
@@ -40,5 +47,5 @@ The main installation retains its authored preset (older presets default to
 Raymarched POM). The desktop release was not replaced. Build and live-test evidence is recorded in
 `test-artifacts/JPOG/terrain-blend/pom-modes-*`.
 
-For isolated-game comparisons, `set-pom-test-mode.ps1 -Mode 0`, `-Mode 1`, or
-`-Mode 2` updates only the isolated terrain preset and makes a backup first.
+For smoke-fixture comparisons, `set-pom-test-mode.ps1 -Mode 0` or `-Mode 2`
+updates the isolated smoke preset and makes a backup first.

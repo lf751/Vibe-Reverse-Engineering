@@ -1,5 +1,7 @@
 # Terrain POM displacement
 
+This records the initial raymarched implementation and its validation. Current terrain displacement uses Quadtree POM only; see [TerrainPomModes.md](TerrainPomModes.md) for the current preset contract. The findings below are retained as historical evidence.
+
 The Terrain Blend plugin adds a master displacement toggle, strength, and quality,
 plus independent Grass, Sand, Rock, and Dirt depths. It uses the existing height
 texture on each layer. White is the top of the apparent surface and black is

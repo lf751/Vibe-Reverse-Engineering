@@ -1,4 +1,4 @@
-param([Parameter(Mandatory = $true)][ValidateRange(0, 2)][int]$Mode)
+param([Parameter(Mandatory = $true)][ValidateSet(0, 2)][int]$Mode)
 $ErrorActionPreference = 'Stop'
 $workspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 $presetPath = Join-Path $workspaceRoot 'test-artifacts\JPOG\terrain-blend\test-game\rtx-remix\mods\terrain-blend-smoke\mod.usda'
