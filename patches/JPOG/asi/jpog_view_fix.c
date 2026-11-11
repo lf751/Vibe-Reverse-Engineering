@@ -59,12 +59,15 @@ void * __cdecl memcpy(void *dst, const void *src, unsigned int n) {
 typedef int (__stdcall *FnSetTransform)(void*, int, void*);
 typedef int (__fastcall *FnWeatherUpdate)(void*, void*, float);
 typedef void (__fastcall *FnTerrainRender)(void*, void*, void*);
+typedef void (__fastcall *FnDestroyRenderContext)(void*, void*);
 
 /* ====================================================================
  * Hook 1: View Matrix Fix (TRenderD3DInterface.dll)
  * ==================================================================== */
 
 static void *g_mainCameraContext = NULL;
+static FnDestroyRenderContext g_originalDestroyRenderContext = NULL;
+static BYTE *g_contextDestroyTrampoline = NULL;
 static FnWeatherUpdate g_originalWeatherUpdate = NULL;
 static FnTerrainRender g_originalTerrainRender = NULL;
 static BYTE *g_weatherTrampoline = NULL;
@@ -159,6 +162,7 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
     float tRow2, tCol2;
     float determinant;
 
+    (void)edx_unused;
     ppIface = *(void**)((char*)thisPtr + RCTX_OFF_IFACE);
     device  = *(void**)((char*)ppIface + IFACE_OFF_DEVICE);
     vtbl    = *(void***)device;
@@ -185,6 +189,31 @@ static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
         fnST(device, D3DTS_VIEW, viewMatrix);
         fnST(device, D3DTS_PROJECTION, projMatrix);
     }
+}
+
+/* The context owns camera selection, so destruction releases that selection. */
+static void __fastcall Hook_DestroyRenderContext(void *context, void *unused) {
+    (void)unused;
+    if (context == g_mainCameraContext)
+        g_mainCameraContext = NULL;
+    g_originalDestroyRenderContext(context, NULL);
+}
+
+static int MatchModuleBytes(HMODULE module, DWORD rva, const BYTE *expected, DWORD length) {
+    const BYTE *base = (const BYTE*)module;
+    const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER*)base;
+    const IMAGE_NT_HEADERS *nt;
+    DWORD i;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE || dos->e_lfanew < 0)
+        return 0;
+    nt = (const IMAGE_NT_HEADERS*)(base + dos->e_lfanew);
+    if (nt->Signature != IMAGE_NT_SIGNATURE || rva > nt->OptionalHeader.SizeOfImage ||
+        length > nt->OptionalHeader.SizeOfImage - rva)
+        return 0;
+    for (i = 0; i < length; i++)
+        if (base[rva + i] != expected[i])
+            return 0;
+    return 1;
 }
 
 /* ---- Patch helpers ---- */
@@ -236,6 +265,7 @@ static int InstallWeatherHook(HMODULE hMod) {
     g_weatherTrampoline[5] = 0xE9;
     rel = (int)((target + 5) - (g_weatherTrampoline + 10));
     memcpy(g_weatherTrampoline + 6, &rel, 4);
+    FlushInstructionCache(GetCurrentProcess(), g_weatherTrampoline, 10);
     g_originalWeatherUpdate = (FnWeatherUpdate)g_weatherTrampoline;
     if (!InstallJump(hMod, WEATHER_UPDATE_RVA, (void*)Hook_WeatherUpdate)) {
         VirtualFree(g_weatherTrampoline, 0, MEM_RELEASE);
@@ -270,6 +300,7 @@ static int InstallTerrainRenderHook(HMODULE hMod) {
     g_terrainTrampoline[7] = 0xE9;
     rel = (int)((target + 7) - (g_terrainTrampoline + 12));
     memcpy(g_terrainTrampoline + 8, &rel, 4);
+    FlushInstructionCache(GetCurrentProcess(), g_terrainTrampoline, 12);
     g_originalTerrainRender = (FnTerrainRender)g_terrainTrampoline;
 
     patch[0] = 0xE9;
@@ -302,7 +333,51 @@ static int InstallTerrainTagHook(HMODULE hMod) {
 /* ---- Install render hooks ---- */
 
 static int InstallRenderHooks(HMODULE hMod) {
-    return InstallJump(hMod, 0x7180, (void*)Hook_SetRenderMatrices);
+    static const BYTE matrixPrologue[6] = { 0x56, 0x8B, 0xF1, 0x8B, 0x46, 0x04 };
+    BYTE destroyPrologue[6] = { 0xC7, 0x01, 0, 0, 0, 0 };
+    BYTE destroyPatch[6];
+    BYTE matrixPatch[6];
+    BYTE *destroyTarget = (BYTE*)hMod + 0x71C0;
+    DWORD contextVtable = (DWORD)((BYTE*)hMod + 0x74480);
+    int relative;
+
+    memcpy(destroyPrologue + 2, &contextVtable, 4);
+    if (!MatchModuleBytes(hMod, 0x7180, matrixPrologue, 6) ||
+        !MatchModuleBytes(hMod, 0x71C0, destroyPrologue, 6)) {
+        OutputDebugStringA("JPOG ASI: unsupported render-context signatures; camera hooks skipped.\n");
+        return 0;
+    }
+    g_contextDestroyTrampoline = (BYTE*)VirtualAlloc(NULL, 11,
+        MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!g_contextDestroyTrampoline)
+        return 0;
+    memcpy(g_contextDestroyTrampoline, destroyPrologue, 6);
+    g_contextDestroyTrampoline[6] = 0xE9;
+    relative = (int)(destroyTarget + 6 - (g_contextDestroyTrampoline + 11));
+    memcpy(g_contextDestroyTrampoline + 7, &relative, 4);
+    FlushInstructionCache(GetCurrentProcess(), g_contextDestroyTrampoline, 11);
+    g_originalDestroyRenderContext = (FnDestroyRenderContext)g_contextDestroyTrampoline;
+
+    destroyPatch[0] = 0xE9;
+    relative = (int)((BYTE*)Hook_DestroyRenderContext - destroyTarget - 5);
+    memcpy(destroyPatch + 1, &relative, 4);
+    destroyPatch[5] = 0x90;
+    matrixPatch[0] = 0xE9;
+    relative = (int)((BYTE*)Hook_SetRenderMatrices - ((BYTE*)hMod + 0x7180) - 5);
+    memcpy(matrixPatch + 1, &relative, 4);
+    matrixPatch[5] = 0x90;
+    if (!PatchBytes(destroyTarget, destroyPatch, 6)) {
+        VirtualFree(g_contextDestroyTrampoline, 0, MEM_RELEASE);
+        g_contextDestroyTrampoline = NULL;
+        g_originalDestroyRenderContext = NULL;
+        return 0;
+    }
+    if (!PatchBytes((BYTE*)hMod + 0x7180, matrixPatch, 6)) {
+        /* The destructor trampoline stays live even if only its hook installed. */
+        OutputDebugStringA("JPOG ASI: camera matrix patch failed.\n");
+        return 0;
+    }
+    return 1;
 }
 
 /* ---- Delayed init thread ---- */
@@ -323,7 +398,8 @@ static DWORD WINAPI InitThread(LPVOID param) {
         if (!renderDone) {
             hRenderD3D = GetModuleHandleA("TRenderD3DInterface.dll");
             if (hRenderD3D) {
-                renderDone = InstallRenderHooks(hRenderD3D);
+                InstallRenderHooks(hRenderD3D);
+                renderDone = 1;
             }
         }
         if (!terrainDone) {
@@ -348,22 +424,18 @@ static DWORD WINAPI InitThread(LPVOID param) {
 
 BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
     HANDLE thread;
+    HMODULE pinnedModule;
 
     (void)reserved;
     if (reason == DLL_PROCESS_ATTACH) {
+        /* Game modules keep jumps into this ASI for the process lifetime. */
+        if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+            GET_MODULE_HANDLE_EX_FLAG_PIN, (LPCSTR)hDll, &pinnedModule))
+            return FALSE;
         DisableThreadLibraryCalls(hDll);
         thread = CreateThread(NULL, 0, InitThread, NULL, 0, NULL);
         if (thread)
             CloseHandle(thread);
-    } else if (reason == DLL_PROCESS_DETACH) {
-        if (g_weatherTrampoline) {
-            VirtualFree(g_weatherTrampoline, 0, MEM_RELEASE);
-            g_weatherTrampoline = NULL;
-        }
-        if (g_terrainTrampoline) {
-            VirtualFree(g_terrainTrampoline, 0, MEM_RELEASE);
-            g_terrainTrampoline = NULL;
-        }
     }
     return TRUE;
 }

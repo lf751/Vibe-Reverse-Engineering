@@ -26,7 +26,6 @@ static const WaterShader g_waterShaders[] = {
 
 static BYTE* g_terrainModule;
 static TerrainCreateShaders g_createTerrainShaders;
-static HANDLE g_resetLog = INVALID_HANDLE_VALUE;
 
 static void LogWaterShader(DWORD offset, HRESULT result, DWORD handle) {
     char line[] = "water reset: offset=00000000 hr=00000000 handle=00000000\r\n";
@@ -34,6 +33,7 @@ static void LogWaterShader(DWORD offset, HRESULT result, DWORD handle) {
     DWORD values[3];
     int positions[3] = { 20, 32, 48 };
     DWORD written;
+    HANDLE resetLog;
     int i, j;
     values[0] = offset;
     values[1] = (DWORD)result;
@@ -41,8 +41,12 @@ static void LogWaterShader(DWORD offset, HRESULT result, DWORD handle) {
     for (i = 0; i < 3; ++i)
         for (j = 0; j < 8; ++j)
             line[positions[i] + j] = digits[(values[i] >> (28 - j * 4)) & 15];
-    if (g_resetLog != INVALID_HANDLE_VALUE)
-        WriteFile(g_resetLog, line, sizeof(line) - 1, &written, NULL);
+    resetLog = CreateFileA("jpog_terrain_water_reset.log", FILE_APPEND_DATA,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (resetLog != INVALID_HANDLE_VALUE) {
+        WriteFile(resetLog, line, sizeof(line) - 1, &written, NULL);
+        CloseHandle(resetLog);
+    }
 }
 
 /* Water resources are independent of the high-end terrain rendering path. */
@@ -116,8 +120,6 @@ int InstallTerrainWaterResetHook(HMODULE module) {
     }
     g_terrainModule = (BYTE*)module;
     g_createTerrainShaders = (TerrainCreateShaders)trampoline;
-    g_resetLog = CreateFileA("jpog_terrain_water_reset.log", FILE_APPEND_DATA,
-        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     relative = (int)((BYTE*)HookTerrainCreateShaders - target - 5);
     target[0] = 0xE9;
     *(int*)(target + 1) = relative;

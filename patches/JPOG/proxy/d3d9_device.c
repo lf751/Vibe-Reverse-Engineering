@@ -67,7 +67,6 @@ typedef HRESULT (__stdcall *PFN_SetOuterDevice)(void *inner, void *outerDevice, 
 #define D3DRS_DESTBLEND             20
 #define D3DRS_ALPHABLENDENABLE      27
 
-#define VERTEX_SHADER_RECORDS 128
 #define PARTICLE_VERTEX_SHADER_HASH 0x72F91594u
 
 /* ---- Device vtable slot indices ---- */
@@ -109,10 +108,12 @@ typedef struct WrappedDevice {
     /* MV from c17-c20 (transposed to D3D row-major) */
     float mvMatrix[16];
     int   mvDirty;
+    unsigned int mvValidRegisters;
 
     /* MVP from c0-c3 (transposed to D3D row-major) */
     float mvpMatrix[16];
     int   hasMVP;
+    unsigned int mvpValidRegisters;
 
     /* View matrix (real from ASI or rotation-only approximation) */
     float viewMatrix[16];
@@ -137,6 +138,7 @@ typedef struct WrappedDevice {
     void *texture0;
 
     unsigned int stream0Stride;
+    unsigned int stream0Offset;
     void *vertexDeclaration;
     unsigned int currentFVF;
     int usesFVF;
@@ -144,9 +146,6 @@ typedef struct WrappedDevice {
     void *pixelShader;
     unsigned int alphaBlendEnabled;
     unsigned int destBlend;
-    void *vertexShaderObjects[VERTEX_SHADER_RECORDS];
-    unsigned int vertexShaderHashes[VERTEX_SHADER_RECORDS];
-    unsigned int vertexShaderRecordCount;
     unsigned int currentVertexShaderHash;
     void *particleDeclaration;
 } WrappedDevice;
@@ -165,16 +164,19 @@ static unsigned int hash_bytes(const void *data, unsigned int size) {
     return hash;
 }
 
-static unsigned int hash_shader_bytecode(const unsigned int *tokens) {
-    unsigned int count = 0;
-    if (!tokens)
-        return 0;
-    while (count < 4096) {
-        count++;
-        if (tokens[count - 1] == 0x0000FFFF)
-            return hash_bytes(tokens, count * sizeof(unsigned int));
-    }
-    return 0;
+static unsigned int get_shader_hash(void *shader) {
+    typedef int (__stdcall *GetFunction)(void*, void*, unsigned int*);
+    unsigned int size = 0, hash = 0;
+    void *code;
+    GetFunction get;
+    if (!shader) return 0;
+    get = (GetFunction)(*(void***)shader)[4];
+    if (get(shader, NULL, &size) < 0 || !size) return 0;
+    code = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!code) return 0;
+    if (get(shader, code, &size) >= 0) hash = hash_bytes(code, size);
+    HeapFree(GetProcessHeap(), 0, code);
+    return hash;
 }
 
 typedef struct VertexElement9 {
@@ -331,32 +333,21 @@ static void set_world_if_changed(WrappedDevice *self, const float *world) {
 
 /* ---- VB vtable hook: capture first-vertex XYZ at upload time ---- */
 
-#define VB_SAMPLE_MAX 4096
-#define VB_LOCK_SLOTS   64
-
-typedef struct { void *pVB; void *pData; } VBLockSlot;
-typedef struct {
-    void *pVB;
-    float x, y, z;
-} VBSample;
-
-static VBLockSlot  g_vbLocks[VB_LOCK_SLOTS];
-static VBSample    g_vbSamples[VB_SAMPLE_MAX];
-static int         g_vbSampleCount  = 0;
-static int         g_vbVtblHooked   = 0;
-static void       *g_origVBLock     = NULL;
-static void       *g_origVBUnlock   = NULL;
-static void       *g_curStream0VB   = NULL;
+static const GUID g_vbSampleKey = {0x879712c1,0x4e79,0x49ac,{0x92,0x71,0x75,0x66,0x93,0x3a,0x42,0x11}};
+static const GUID g_vbLockKey = {0x879712c2,0x4e79,0x49ac,{0x92,0x71,0x75,0x66,0x93,0x3a,0x42,0x11}};
+static int g_vbVtblHooked;
+static void *g_origVBLock, *g_origVBUnlock;
+static void *g_curStream0VB;
 
 /* Set by the ASI while TTerrainShaderD3D renders a terrain packet. */
 __declspec(dllexport) volatile int g_terrainRenderActive = 0;
 
-#define TERRAIN_HASH_MAX 64
 #define REMIX_TAG_HASH_MAX 256
-#define TEXTURE_HASH_CACHE_MAX 64
-typedef struct { void *texture; unsigned __int64 hash; unsigned int frame; } TextureHashCache;
+typedef struct { unsigned __int64 hash; unsigned __int64 frame; } TextureHashCache;
+static const GUID g_textureHashKey = {0x879712c3,0x4e79,0x49ac,{0x92,0x71,0x75,0x66,0x93,0x3a,0x42,0x11}};
 static remixapi_Interface g_remix = { 0 };
-static unsigned __int64 g_terrainHashes[TERRAIN_HASH_MAX];
+static unsigned __int64 *g_terrainHashes;
+static unsigned int g_terrainHashCapacity;
 static int g_terrainHashCount = 0;
 static unsigned __int64 g_particleTextureHashes[REMIX_TAG_HASH_MAX];
 static unsigned int g_particleTextureHashCount = 0;
@@ -367,8 +358,9 @@ static int g_loggedRemixInitFailure = 0;
 static int g_loggedTextureHashFailure = 0;
 static int g_loggedTextureHashZero = 0;
 static int g_loggedTerrainAddFailure = 0;
-static TextureHashCache g_textureHashCache[TEXTURE_HASH_CACHE_MAX];
-static unsigned int g_textureHashFrame = 1;
+static unsigned __int64 g_textureHashFrame = 1;
+static int resource_set_data(void*, const GUID*, const void*, unsigned int);
+static int resource_get_data(void*, const GUID*, void*, unsigned int);
 static DWORD g_nextRemixTagConfigPoll = 0;
 
 static int initialize_remix_api(void) {
@@ -459,7 +451,16 @@ static void tag_terrain_texture(void *texture) {
     }
 
     hash_to_hex(hashText, hash);
-    if (g_remix.AddTextureHash("rtx.terrainTextures", hashText) !=
+    if ((unsigned int)g_terrainHashCount == g_terrainHashCapacity) {
+        unsigned int capacity = g_terrainHashCapacity ? g_terrainHashCapacity * 2 : 64;
+        void *grown = g_terrainHashes
+            ? HeapReAlloc(GetProcessHeap(), 0, g_terrainHashes, capacity * sizeof(*g_terrainHashes))
+            : HeapAlloc(GetProcessHeap(), 0, capacity * sizeof(*g_terrainHashes));
+        if (!grown) return;
+        g_terrainHashes = grown;
+        g_terrainHashCapacity = capacity;
+    }
+    if (g_remix.AddTextureHash("session:rtx.terrainTextures", hashText) !=
         REMIXAPI_ERROR_CODE_SUCCESS) {
         if (!g_loggedTerrainAddFailure) {
             log_str("Terrain tag: AddTextureHash failed\r\n");
@@ -467,8 +468,7 @@ static void tag_terrain_texture(void *texture) {
         }
         return;
     }
-    if (g_terrainHashCount < TERRAIN_HASH_MAX)
-        g_terrainHashes[g_terrainHashCount++] = hash;
+    g_terrainHashes[g_terrainHashCount++] = hash;
     log_str("Auto-tagged terrain texture: 0x");
     log_str(hashText);
     log_str("\r\n");
@@ -631,22 +631,16 @@ static void reload_remix_tag_config(void) {
 }
 
 static int get_texture_hash(void *texture, unsigned __int64 *hash) {
-    unsigned int i;
-    if (!texture || !hash || !initialize_remix_api())
-        return 0;
-
-    i = ((unsigned int)(unsigned long)texture >> 4) % TEXTURE_HASH_CACHE_MAX;
-    if (g_textureHashCache[i].frame == g_textureHashFrame &&
-        g_textureHashCache[i].texture == texture) {
-        *hash = g_textureHashCache[i].hash;
+    TextureHashCache cached;
+    if (!texture || !hash || !initialize_remix_api()) return 0;
+    if (resource_get_data(texture, &g_textureHashKey, &cached, sizeof(cached)) && cached.frame == g_textureHashFrame) {
+        *hash = cached.hash;
         return 1;
     }
-    if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, hash) !=
-        REMIXAPI_ERROR_CODE_SUCCESS || *hash == 0)
-        return 0;
-    g_textureHashCache[i].texture = texture;
-    g_textureHashCache[i].hash = *hash;
-    g_textureHashCache[i].frame = g_textureHashFrame;
+    if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, hash) != REMIXAPI_ERROR_CODE_SUCCESS || !*hash) return 0;
+    cached.hash = *hash;
+    cached.frame = g_textureHashFrame;
+    resource_set_data(texture, &g_textureHashKey, &cached, sizeof(cached));
     return 1;
 }
 
@@ -661,47 +655,32 @@ static int texture_hash_is_tagged(unsigned __int64 hash,
     return 0;
 }
 
-static float *vbsample_get(void *pVB) {
-    int i;
-    for (i = 0; i < g_vbSampleCount; i++)
-        if (g_vbSamples[i].pVB == pVB) return &g_vbSamples[i].x;
-    return NULL;
+static int resource_set_data(void *resource, const GUID *key, const void *data, unsigned int size) {
+    typedef int (__stdcall *FN)(void*, const GUID*, const void*, unsigned int, unsigned int);
+    return ((FN)(*(void***)resource)[4])(resource, key, data, size, 0);
 }
 
-static void vbsample_store(void *pVB, const void *data) {
-    const float *position = (const float *)data;
-    int i;
-    for (i = 0; i < g_vbSampleCount; i++) {
-        if (g_vbSamples[i].pVB == pVB) {
-            g_vbSamples[i].x = position[0];
-            g_vbSamples[i].y = position[1];
-            g_vbSamples[i].z = position[2];
-            return;
-        }
-    }
-    if (g_vbSampleCount >= VB_SAMPLE_MAX) return;
-    g_vbSamples[g_vbSampleCount].pVB = pVB;
-    g_vbSamples[g_vbSampleCount].x = position[0];
-    g_vbSamples[g_vbSampleCount].y = position[1];
-    g_vbSamples[g_vbSampleCount].z = position[2];
-    g_vbSampleCount++;
+static int resource_get_data(void *resource, const GUID *key, void *data, unsigned int size) {
+    typedef int (__stdcall *FN)(void*, const GUID*, void*, unsigned int*);
+    return ((FN)(*(void***)resource)[5])(resource, key, data, &size) >= 0;
 }
-
-#define D3DLOCK_READONLY 0x0010
 
 static int __stdcall VBLock_Hook(void *pVB,
-    unsigned int offset, unsigned int size, void **ppData, unsigned int flags)
-{
-    typedef int (__stdcall *FN)(void*,unsigned int,unsigned int,void**,unsigned int);
+    unsigned int offset, unsigned int size, void **ppData, unsigned int flags) {
+    typedef int (__stdcall *FN)(void*, unsigned int, unsigned int, void**, unsigned int);
     int hr = ((FN)g_origVBLock)(pVB, offset, size, ppData, flags);
-    if (hr == 0 && ppData && offset == 0) {
-        int i;
-        for (i = 0; i < VB_LOCK_SLOTS; i++) {
-            if (!g_vbLocks[i].pVB) {
-                g_vbLocks[i].pVB  = pVB;
-                g_vbLocks[i].pData = *ppData;
-                break;
-            }
+    if (hr >= 0) {
+        typedef int (__stdcall *FreeData)(void*, const GUID*);
+        ((FreeData)(*(void***)pVB)[6])(pVB, &g_vbSampleKey);
+        if (size == 0) {
+            typedef int (__stdcall *GetDesc)(void*, unsigned int*);
+            unsigned int desc[6];
+            if (((GetDesc)(*(void***)pVB)[13])(pVB, desc) >= 0 && desc[4] >= offset)
+                size = desc[4] - offset;
+        }
+        if (ppData && offset == 0 && size >= 12) {
+            void *data = *ppData;
+            resource_set_data(pVB, &g_vbLockKey, &data, sizeof(data));
         }
     }
     return hr;
@@ -709,15 +688,11 @@ static int __stdcall VBLock_Hook(void *pVB,
 
 static int __stdcall VBUnlock_Hook(void *pVB) {
     typedef int (__stdcall *FN)(void*);
-    int i;
-    for (i = 0; i < VB_LOCK_SLOTS; i++) {
-        if (g_vbLocks[i].pVB == pVB) {
-            float *f = (float *)g_vbLocks[i].pData;
-            if (f) vbsample_store(pVB, f);
-            g_vbLocks[i].pVB  = NULL;
-            g_vbLocks[i].pData = NULL;
-            break;
-        }
+    typedef int (__stdcall *FreeData)(void*, const GUID*);
+    float *data = NULL;
+    if (resource_get_data(pVB, &g_vbLockKey, &data, sizeof(data))) {
+        if (data) resource_set_data(pVB, &g_vbSampleKey, data, 3 * sizeof(float));
+        ((FreeData)(*(void***)pVB)[6])(pVB, &g_vbLockKey);
     }
     return ((FN)g_origVBUnlock)(pVB);
 }
@@ -726,14 +701,14 @@ static void vb_hook_vtable(void *pVB) {
     void **vtbl;
     DWORD oldProt;
     if (g_vbVtblHooked) return;
-    g_vbVtblHooked = 1;
     vtbl = *(void***)pVB;
-    g_origVBLock   = vtbl[11];
+    if (!VirtualProtect(&vtbl[11], sizeof(void*) * 2, PAGE_READWRITE, &oldProt)) return;
+    g_origVBLock = vtbl[11];
     g_origVBUnlock = vtbl[12];
-    VirtualProtect(&vtbl[11], sizeof(void*) * 2, PAGE_READWRITE, &oldProt);
     vtbl[11] = (void*)VBLock_Hook;
     vtbl[12] = (void*)VBUnlock_Hook;
     VirtualProtect(&vtbl[11], sizeof(void*) * 2, oldProt, &oldProt);
+    g_vbVtblHooked = 1;
 }
 
 /* ---- Transform helpers ---- */
@@ -785,7 +760,7 @@ static int applyMvPath(WrappedDevice *self) {
  */
 static void applyCentroidOrMvpPath(WrappedDevice *self) {
     float world[16];
-    float *centroid;
+    float centroid[3];
 
     if (self->gameWorldSet) return;
 
@@ -806,9 +781,8 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
 
     /* Centroid lookup from VB sample table — last-resort placement guess for
      * FFP draws with no shader constants at all; identity rotation only. */
-    if (g_curStream0VB) {
-        centroid = vbsample_get(g_curStream0VB);
-        if (centroid) {
+    if (g_curStream0VB && self->stream0Offset == 0) {
+        if (resource_get_data(g_curStream0VB, &g_vbSampleKey, centroid, sizeof(centroid))) {
             float dist2 = centroid[0]*centroid[0] +
                            centroid[1]*centroid[1] +
                            centroid[2]*centroid[2];
@@ -852,6 +826,10 @@ static unsigned long __stdcall WD_Release(WrappedDevice *self) {
     typedef unsigned long (__stdcall *FN)(void*);
     unsigned long rc;
     const int finalRelease = InterlockedDecrement((LONG*)&self->refCount) == 0;
+    if (finalRelease && self->particleDeclaration) {
+        ((FN)(*(void***)self->particleDeclaration)[2])(self->particleDeclaration);
+        self->particleDeclaration = NULL;
+    }
     if (finalRelease && self->setOuterDevice) {
         // The bridge borrows these pointers. Clear them while the inner device is still alive.
         self->setOuterDevice(self->pReal, NULL, NULL);
@@ -1019,87 +997,80 @@ static int __stdcall WD_SetStreamSource(WrappedDevice *self,
     unsigned int stream, void *pVB, unsigned int offset, unsigned int stride)
 {
     typedef int (__stdcall *FN)(void*,unsigned int,void*,unsigned int,unsigned int);
-    if (stream == 0) {
+    int hr = ((FN)RealVtbl(self)[SLOT_SetStreamSource])(
+        self->pReal, stream, pVB, offset, stride);
+    if (hr >= 0 && stream == 0) {
         g_curStream0VB = pVB;
         self->stream0Stride = stride;
+        self->stream0Offset = offset;
     }
-    return ((FN)RealVtbl(self)[SLOT_SetStreamSource])(
-        self->pReal, stream, pVB, offset, stride);
+    return hr;
 }
 
 static int __stdcall WD_SetRenderState(WrappedDevice *self,
     unsigned int state, unsigned int value)
 {
     typedef int (__stdcall *FN)(void*, unsigned int, unsigned int);
-    if (state == D3DRS_ALPHABLENDENABLE) self->alphaBlendEnabled = value;
-    if (state == D3DRS_DESTBLEND) self->destBlend = value;
-    return ((FN)RealVtbl(self)[SLOT_SetRenderState])(self->pReal, state, value);
+    int hr = ((FN)RealVtbl(self)[SLOT_SetRenderState])(self->pReal, state, value);
+    if (hr >= 0) {
+        if (state == D3DRS_ALPHABLENDENABLE) self->alphaBlendEnabled = value;
+        if (state == D3DRS_DESTBLEND) self->destBlend = value;
+    }
+    return hr;
 }
 
 static int __stdcall WD_SetVertexDeclaration(WrappedDevice *self, void *declaration) {
     typedef int (__stdcall *FN)(void*, void*);
-    self->vertexDeclaration = declaration;
-    self->usesFVF = 0;
-    return ((FN)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, declaration);
+    int hr = ((FN)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, declaration);
+    if (hr >= 0) {
+        self->vertexDeclaration = declaration;
+        self->usesFVF = 0;
+    }
+    return hr;
 }
 
 static int __stdcall WD_SetFVF(WrappedDevice *self, unsigned int fvf) {
     typedef int (__stdcall *FN)(void*, unsigned int);
-    self->currentFVF = fvf;
-    self->usesFVF = 1;
-    return ((FN)RealVtbl(self)[SLOT_SetFVF])(self->pReal, fvf);
-}
-
-static int __stdcall WD_CreateVertexShader(WrappedDevice *self,
-    const unsigned int *function, void **shader)
-{
-    typedef int (__stdcall *FN)(void*, const unsigned int*, void**);
-    int hr = ((FN)RealVtbl(self)[SLOT_CreateVertexShader])(
-        self->pReal, function, shader);
-    if (hr == 0 && shader && *shader &&
-        self->vertexShaderRecordCount < VERTEX_SHADER_RECORDS) {
-        unsigned int hash = hash_shader_bytecode(function);
-        unsigned int index = self->vertexShaderRecordCount++;
-        self->vertexShaderObjects[index] = *shader;
-        self->vertexShaderHashes[index] = hash;
-    }
+    int hr = ((FN)RealVtbl(self)[SLOT_SetFVF])(self->pReal, fvf);
+    if (hr >= 0) { self->currentFVF = fvf; self->usesFVF = 1; }
     return hr;
 }
 
 static int __stdcall WD_SetVertexShader(WrappedDevice *self, void *shader) {
     typedef int (__stdcall *FN)(void*, void*);
-    unsigned int index;
-    if (self->vertexShader != shader) {
+    int hr = ((FN)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, shader);
+    if (hr >= 0 && self->vertexShader != shader) {
         self->vertexShader = shader;
-        self->currentVertexShaderHash = 0;
-        for (index = 0; index < self->vertexShaderRecordCount; index++) {
-            if (self->vertexShaderObjects[index] == shader) {
-                self->currentVertexShaderHash = self->vertexShaderHashes[index];
-                break;
-            }
-        }
+        self->currentVertexShaderHash = get_shader_hash(shader);
     }
-    return ((FN)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, shader);
+    return hr;
 }
 
 static int __stdcall WD_SetPixelShader(WrappedDevice *self, void *shader) {
     typedef int (__stdcall *FN)(void*, void*);
-    self->pixelShader = shader;
-    return ((FN)RealVtbl(self)[SLOT_SetPixelShader])(self->pReal, shader);
+    int hr = ((FN)RealVtbl(self)[SLOT_SetPixelShader])(self->pReal, shader);
+    if (hr >= 0) self->pixelShader = shader;
+    return hr;
 }
 
 /* 16: Reset */
 static int __stdcall WD_Reset(WrappedDevice *self, void *pPresentParams) {
     typedef int (__stdcall *FN)(void*, void*);
+    int hr;
     self->mvDirty = 0;
-    self->hasAppliedWorld = 0;
-    self->gameWorldSet = 0;
-    g_vbSampleCount = 0;
-    memset(g_vbLocks, 0, sizeof(g_vbLocks));
+    self->hasMVP = self->hasRealView = self->hasProjection = 0;
+    self->mvpValidRegisters = self->mvValidRegisters = 0;
+    self->invProjDirty = 1;
+    self->hasAppliedWorld = self->gameWorldSet = 0;
+    self->texture0 = self->vertexShader = self->pixelShader = NULL;
+    self->vertexDeclaration = NULL;
+    self->currentVertexShaderHash = self->currentFVF = self->stream0Stride = self->stream0Offset = 0;
+    self->usesFVF = self->alphaBlendEnabled = 0;
+    self->destBlend = 1; /* D3DBLEND_ZERO */
     g_curStream0VB = NULL;
-    memset(g_textureHashCache, 0, sizeof(g_textureHashCache));
-    g_textureHashFrame = 1;
-    return ((FN)RealVtbl(self)[SLOT_Reset])(self->pReal, pPresentParams);
+    ++g_textureHashFrame;
+    hr = ((FN)RealVtbl(self)[SLOT_Reset])(self->pReal, pPresentParams);
+    return hr;
 }
 
 /* 17: Present — end of frame */
@@ -1109,10 +1080,7 @@ static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, 
 
     hr = ((FN)RealVtbl(self)[SLOT_Present])(self->pReal, a, b, c, d);
     reload_remix_tag_config();
-    if (++g_textureHashFrame == 0) {
-        memset(g_textureHashCache, 0, sizeof(g_textureHashCache));
-        g_textureHashFrame = 1;
-    }
+    ++g_textureHashFrame;
 
     self->mvDirty = 0;
     self->hasAppliedWorld = 0;
@@ -1125,12 +1093,16 @@ static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, 
 static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, float *pMatrix) {
     typedef int (__stdcall *FN)(void*, unsigned int, float*);
 
+    int hr;
     if (state == D3DTS_VIEW && pMatrix) {
         /* Block identity VIEW from reaching Remix. Other engine code paths
          * besides SetRenderMatrices send identity VIEW. If Remix sees it, the
          * camera resets to origin and terrain/light/assets break. */
         if (mat4_isIdentity(pMatrix))
             return 0;
+
+        hr = ((FN)RealVtbl(self)[SLOT_SetTransform])(self->pReal, state, pMatrix);
+        if (hr < 0) return hr;
 
         /* Cache for WORLD decomposition when translation is present. */
         {
@@ -1146,13 +1118,7 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
             }
         }
 
-        /* Forward non-identity VIEW to Remix. */
-        {
-            float copy[16];
-            memcpy(copy, pMatrix, 16 * sizeof(float));
-            return ((FN)RealVtbl(self)[SLOT_SetTransform])(self->pReal,
-                D3DTS_VIEW, copy);
-        }
+        return hr;
     }
 
     /* Keep synthetic-WORLD deduplication coherent with game WORLD writes. */
@@ -1169,22 +1135,23 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
         return hr;
     }
 
+    hr = ((FN)RealVtbl(self)[SLOT_SetTransform])(self->pReal, state, pMatrix);
     /* Capture Projection matrix */
-    if (state == D3DTS_PROJECTION && pMatrix) {
+    if (hr >= 0 && state == D3DTS_PROJECTION && pMatrix) {
         memcpy(self->projMatrix, pMatrix, 16 * sizeof(float));
         self->hasProjection = 1;
         self->invProjDirty = 1;
     }
 
-    return ((FN)RealVtbl(self)[SLOT_SetTransform])(self->pReal, state, pMatrix);
+    return hr;
 }
 
 /* 65: SetTexture — retain the active albedo texture for terrain tagging. */
 static int __stdcall WD_SetTexture(WrappedDevice *self, unsigned int stage, void *texture) {
     typedef int (__stdcall *FN)(void*, unsigned int, void*);
-    if (stage == 0)
-        self->texture0 = texture;
-    return ((FN)RealVtbl(self)[SLOT_SetTexture])(self->pReal, stage, texture);
+    int hr = ((FN)RealVtbl(self)[SLOT_SetTexture])(self->pReal, stage, texture);
+    if (hr >= 0 && stage == 0) self->texture0 = texture;
+    return hr;
 }
 
 /* 94: SetVertexShaderConstantF — capture c0-c3 (MVP) and c17-c20 (MV) */
@@ -1193,6 +1160,8 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
 {
     typedef int (__stdcall *FN)(void*, unsigned int, float*, unsigned int);
 
+    int hr = ((FN)RealVtbl(self)[SLOT_SetVertexShaderConstantF])(self->pReal, startReg, pData, count);
+    if (hr < 0) return hr;
     if (pData) {
         unsigned int endReg = startReg + count;
 
@@ -1200,12 +1169,14 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
         if (startReg < 4 && endReg > 0) {
             if (startReg == 0 && endReg >= 4) {
                 mat4_transpose(self->mvpMatrix, pData);
+                self->mvpValidRegisters = 15;
             } else {
                 float raw[16];
                 unsigned int r;
                 mat4_transpose(raw, self->mvpMatrix);
                 for (r = startReg; r < endReg && r < 4; r++) {
                     unsigned int off = r * 4;
+                    self->mvpValidRegisters |= 1u << r;
                     unsigned int src = (r - startReg) * 4;
                     raw[off+0] = pData[src+0];
                     raw[off+1] = pData[src+1];
@@ -1214,7 +1185,7 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
                 }
                 mat4_transpose(self->mvpMatrix, raw);
             }
-            self->hasMVP = 1;
+            self->hasMVP = self->mvpValidRegisters == 15;
             self->gameWorldSet = 0;
         }
 
@@ -1223,6 +1194,7 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
             if (startReg <= VS_REG_MV_START && endReg >= VS_REG_MV_END) {
                 float *mvSrc = pData + (VS_REG_MV_START - startReg) * 4;
                 mat4_transpose(self->mvMatrix, mvSrc);
+                self->mvValidRegisters = 15;
             } else {
                 float raw[16];
                 unsigned int r;
@@ -1230,6 +1202,7 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
                 for (r = startReg; r < endReg; r++) {
                     if (r >= VS_REG_MV_START && r < VS_REG_MV_END) {
                         unsigned int off = (r - VS_REG_MV_START) * 4;
+                        self->mvValidRegisters |= 1u << (r - VS_REG_MV_START);
                         unsigned int src = (r - startReg) * 4;
                         raw[off+0] = pData[src+0];
                         raw[off+1] = pData[src+1];
@@ -1239,12 +1212,11 @@ static int __stdcall WD_SetVertexShaderConstantF(WrappedDevice *self,
                 }
                 mat4_transpose(self->mvMatrix, raw);
             }
-            self->mvDirty = 1;
+            self->mvDirty = self->mvValidRegisters == 15;
         }
     }
 
-    return ((FN)RealVtbl(self)[SLOT_SetVertexShaderConstantF])(self->pReal,
-        startReg, pData, count);
+    return hr;
 }
 
 /* 81: DrawPrimitive */
@@ -1299,7 +1271,7 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
         tag_terrain_texture(self->texture0);
     }
 
-    if (self->currentVertexShaderHash == PARTICLE_VERTEX_SHADER_HASH &&
+    if (g_particleTextureHashCount && self->currentVertexShaderHash == PARTICLE_VERTEX_SHADER_HASH &&
         self->alphaBlendEnabled && self->stream0Stride == 24 &&
         !self->pixelShader && get_texture_hash(self->texture0, &textureHash)) {
         isParticleTexture = texture_hash_is_tagged(textureHash,
@@ -1444,7 +1416,7 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice, void *pOuterDirect3D) {
     s_device_vtbl[88] = (void*)Relay_88;
     s_device_vtbl[89] = (void*)WD_SetFVF;
     s_device_vtbl[90] = (void*)Relay_90;
-    s_device_vtbl[91] = (void*)WD_CreateVertexShader;
+    s_device_vtbl[91] = (void*)Relay_91;
     s_device_vtbl[92] = (void*)WD_SetVertexShader;
     s_device_vtbl[93] = (void*)Relay_93;
     s_device_vtbl[94] = (void*)WD_SetVertexShaderConstantF;
@@ -1494,6 +1466,7 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice, void *pOuterDirect3D) {
     w->invProjDirty = 1;
     w->gameWorldSet = 0;
     w->texture0 = NULL;
+    w->destBlend = 1;
 
     for (i = 0; i < 16; i++) {
         float v = (i % 5 == 0) ? 1.0f : 0.0f;

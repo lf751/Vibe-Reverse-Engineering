@@ -167,6 +167,8 @@ static int __stdcall W9_CreateDevice(WrappedD3D9 *self, unsigned int adapter,
     int hr;
     void *pRealDevice = NULL;
 
+    if (!ppDevice) return (int)0x8876086c;
+    *ppDevice = NULL;
     hr = ((FN)REAL_VTBL(self)[16])(self->pReal, adapter, devType, hWnd, behFlags, pPresentParams, &pRealDevice);
 
     if (hr < 0 || !pRealDevice) {
@@ -179,8 +181,9 @@ static int __stdcall W9_CreateDevice(WrappedD3D9 *self, unsigned int adapter,
         WrappedDevice *wrapped = WrappedDevice_Create(pRealDevice, self);
         if (!wrapped) {
             log_str("  ERROR: Failed to create wrapped device\r\n");
-            *ppDevice = pRealDevice;
-            return hr;
+            typedef unsigned long (__stdcall *Release)(void*);
+            ((Release)(*(void***)pRealDevice)[2])(pRealDevice);
+            return (int)0x8007000e;
         }
         *ppDevice = (void*)wrapped;
     }

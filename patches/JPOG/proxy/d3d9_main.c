@@ -76,31 +76,32 @@ typedef struct WrappedDevice WrappedDevice;
 WrappedD3D9* WrappedD3D9_Create(void* pRealD3D9);
 
 /* Build the full path to a file in the same directory as our DLL */
-static void get_dll_sibling_path(char *out, int outSize, const char *filename) {
-    int i, lastSlash = -1, p;
-    GetModuleFileNameA(g_hInstance, out, outSize);
-    for (i = 0; out[i]; i++) {
+static int get_dll_sibling_path(char *out, int outSize, const char *filename) {
+    DWORD length = GetModuleFileNameA(g_hInstance, out, outSize);
+    int i, lastSlash = -1, p, nameLength = 0;
+    if (!length || length >= (DWORD)outSize) return 0;
+    for (i = 0; i < (int)length; i++)
         if (out[i] == '\\' || out[i] == '/') lastSlash = i;
-    }
-    p = (lastSlash >= 0) ? lastSlash + 1 : 0;
-    for (i = 0; filename[i]; i++) out[p++] = filename[i];
-    out[p] = '\0';
+    p = lastSlash + 1;
+    while (filename[nameLength]) nameLength++;
+    if (nameLength >= outSize - p) return 0;
+    for (i = 0; i <= nameLength; i++) out[p + i] = filename[i];
+    return 1;
 }
 
 /* ---- Exported: Direct3DCreate9 ---- */
 
-__declspec(dllexport) void* __stdcall Direct3DCreate9(unsigned int SDKVersion) {
-    char pathBuf[MAX_PATH];
-    char iniBuf[MAX_PATH];
-    void *pReal;
+static INIT_ONCE g_backendInit = INIT_ONCE_STATIC_INIT;
+static BOOL CALLBACK initialize_backend(PINIT_ONCE once, PVOID parameter, PVOID *context) {
+    char pathBuf[MAX_PATH], iniBuf[MAX_PATH];
     int useRemix = 0;
-
+    (void)once; (void)parameter; (void)context;
     if (!g_realD3D9) {
         log_open();
         log_str("=== DX9 Shader-to-FFP Proxy ===\r\n");
 
         /* Read proxy.ini from the same directory as this DLL */
-        get_dll_sibling_path(iniBuf, MAX_PATH, "proxy.ini");
+        if (!get_dll_sibling_path(iniBuf, MAX_PATH, "proxy.ini")) { log_str("DLL path exceeds supported length\r\n"); log_close(); return FALSE; }
         useRemix = GetPrivateProfileIntA("Remix", "Enabled", 0, iniBuf);
         /*
          * PreloadDLL: load a DLL for its side effects (DllMain patches).
@@ -111,8 +112,8 @@ __declspec(dllexport) void* __stdcall Direct3DCreate9(unsigned int SDKVersion) {
             char preloadName[MAX_PATH];
             GetPrivateProfileStringA("Chain", "PreloadDLL", "",
                 preloadName, MAX_PATH, iniBuf);
-            if (preloadName[0]) {
-                get_dll_sibling_path(pathBuf, MAX_PATH, preloadName);
+            if (preloadName[0] && !g_preloadDLL) {
+                if (!get_dll_sibling_path(pathBuf, MAX_PATH, preloadName)) { log_str("DLL path exceeds supported length\r\n"); log_close(); return FALSE; }
                 log_str("Preloading DLL: ");
                 log_str(pathBuf);
                 log_str("\r\n");
@@ -129,7 +130,7 @@ __declspec(dllexport) void* __stdcall Direct3DCreate9(unsigned int SDKVersion) {
             char remixDLL[MAX_PATH];
             GetPrivateProfileStringA("Remix", "DLLName", "d3d9_remix.dll",
                 remixDLL, MAX_PATH, iniBuf);
-            get_dll_sibling_path(pathBuf, MAX_PATH, remixDLL);
+            if (!get_dll_sibling_path(pathBuf, MAX_PATH, remixDLL)) { log_str("DLL path exceeds supported length\r\n"); log_close(); return FALSE; }
             log_str("Remix enabled, loading: ");
             log_str(pathBuf);
             log_str("\r\n");
@@ -159,16 +160,26 @@ __declspec(dllexport) void* __stdcall Direct3DCreate9(unsigned int SDKVersion) {
         if (!g_realD3D9) {
             log_str("FATAL: Failed to load d3d9 backend\r\n");
             log_close();
-            return NULL;
+            return FALSE;
         }
 
         g_realDirect3DCreate9 = (PFN_Direct3DCreate9)GetProcAddress(g_realD3D9, "Direct3DCreate9");
         if (!g_realDirect3DCreate9) {
+            FreeLibrary(g_realD3D9);
+            g_realD3D9 = NULL;
             log_str("FATAL: Direct3DCreate9 not found in loaded d3d9\r\n");
             log_close();
-            return NULL;
+            return FALSE;
         }
     }
+
+    return TRUE;
+}
+
+__declspec(dllexport) void* __stdcall Direct3DCreate9(unsigned int SDKVersion) {
+    void *pReal;
+
+    if (!InitOnceExecuteOnce(&g_backendInit, initialize_backend, NULL, NULL)) return NULL;
 
     pReal = g_realDirect3DCreate9(SDKVersion);
     if (!pReal) {
@@ -176,7 +187,14 @@ __declspec(dllexport) void* __stdcall Direct3DCreate9(unsigned int SDKVersion) {
         return NULL;
     }
 
-    return (void*)WrappedD3D9_Create(pReal);
+    {
+        void *wrapped = WrappedD3D9_Create(pReal);
+        if (!wrapped) {
+            typedef unsigned long (__stdcall *Release)(void*);
+            ((Release)(*(void***)pReal)[2])(pReal);
+        }
+        return wrapped;
+    }
 }
 
 /* ---- DllMain ---- */
@@ -184,7 +202,11 @@ __declspec(dllexport) void* __stdcall Direct3DCreate9(unsigned int SDKVersion) {
 int __stdcall _DllMainCRTStartup(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     (void)lpvReserved;
     if (fdwReason == DLL_PROCESS_ATTACH) {
+        HMODULE pinned;
         g_hInstance = hinstDLL;
+        DisableThreadLibraryCalls(hinstDLL);
+        if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+            (LPCSTR)&Direct3DCreate9, &pinned)) return 0;
     }
     if (fdwReason == DLL_PROCESS_DETACH) {
         log_close();

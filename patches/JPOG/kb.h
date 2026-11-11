@@ -96,3 +96,8 @@ enum ToshiDeviceVtable {
 
 // D3D Transform State Constants
 // D3DTS_VIEW = 2, D3DTS_PROJECTION = 3, D3DTS_WORLD = 0x100 (256)
+
+// === TRenderD3DInterface.dll: render-context lifecycle ===
+// Exported native destructor. Restores vtable RVA 0x74480, then calls the base destructor.
+@ 0x100071C0 void __thiscall DestroyRenderContextD3D(void *this);
+@ 0x10007180 void __thiscall SetRenderContextMatrices(void *this);
