@@ -46,3 +46,15 @@ are under test-artifacts/JPOG/proxy-lifecycle and asi-lifecycle.
 - Captured live logs and machine-readable validation in
   test-artifacts/JPOG/proxy-lifecycle/verified-gameplay-logs and validation.json.
 - No performance benchmark was performed; no measured frame-time gain is claimed.
+
+## Installed deployment
+
+User requested deployment after the isolated checks passed. Updated
+D:/Games/JPOGRTX/JPOG with232 hash-verified runtime/bridge/proxy/ASI files;
+all copied files matched the tested isolated build before deployment. Preserved
+62 root/configuration/weather files, including bridge.conf and the patched
+DLSS-NR DLL. Complete previous runtime and integration recovery copy:
+backups/JPOG/2026-11-11_193254_proxy-lifecycle-installed.
+Report: test-artifacts/JPOG/proxy-lifecycle/installed-deployment/validation.json.
+Installed game was closed for deployment and was not launched afterward.
+December BaseMod release remains unchanged.
