@@ -386,7 +386,7 @@ static DWORD WINAPI InitThread(LPVOID param) {
     HMODULE hSimJp;
     HMODULE hRenderD3D = NULL;
     HMODULE hTerrainShader = NULL;
-    int renderDone = 0, terrainDone = 0, waterResetDone = 0;
+    int renderAttempted = 0, terrainDone = 0, waterResetDone = 0;
     int i;
 
     (void)param;
@@ -395,25 +395,23 @@ static DWORD WINAPI InitThread(LPVOID param) {
         InstallWeatherHook(hSimJp);
 
     for (i = 0; i < 300; i++) {  /* 30 seconds max */
-        if (!renderDone) {
+        if (!renderAttempted) {
             hRenderD3D = GetModuleHandleA("TRenderD3DInterface.dll");
             if (hRenderD3D) {
                 InstallRenderHooks(hRenderD3D);
-                renderDone = 1;
+                renderAttempted = 1;
             }
         }
-        if (!terrainDone) {
+        if (!terrainDone || !waterResetDone) {
             hTerrainShader = GetModuleHandleA("TTerrainShaderD3D.dll");
             if (hTerrainShader) {
-                terrainDone = InstallTerrainTagHook(hTerrainShader);
+                if (!terrainDone)
+                    terrainDone = InstallTerrainTagHook(hTerrainShader);
+                if (!waterResetDone)
+                    waterResetDone = InstallTerrainWaterResetHook(hTerrainShader);
             }
         }
-        if (!waterResetDone) {
-            hTerrainShader = GetModuleHandleA("TTerrainShaderD3D.dll");
-            if (hTerrainShader)
-                waterResetDone = InstallTerrainWaterResetHook(hTerrainShader);
-        }
-        if (renderDone && terrainDone && waterResetDone)
+        if (renderAttempted && terrainDone && waterResetDone)
             return 0;
         Sleep(100);
     }

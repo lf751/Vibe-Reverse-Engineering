@@ -38,12 +38,11 @@ WrappedDevice* WrappedDevice_Create(void* pRealDevice, void* pOuterDirect3D);
 /* ---- WrappedD3D9 ---- */
 
 typedef struct WrappedD3D9 {
-    void **vtbl;
+    void *const *vtbl;
     void *pReal;
     int refCount;
 } WrappedD3D9;
 
-static void *s_d3d9_vtbl[17];
 
 int Proxy_IsWrapperInterface(const GUID *iid, int isDevice) {
     static const GUID unknown = {0, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46}};
@@ -193,27 +192,29 @@ static int __stdcall W9_CreateDevice(WrappedD3D9 *self, unsigned int adapter,
 
 /* ---- Build and populate the vtable ---- */
 
+static void *const s_d3d9_vtbl[17] = {
+    (void*)W9_QueryInterface, /* 0 */
+    (void*)W9_AddRef, /* 1 */
+    (void*)W9_Release, /* 2 */
+    (void*)W9_RegisterSoftwareDevice, /* 3 */
+    (void*)W9_GetAdapterCount, /* 4 */
+    (void*)W9_GetAdapterIdentifier, /* 5 */
+    (void*)W9_GetAdapterModeCount, /* 6 */
+    (void*)W9_EnumAdapterModes, /* 7 */
+    (void*)W9_GetAdapterDisplayMode, /* 8 */
+    (void*)W9_CheckDeviceType, /* 9 */
+    (void*)W9_CheckDeviceFormat, /* 10 */
+    (void*)W9_CheckDeviceMultiSampleType, /* 11 */
+    (void*)W9_CheckDepthStencilMatch, /* 12 */
+    (void*)W9_CheckDeviceFormatConversion, /* 13 */
+    (void*)W9_GetDeviceCaps, /* 14 */
+    (void*)W9_GetAdapterMonitor, /* 15 */
+    (void*)W9_CreateDevice, /* 16 */
+};
+
 WrappedD3D9* WrappedD3D9_Create(void *pRealD3D9) {
     WrappedD3D9 *w = (WrappedD3D9*)HeapAlloc(GetProcessHeap(), 0, sizeof(WrappedD3D9));
     if (!w) return NULL;
-
-    s_d3d9_vtbl[0]  = (void*)W9_QueryInterface;
-    s_d3d9_vtbl[1]  = (void*)W9_AddRef;
-    s_d3d9_vtbl[2]  = (void*)W9_Release;
-    s_d3d9_vtbl[3]  = (void*)W9_RegisterSoftwareDevice;
-    s_d3d9_vtbl[4]  = (void*)W9_GetAdapterCount;
-    s_d3d9_vtbl[5]  = (void*)W9_GetAdapterIdentifier;
-    s_d3d9_vtbl[6]  = (void*)W9_GetAdapterModeCount;
-    s_d3d9_vtbl[7]  = (void*)W9_EnumAdapterModes;
-    s_d3d9_vtbl[8]  = (void*)W9_GetAdapterDisplayMode;
-    s_d3d9_vtbl[9]  = (void*)W9_CheckDeviceType;
-    s_d3d9_vtbl[10] = (void*)W9_CheckDeviceFormat;
-    s_d3d9_vtbl[11] = (void*)W9_CheckDeviceMultiSampleType;
-    s_d3d9_vtbl[12] = (void*)W9_CheckDepthStencilMatch;
-    s_d3d9_vtbl[13] = (void*)W9_CheckDeviceFormatConversion;
-    s_d3d9_vtbl[14] = (void*)W9_GetDeviceCaps;
-    s_d3d9_vtbl[15] = (void*)W9_GetAdapterMonitor;
-    s_d3d9_vtbl[16] = (void*)W9_CreateDevice;
 
     w->vtbl = s_d3d9_vtbl;
     w->pReal = pRealD3D9;

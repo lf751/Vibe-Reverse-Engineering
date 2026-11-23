@@ -100,7 +100,7 @@ enum {
 /* ---- WrappedDevice ---- */
 
 typedef struct WrappedDevice {
-    void **vtbl;
+    void *const *vtbl;
     void *pReal;
     int refCount;
     void *pOuterDirect3D;
@@ -799,7 +799,6 @@ static void applyCentroidOrMvpPath(WrappedDevice *self) {
 
 /* ---- Vtable method implementations ---- */
 
-static void *s_device_vtbl[DEVICE_VTABLE_SIZE];
 static unsigned long __stdcall WD_AddRef(WrappedDevice *self);
 
 /* 0: QueryInterface */
@@ -1317,6 +1316,128 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
 
 /* ---- Build vtable ---- */
 
+static void *const s_device_vtbl[DEVICE_VTABLE_SIZE] = {
+    (void*)WD_QueryInterface, /* 0 */
+    (void*)WD_AddRef, /* 1 */
+    (void*)WD_Release, /* 2 */
+    (void*)Relay_03, /* 3 */
+    (void*)Relay_04, /* 4 */
+    (void*)Relay_05, /* 5 */
+    (void*)WD_GetDirect3D, /* 6 */
+    (void*)Relay_07, /* 7 */
+    (void*)Relay_08, /* 8 */
+    (void*)Relay_09, /* 9 */
+    (void*)Relay_10, /* 10 */
+    (void*)Relay_11, /* 11 */
+    (void*)Relay_12, /* 12 */
+    (void*)Relay_13, /* 13 */
+    (void*)Relay_14, /* 14 */
+    (void*)Relay_15, /* 15 */
+    (void*)WD_Reset, /* 16 */
+    (void*)WD_Present, /* 17 */
+    (void*)Relay_18, /* 18 */
+    (void*)Relay_19, /* 19 */
+    (void*)Relay_20, /* 20 */
+    (void*)Relay_21, /* 21 */
+    (void*)Relay_22, /* 22 */
+    (void*)Relay_23, /* 23 */
+    (void*)Relay_24, /* 24 */
+    (void*)Relay_25, /* 25 */
+    (void*)WD_CreateVertexBuffer, /* 26 */
+    (void*)Relay_27, /* 27 */
+    (void*)Relay_28, /* 28 */
+    (void*)Relay_29, /* 29 */
+    (void*)Relay_30, /* 30 */
+    (void*)Relay_31, /* 31 */
+    (void*)Relay_32, /* 32 */
+    (void*)Relay_33, /* 33 */
+    (void*)Relay_34, /* 34 */
+    (void*)Relay_35, /* 35 */
+    (void*)Relay_36, /* 36 */
+    (void*)Relay_37, /* 37 */
+    (void*)Relay_38, /* 38 */
+    (void*)Relay_39, /* 39 */
+    (void*)Relay_40, /* 40 */
+    (void*)Relay_41, /* 41 */
+    (void*)Relay_42, /* 42 */
+    (void*)Relay_43, /* 43 */
+    (void*)WD_SetTransform, /* 44 */
+    (void*)Relay_45, /* 45 */
+    (void*)Relay_46, /* 46 */
+    (void*)Relay_47, /* 47 */
+    (void*)Relay_48, /* 48 */
+    (void*)Relay_49, /* 49 */
+    (void*)Relay_50, /* 50 */
+    (void*)Relay_51, /* 51 */
+    (void*)Relay_52, /* 52 */
+    (void*)Relay_53, /* 53 */
+    (void*)Relay_54, /* 54 */
+    (void*)Relay_55, /* 55 */
+    (void*)Relay_56, /* 56 */
+    (void*)WD_SetRenderState, /* 57 */
+    (void*)Relay_58, /* 58 */
+    (void*)Relay_59, /* 59 */
+    (void*)Relay_60, /* 60 */
+    (void*)Relay_61, /* 61 */
+    (void*)Relay_62, /* 62 */
+    (void*)Relay_63, /* 63 */
+    (void*)Relay_64, /* 64 */
+    (void*)WD_SetTexture, /* 65 */
+    (void*)Relay_66, /* 66 */
+    (void*)Relay_67, /* 67 */
+    (void*)Relay_68, /* 68 */
+    (void*)Relay_69, /* 69 */
+    (void*)Relay_70, /* 70 */
+    (void*)Relay_71, /* 71 */
+    (void*)Relay_72, /* 72 */
+    (void*)Relay_73, /* 73 */
+    (void*)Relay_74, /* 74 */
+    (void*)Relay_75, /* 75 */
+    (void*)Relay_76, /* 76 */
+    (void*)Relay_77, /* 77 */
+    (void*)Relay_78, /* 78 */
+    (void*)Relay_79, /* 79 */
+    (void*)Relay_80, /* 80 */
+    (void*)WD_DrawPrimitive, /* 81 */
+    (void*)WD_DrawIndexedPrimitive, /* 82 */
+    (void*)Relay_83, /* 83 */
+    (void*)Relay_84, /* 84 */
+    (void*)Relay_85, /* 85 */
+    (void*)Relay_86, /* 86 */
+    (void*)WD_SetVertexDeclaration, /* 87 */
+    (void*)Relay_88, /* 88 */
+    (void*)WD_SetFVF, /* 89 */
+    (void*)Relay_90, /* 90 */
+    (void*)Relay_91, /* 91 */
+    (void*)WD_SetVertexShader, /* 92 */
+    (void*)Relay_93, /* 93 */
+    (void*)WD_SetVertexShaderConstantF, /* 94 */
+    (void*)Relay_95, /* 95 */
+    (void*)Relay_96, /* 96 */
+    (void*)Relay_97, /* 97 */
+    (void*)Relay_98, /* 98 */
+    (void*)Relay_99, /* 99 */
+    (void*)WD_SetStreamSource, /* 100 */
+    (void*)Relay_101, /* 101 */
+    (void*)Relay_102, /* 102 */
+    (void*)Relay_103, /* 103 */
+    (void*)Relay_104, /* 104 */
+    (void*)Relay_105, /* 105 */
+    (void*)Relay_106, /* 106 */
+    (void*)WD_SetPixelShader, /* 107 */
+    (void*)Relay_108, /* 108 */
+    (void*)Relay_109, /* 109 */
+    (void*)Relay_110, /* 110 */
+    (void*)Relay_111, /* 111 */
+    (void*)Relay_112, /* 112 */
+    (void*)Relay_113, /* 113 */
+    (void*)Relay_114, /* 114 */
+    (void*)Relay_115, /* 115 */
+    (void*)Relay_116, /* 116 */
+    (void*)Relay_117, /* 117 */
+    (void*)Relay_118, /* 118 */
+};
+
 WrappedDevice* WrappedDevice_Create(void *pRealDevice, void *pOuterDirect3D) {
     WrappedDevice *w;
     int i;
@@ -1324,126 +1445,6 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice, void *pOuterDirect3D) {
     w = (WrappedDevice*)HeapAlloc(GetProcessHeap(), 8 /*HEAP_ZERO_MEMORY*/,
                                   sizeof(WrappedDevice));
     if (!w) return NULL;
-
-    s_device_vtbl[0]  = (void*)WD_QueryInterface;
-    s_device_vtbl[1]  = (void*)WD_AddRef;
-    s_device_vtbl[2]  = (void*)WD_Release;
-    s_device_vtbl[3]  = (void*)Relay_03;
-    s_device_vtbl[4]  = (void*)Relay_04;
-    s_device_vtbl[5]  = (void*)Relay_05;
-    s_device_vtbl[6]  = (void*)WD_GetDirect3D;
-    s_device_vtbl[7]  = (void*)Relay_07;
-    s_device_vtbl[8]  = (void*)Relay_08;
-    s_device_vtbl[9]  = (void*)Relay_09;
-    s_device_vtbl[10] = (void*)Relay_10;
-    s_device_vtbl[11] = (void*)Relay_11;
-    s_device_vtbl[12] = (void*)Relay_12;
-    s_device_vtbl[13] = (void*)Relay_13;
-    s_device_vtbl[14] = (void*)Relay_14;
-    s_device_vtbl[15] = (void*)Relay_15;
-    s_device_vtbl[16] = (void*)WD_Reset;
-    s_device_vtbl[17] = (void*)WD_Present;
-    s_device_vtbl[18] = (void*)Relay_18;
-    s_device_vtbl[19] = (void*)Relay_19;
-    s_device_vtbl[20] = (void*)Relay_20;
-    s_device_vtbl[21] = (void*)Relay_21;
-    s_device_vtbl[22] = (void*)Relay_22;
-    s_device_vtbl[23] = (void*)Relay_23;
-    s_device_vtbl[24] = (void*)Relay_24;
-    s_device_vtbl[25] = (void*)Relay_25;
-    s_device_vtbl[26] = (void*)WD_CreateVertexBuffer;
-    s_device_vtbl[27] = (void*)Relay_27;
-    s_device_vtbl[28] = (void*)Relay_28;
-    s_device_vtbl[29] = (void*)Relay_29;
-    s_device_vtbl[30] = (void*)Relay_30;
-    s_device_vtbl[31] = (void*)Relay_31;
-    s_device_vtbl[32] = (void*)Relay_32;
-    s_device_vtbl[33] = (void*)Relay_33;
-    s_device_vtbl[34] = (void*)Relay_34;
-    s_device_vtbl[35] = (void*)Relay_35;
-    s_device_vtbl[36] = (void*)Relay_36;
-    s_device_vtbl[37] = (void*)Relay_37;
-    s_device_vtbl[38] = (void*)Relay_38;
-    s_device_vtbl[39] = (void*)Relay_39;
-    s_device_vtbl[40] = (void*)Relay_40;
-    s_device_vtbl[41] = (void*)Relay_41;
-    s_device_vtbl[42] = (void*)Relay_42;
-    s_device_vtbl[43] = (void*)Relay_43;
-    s_device_vtbl[44] = (void*)WD_SetTransform;
-    s_device_vtbl[45] = (void*)Relay_45;
-    s_device_vtbl[46] = (void*)Relay_46;
-    s_device_vtbl[47] = (void*)Relay_47;
-    s_device_vtbl[48] = (void*)Relay_48;
-    s_device_vtbl[49] = (void*)Relay_49;
-    s_device_vtbl[50] = (void*)Relay_50;
-    s_device_vtbl[51] = (void*)Relay_51;
-    s_device_vtbl[52] = (void*)Relay_52;
-    s_device_vtbl[53] = (void*)Relay_53;
-    s_device_vtbl[54] = (void*)Relay_54;
-    s_device_vtbl[55] = (void*)Relay_55;
-    s_device_vtbl[56] = (void*)Relay_56;
-    s_device_vtbl[57] = (void*)WD_SetRenderState;
-    s_device_vtbl[58] = (void*)Relay_58;
-    s_device_vtbl[59] = (void*)Relay_59;
-    s_device_vtbl[60] = (void*)Relay_60;
-    s_device_vtbl[61] = (void*)Relay_61;
-    s_device_vtbl[62] = (void*)Relay_62;
-    s_device_vtbl[63] = (void*)Relay_63;
-    s_device_vtbl[64] = (void*)Relay_64;
-    s_device_vtbl[65] = (void*)WD_SetTexture;
-    s_device_vtbl[66] = (void*)Relay_66;
-    s_device_vtbl[67] = (void*)Relay_67;
-    s_device_vtbl[68] = (void*)Relay_68;
-    s_device_vtbl[69] = (void*)Relay_69;
-    s_device_vtbl[70] = (void*)Relay_70;
-    s_device_vtbl[71] = (void*)Relay_71;
-    s_device_vtbl[72] = (void*)Relay_72;
-    s_device_vtbl[73] = (void*)Relay_73;
-    s_device_vtbl[74] = (void*)Relay_74;
-    s_device_vtbl[75] = (void*)Relay_75;
-    s_device_vtbl[76] = (void*)Relay_76;
-    s_device_vtbl[77] = (void*)Relay_77;
-    s_device_vtbl[78] = (void*)Relay_78;
-    s_device_vtbl[79] = (void*)Relay_79;
-    s_device_vtbl[80] = (void*)Relay_80;
-    s_device_vtbl[81] = (void*)WD_DrawPrimitive;
-    s_device_vtbl[82] = (void*)WD_DrawIndexedPrimitive;
-    s_device_vtbl[83] = (void*)Relay_83;
-    s_device_vtbl[84] = (void*)Relay_84;
-    s_device_vtbl[85] = (void*)Relay_85;
-    s_device_vtbl[86] = (void*)Relay_86;
-    s_device_vtbl[87] = (void*)WD_SetVertexDeclaration;
-    s_device_vtbl[88] = (void*)Relay_88;
-    s_device_vtbl[89] = (void*)WD_SetFVF;
-    s_device_vtbl[90] = (void*)Relay_90;
-    s_device_vtbl[91] = (void*)Relay_91;
-    s_device_vtbl[92] = (void*)WD_SetVertexShader;
-    s_device_vtbl[93] = (void*)Relay_93;
-    s_device_vtbl[94] = (void*)WD_SetVertexShaderConstantF;
-    s_device_vtbl[95] = (void*)Relay_95;
-    s_device_vtbl[96] = (void*)Relay_96;
-    s_device_vtbl[97] = (void*)Relay_97;
-    s_device_vtbl[98] = (void*)Relay_98;
-    s_device_vtbl[99] = (void*)Relay_99;
-    s_device_vtbl[100] = (void*)WD_SetStreamSource;
-    s_device_vtbl[101] = (void*)Relay_101;
-    s_device_vtbl[102] = (void*)Relay_102;
-    s_device_vtbl[103] = (void*)Relay_103;
-    s_device_vtbl[104] = (void*)Relay_104;
-    s_device_vtbl[105] = (void*)Relay_105;
-    s_device_vtbl[106] = (void*)Relay_106;
-    s_device_vtbl[107] = (void*)WD_SetPixelShader;
-    s_device_vtbl[108] = (void*)Relay_108;
-    s_device_vtbl[109] = (void*)Relay_109;
-    s_device_vtbl[110] = (void*)Relay_110;
-    s_device_vtbl[111] = (void*)Relay_111;
-    s_device_vtbl[112] = (void*)Relay_112;
-    s_device_vtbl[113] = (void*)Relay_113;
-    s_device_vtbl[114] = (void*)Relay_114;
-    s_device_vtbl[115] = (void*)Relay_115;
-    s_device_vtbl[116] = (void*)Relay_116;
-    s_device_vtbl[117] = (void*)Relay_117;
-    s_device_vtbl[118] = (void*)Relay_118;
 
     w->vtbl = s_device_vtbl;
     w->pReal = pRealDevice;

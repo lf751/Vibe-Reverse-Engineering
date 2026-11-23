@@ -142,15 +142,16 @@ static BOOL CALLBACK initialize_backend(PINIT_ONCE once, PVOID parameter, PVOID 
         }
 
         if (!g_realD3D9) {
-            GetSystemDirectoryA(pathBuf, MAX_PATH);
-            {
-                int i = 0;
-                while (pathBuf[i]) i++;
-                pathBuf[i++] = '\\';
-                pathBuf[i++] = 'd'; pathBuf[i++] = '3'; pathBuf[i++] = 'd';
-                pathBuf[i++] = '9'; pathBuf[i++] = '.'; pathBuf[i++] = 'd';
-                pathBuf[i++] = 'l'; pathBuf[i++] = 'l'; pathBuf[i] = 0;
+            static const char suffix[] = "\\d3d9.dll";
+            UINT length = GetSystemDirectoryA(pathBuf, MAX_PATH);
+            unsigned int i;
+            if (!length || length > MAX_PATH - sizeof(suffix)) {
+                log_str("FATAL: Cannot construct system d3d9 path\r\n");
+                log_close();
+                return FALSE;
             }
+            for (i = 0; i < sizeof(suffix); i++)
+                pathBuf[length + i] = suffix[i];
             log_str("Loading system d3d9.dll: ");
             log_str(pathBuf);
             log_str("\r\n");
