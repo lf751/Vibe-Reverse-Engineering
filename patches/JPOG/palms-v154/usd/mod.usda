@@ -1,0 +1,767 @@
+#usda 1.0
+(
+    customLayerData = {
+        string lightspeed_game_name = "TRenderD3DInterface"
+        string lightspeed_layer_type = "replacement"
+        string lightspeed_mod_name = "JPOGRTX-TestPalms"
+        string lightspeed_mod_version = "1.0.0"
+    }
+    timeCodesPerSecond = 24
+    upAxis = "Y"
+)
+
+def Xform "RootNode"
+{
+    def Scope "TestPalmLooks"
+    {
+        def Material "MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.55
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01_Roughness.r.rtex.dds@
+                custom float inputs:subsurface_measurement_distance = 0.75
+                custom asset inputs:subsurface_single_scattering_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01_Subsurface.a.rtex.dds@
+                custom color3f inputs:subsurface_transmittance_color = (0.25, 0.35, 0.12)
+                custom float inputs:subsurface_volumetric_anisotropy = -0.1
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_02"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_02/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_02_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_02_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_02_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_05"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_05/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_05_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_05_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_05_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Caryota_urens_01_Leaf_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Leaf_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Caryota_urens_01_Leaf_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Caryota_urens_01_Leaf_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.55
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Caryota_urens_01_Leaf_01_Roughness.r.rtex.dds@
+                custom float inputs:subsurface_measurement_distance = 0.75
+                custom asset inputs:subsurface_single_scattering_texture = @./textures/MT_PM_V154_Caryota_urens_01_Leaf_01_Subsurface.a.rtex.dds@
+                custom color3f inputs:subsurface_transmittance_color = (0.25, 0.35, 0.12)
+                custom float inputs:subsurface_volumetric_anisotropy = -0.1
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Caryota_urens_01_Petiole_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Petiole_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Caryota_urens_01_Petiole_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Caryota_urens_01_Petiole_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Caryota_urens_01_Petiole_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Caryota_urens_01_Sheath_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Sheath_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Caryota_urens_01_Sheath_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Caryota_urens_01_Sheath_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Caryota_urens_01_Sheath_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Caryota_urens_01_Trunk_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Trunk_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Caryota_urens_01_Trunk_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Caryota_urens_01_Trunk_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Caryota_urens_01_Trunk_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Roystonea_oleracea_01_Leaf_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Leaf_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Leaf_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Leaf_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.55
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Leaf_01_Roughness.r.rtex.dds@
+                custom float inputs:subsurface_measurement_distance = 0.75
+                custom asset inputs:subsurface_single_scattering_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Leaf_01_Subsurface.a.rtex.dds@
+                custom color3f inputs:subsurface_transmittance_color = (0.25, 0.35, 0.12)
+                custom float inputs:subsurface_volumetric_anisotropy = -0.1
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Roystonea_oleracea_01_Petiole_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Petiole_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Petiole_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Petiole_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Petiole_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Roystonea_oleracea_01_Petiole_02"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Petiole_02/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Petiole_02_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Petiole_02_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Petiole_02_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Roystonea_oleracea_01_Trunk_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Trunk_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Trunk_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Trunk_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Trunk_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Roystonea_oleracea_01_Trunk_05"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Trunk_05/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Trunk_05_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Trunk_05_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Roystonea_oleracea_01_Trunk_05_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Syagrus_coronata_01_Leaf_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Leaf_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Leaf_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Leaf_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.55
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Leaf_01_Roughness.r.rtex.dds@
+                custom float inputs:subsurface_measurement_distance = 0.75
+                custom asset inputs:subsurface_single_scattering_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Leaf_01_Subsurface.a.rtex.dds@
+                custom color3f inputs:subsurface_transmittance_color = (0.25, 0.35, 0.12)
+                custom float inputs:subsurface_volumetric_anisotropy = -0.1
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Syagrus_coronata_01_Petiole_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Syagrus_coronata_01_Petiole_02"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_02/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_02_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_02_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_02_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Syagrus_coronata_01_Petiole_03"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_03/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_03_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_03_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Petiole_03_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Syagrus_coronata_01_Sheath_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Sheath_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Sheath_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Sheath_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Sheath_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Syagrus_coronata_01_Trunk_01"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Trunk_01/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Trunk_01_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Trunk_01_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Trunk_01_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+        def Material "MT_PM_V154_Syagrus_coronata_01_Trunk_02"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Trunk_02/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Trunk_02_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Trunk_02_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.78
+                asset inputs:reflectionroughness_texture = @./textures/MT_PM_V154_Syagrus_coronata_01_Trunk_02_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+    }
+
+    def Scope "meshes"
+    {
+        over "mesh_1ED7E05C5B77EA38" (
+            references = None
+        )
+        {
+            over "ref_d62de1f3e8414d988e5df3e94f29f0ee" (
+                active = false
+            )
+            {
+            }
+
+            def Xform "ref_Palm_Roystonea_01" (
+                prepend references = @./meshes/Palm_Roystonea_01.usda@
+            )
+            {
+                custom bool IsRemixRef = 1
+                double3 xformOp:rotateXYZ = (0, 0, 0)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                over "MT_PM_V154_Roystonea_oleracea_01_Leaf_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Leaf_01>
+                }
+                over "MT_PM_V154_Roystonea_oleracea_01_Petiole_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Petiole_01>
+                }
+                over "MT_PM_V154_Roystonea_oleracea_01_Petiole_02" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Petiole_02>
+                }
+                over "MT_PM_V154_Roystonea_oleracea_01_Trunk_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Trunk_01>
+                }
+                over "MT_PM_V154_Roystonea_oleracea_01_Trunk_05" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Roystonea_oleracea_01_Trunk_05>
+                }
+            }
+        }
+        over "mesh_A52962A5D4E16306" (
+            references = None
+        )
+        {
+            over "ref_2dff8af6fc9e4250ab65fcb7ea9ef1fb" (
+                active = false
+            )
+            {
+            }
+
+            def Xform "ref_DatePalm_Caryota_04" (
+                prepend references = @./meshes/DatePalm_Caryota_04.usda@
+            )
+            {
+                custom bool IsRemixRef = 1
+                double3 xformOp:rotateXYZ = (0, 0, 0)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                over "MT_PM_V154_Caryota_urens_01_Leaf_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Leaf_01>
+                }
+                over "MT_PM_V154_Caryota_urens_01_Petiole_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Petiole_01>
+                }
+                over "MT_PM_V154_Caryota_urens_01_Sheath_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Sheath_01>
+                }
+                over "MT_PM_V154_Caryota_urens_01_Trunk_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Caryota_urens_01_Trunk_01>
+                }
+            }
+        }
+        over "mesh_17D371F59020F1E8" (
+            references = None
+        )
+        {
+            over "ref_b7096fb06ce34a59b6edaa60a8d1fea8" (
+                active = false
+            )
+            {
+            }
+
+            def Xform "ref_SagoPalmTall_Archontophoenix_02" (
+                prepend references = @./meshes/SagoPalmTall_Archontophoenix_02.usda@
+            )
+            {
+                custom bool IsRemixRef = 1
+                double3 xformOp:rotateXYZ = (0, 0, 0)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                over "MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Leaf_01>
+                }
+                over "MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_01>
+                }
+                over "MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_02" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Petiole_02>
+                }
+                over "MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_01>
+                }
+                over "MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_05" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Archontophoenix_cunninghamiana_01_Trunk_05>
+                }
+            }
+        }
+        over "mesh_F170165D5CCFCD7D" (
+            references = None
+        )
+        {
+            over "ref_33d70ef66edd41229f1097dacd76ce91" (
+                active = false
+            )
+            {
+            }
+
+            def Xform "ref_SagoPalmShort_Syagrus_01" (
+                prepend references = @./meshes/SagoPalmShort_Syagrus_01.usda@
+            )
+            {
+                custom bool IsRemixRef = 1
+                double3 xformOp:rotateXYZ = (0, 0, 0)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                over "MT_PM_V154_Syagrus_coronata_01_Leaf_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Leaf_01>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Petiole_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_01>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Petiole_02" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_02>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Petiole_03" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_03>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Sheath_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Sheath_01>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Trunk_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Trunk_01>
+                }
+            }
+        }
+        over "mesh_4B520816B40FDE06" (
+            references = None
+        )
+        {
+            over "ref_b0f11a278dae4d8f80a937ab976299de" (
+                active = false
+            )
+            {
+            }
+
+            def Xform "ref_SagoPalmWide_Syagrus_03" (
+                prepend references = @./meshes/SagoPalmWide_Syagrus_03.usda@
+            )
+            {
+                custom bool IsRemixRef = 1
+                double3 xformOp:rotateXYZ = (0, 0, 0)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+                over "MT_PM_V154_Syagrus_coronata_01_Leaf_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Leaf_01>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Petiole_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_01>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Petiole_02" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_02>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Petiole_03" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Petiole_03>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Sheath_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Sheath_01>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Trunk_01" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Trunk_01>
+                }
+                over "MT_PM_V154_Syagrus_coronata_01_Trunk_02" (
+                    prepend apiSchemas = ["MaterialBindingAPI"]
+                )
+                {
+                    rel material:binding = </RootNode/TestPalmLooks/MT_PM_V154_Syagrus_coronata_01_Trunk_02>
+                }
+            }
+        }
+    }
+}

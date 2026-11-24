@@ -24,10 +24,18 @@
 // === TSysShaderD3D.dll ===
 
 @ 0x100019B0 void __thiscall TSysShaderHAL_Flush(TSysShaderHAL *this);
+@ 0x100020C0 bool __thiscall TSysShaderHAL_Validate(TSysShaderHAL *this);
 @ 0x100022D0 void __thiscall TSysShaderHAL_Render(TSysShaderHAL *this, TRenderPacket *packet);
 @ 0x10002780 void __thiscall TSysShaderHAL_EnableHighEnd(TSysShaderHAL *this, bool enable);
+@ 0x100027D0 bool __thiscall TSysShaderHAL_IsCapableHighEnd(TSysShaderHAL *this);
+@ 0x10002830 bool __thiscall TSysShaderHAL_IsCapableLightScattering(TSysShaderHAL *this);
 @ 0x10003070 void* __thiscall GetTerrainShader(TSysShaderHAL *this);
 @ 0x10002890 void __thiscall SetVertexShaderScatteringConstants(TSysShaderHAL *this);
+
+// === TTerrainInterface.dll ===
+
+@ 0x10007470 signed char __thiscall TTerrainSection_ComputeLOD(void *this, void *camPos, signed char *outMinLOD);
+$ 0x100123C4 unsigned int TTerrainSection_sm_ui32Counter
 
 // === simjp.exe ===
 

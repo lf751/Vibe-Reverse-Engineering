@@ -20,6 +20,14 @@ venv/
 /test-artifacts/
 patches/JPOG/terrain-control-map-investigation/
 patches/JPOG/organize-workspace.py
+patches/JPOG/palms-v154/fbx/
+patches/JPOG/palms-v154/usd/meshes/
+patches/JPOG/palms-v154/usd/textures/
+patches/JPOG/terrain-grass/fbx/
+patches/JPOG/terrain-grass/usd/meshes/
+patches/JPOG/terrain-grass/usd/textures/
+patches/JPOG/terrain-grass/_terrain_orig_backup/
+patches/JPOG/terrain-grass/_tmp_tex/
 
 
 

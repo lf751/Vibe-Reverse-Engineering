@@ -66,6 +66,7 @@ typedef HRESULT (__stdcall *PFN_SetOuterDevice)(void *inner, void *outerDevice, 
 
 #define D3DRS_DESTBLEND             20
 #define D3DRS_ALPHABLENDENABLE      27
+#define D3DLOCK_READONLY            0x00000010u
 
 #define PARTICLE_VERTEX_SHADER_HASH 0x72F91594u
 
@@ -74,9 +75,15 @@ enum {
     SLOT_QueryInterface = 0,
     SLOT_AddRef = 1,
     SLOT_Release = 2,
-    SLOT_CreateVertexBuffer = 26,
     SLOT_Reset = 16,
     SLOT_Present = 17,
+    SLOT_CreateTexture = 23,
+    SLOT_CreateVertexBuffer = 26,
+    SLOT_UpdateSurface = 30,
+    SLOT_UpdateTexture = 31,
+    SLOT_StretchRect = 34,
+    SLOT_ColorFill = 35,
+    SLOT_SetRenderTarget = 37,
     SLOT_BeginScene = 41,
     SLOT_EndScene = 42,
     SLOT_SetTransform = 44,
@@ -216,13 +223,13 @@ static void mat4_transpose(float *dst, const float *src) {
 }
 
 static void mat4_invOrthogonal(float *dst, const float *src) {
-    float tx = src[12], ty = src[13], tz = src[14];
+    double tx = (double)src[12], ty = (double)src[13], tz = (double)src[14];
     dst[0]  = src[0]; dst[1]  = src[4]; dst[2]  = src[8];  dst[3]  = 0.0f;
     dst[4]  = src[1]; dst[5]  = src[5]; dst[6]  = src[9];  dst[7]  = 0.0f;
     dst[8]  = src[2]; dst[9]  = src[6]; dst[10] = src[10]; dst[11] = 0.0f;
-    dst[12] = -(tx*src[0] + ty*src[1] + tz*src[2]);
-    dst[13] = -(tx*src[4] + ty*src[5] + tz*src[6]);
-    dst[14] = -(tx*src[8] + ty*src[9] + tz*src[10]);
+    dst[12] = (float)(-(tx*(double)src[0] + ty*(double)src[1] + tz*(double)src[2]));
+    dst[13] = (float)(-(tx*(double)src[4] + ty*(double)src[5] + tz*(double)src[6]));
+    dst[14] = (float)(-(tx*(double)src[8] + ty*(double)src[9] + tz*(double)src[10]));
     dst[15] = 1.0f;
 }
 
@@ -231,10 +238,10 @@ static void mat4_multiply(float *dst, const float *a, const float *b) {
     int i, j, k;
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
-            float sum = 0.0f;
+            double sum = 0.0;
             for (k = 0; k < 4; k++)
-                sum += a[i*4+k] * b[k*4+j];
-            tmp[i*4+j] = sum;
+                sum += (double)a[i*4+k] * (double)b[k*4+j];
+            tmp[i*4+j] = (float)sum;
         }
     }
     memcpy(dst, tmp, 16 * sizeof(float));
@@ -342,9 +349,13 @@ static void *g_curStream0VB;
 /* Set by the ASI while TTerrainShaderD3D renders a terrain packet. */
 __declspec(dllexport) volatile int g_terrainRenderActive = 0;
 
+/* Set by the ASI while an FFP shader submits ModelView (World*View) via D3DTS_WORLD. */
+__declspec(dllexport) volatile int g_mvWorldTransformActive = 0;
+
 #define REMIX_TAG_HASH_MAX 256
-typedef struct { unsigned __int64 hash; unsigned __int64 frame; } TextureHashCache;
+typedef struct { unsigned __int64 hash; unsigned __int64 epoch; } TextureHashCache;
 static const GUID g_textureHashKey = {0x879712c3,0x4e79,0x49ac,{0x92,0x71,0x75,0x66,0x93,0x3a,0x42,0x11}};
+static const GUID g_iidIDirect3DTexture9 = {0x85c31227,0x3de5,0x4f00,{0x9b,0x3a,0xf1,0x1a,0xc3,0x8c,0x18,0xb5}};
 static remixapi_Interface g_remix = { 0 };
 static unsigned __int64 *g_terrainHashes;
 static unsigned int g_terrainHashCapacity;
@@ -358,9 +369,10 @@ static int g_loggedRemixInitFailure = 0;
 static int g_loggedTextureHashFailure = 0;
 static int g_loggedTextureHashZero = 0;
 static int g_loggedTerrainAddFailure = 0;
-static unsigned __int64 g_textureHashFrame = 1;
+static unsigned __int64 g_textureHashEpoch = 1;
 static int resource_set_data(void*, const GUID*, const void*, unsigned int);
 static int resource_get_data(void*, const GUID*, void*, unsigned int);
+static void resource_free_data(void*, const GUID*);
 static DWORD g_nextRemixTagConfigPoll = 0;
 
 static int initialize_remix_api(void) {
@@ -633,13 +645,13 @@ static void reload_remix_tag_config(void) {
 static int get_texture_hash(void *texture, unsigned __int64 *hash) {
     TextureHashCache cached;
     if (!texture || !hash || !initialize_remix_api()) return 0;
-    if (resource_get_data(texture, &g_textureHashKey, &cached, sizeof(cached)) && cached.frame == g_textureHashFrame) {
+    if (resource_get_data(texture, &g_textureHashKey, &cached, sizeof(cached)) && cached.epoch == g_textureHashEpoch) {
         *hash = cached.hash;
         return 1;
     }
     if (g_remix.dxvk_GetTextureHash((IDirect3DTexture9*)texture, hash) != REMIXAPI_ERROR_CODE_SUCCESS || !*hash) return 0;
     cached.hash = *hash;
-    cached.frame = g_textureHashFrame;
+    cached.epoch = g_textureHashEpoch;
     resource_set_data(texture, &g_textureHashKey, &cached, sizeof(cached));
     return 1;
 }
@@ -663,6 +675,88 @@ static int resource_set_data(void *resource, const GUID *key, const void *data, 
 static int resource_get_data(void *resource, const GUID *key, void *data, unsigned int size) {
     typedef int (__stdcall *FN)(void*, const GUID*, void*, unsigned int*);
     return ((FN)(*(void***)resource)[5])(resource, key, data, &size) >= 0;
+}
+
+static void resource_free_data(void *resource, const GUID *key) {
+    typedef int (__stdcall *FN)(void*, const GUID*);
+    if (resource)
+        ((FN)(*(void***)resource)[6])(resource, key);
+}
+
+static void invalidate_texture_hash(void *texture) {
+    resource_free_data(texture, &g_textureHashKey);
+}
+
+static void invalidate_surface_texture_hash(void *surface) {
+    typedef int (__stdcall *FN_GetContainer)(void*, const GUID*, void**);
+    typedef unsigned long (__stdcall *FN_Release)(void*);
+    void *container = NULL;
+    if (!surface) return;
+    if (((FN_GetContainer)(*(void***)surface)[11])(
+            surface, &g_iidIDirect3DTexture9, &container) >= 0 && container) {
+        invalidate_texture_hash(container);
+        ((FN_Release)(*(void***)container)[2])(container);
+    }
+}
+
+/* ---- Texture / Surface vtable hooks: invalidate cached hash on pixel mutation ---- */
+
+static int g_texVtblHooked;
+static void *g_origTexGetSurfaceLevel, *g_origTexLockRect;
+static int g_surfVtblHooked;
+static void *g_origSurfLockRect;
+
+static int __stdcall SurfLockRect_Hook(void *pSurf,
+    void *pLockedRect, const void *pRect, unsigned int flags) {
+    typedef int (__stdcall *FN)(void*, void*, const void*, unsigned int);
+    int hr = ((FN)g_origSurfLockRect)(pSurf, pLockedRect, pRect, flags);
+    if (hr >= 0 && !(flags & D3DLOCK_READONLY))
+        invalidate_surface_texture_hash(pSurf);
+    return hr;
+}
+
+static void surf_hook_vtable(void *pSurf) {
+    void **vtbl;
+    DWORD oldProt;
+    if (g_surfVtblHooked || !pSurf) return;
+    vtbl = *(void***)pSurf;
+    if (!VirtualProtect(&vtbl[13], sizeof(void*), PAGE_READWRITE, &oldProt)) return;
+    g_origSurfLockRect = vtbl[13];
+    vtbl[13] = (void*)SurfLockRect_Hook;
+    VirtualProtect(&vtbl[13], sizeof(void*), oldProt, &oldProt);
+    g_surfVtblHooked = 1;
+}
+
+static int __stdcall TexGetSurfaceLevel_Hook(void *pTex,
+    unsigned int level, void **ppSurface) {
+    typedef int (__stdcall *FN)(void*, unsigned int, void**);
+    int hr = ((FN)g_origTexGetSurfaceLevel)(pTex, level, ppSurface);
+    if (hr >= 0 && ppSurface && *ppSurface)
+        surf_hook_vtable(*ppSurface);
+    return hr;
+}
+
+static int __stdcall TexLockRect_Hook(void *pTex,
+    unsigned int level, void *pLockedRect, const void *pRect, unsigned int flags) {
+    typedef int (__stdcall *FN)(void*, unsigned int, void*, const void*, unsigned int);
+    int hr = ((FN)g_origTexLockRect)(pTex, level, pLockedRect, pRect, flags);
+    if (hr >= 0 && !(flags & D3DLOCK_READONLY))
+        invalidate_texture_hash(pTex);
+    return hr;
+}
+
+static void tex_hook_vtable(void *pTex) {
+    void **vtbl;
+    DWORD oldProt;
+    if (g_texVtblHooked || !pTex) return;
+    vtbl = *(void***)pTex;
+    if (!VirtualProtect(&vtbl[18], sizeof(void*) * 2, PAGE_READWRITE, &oldProt)) return;
+    g_origTexGetSurfaceLevel = vtbl[18];
+    g_origTexLockRect = vtbl[19];
+    vtbl[18] = (void*)TexGetSurfaceLevel_Hook;
+    vtbl[19] = (void*)TexLockRect_Hook;
+    VirtualProtect(&vtbl[18], sizeof(void*) * 2, oldProt, &oldProt);
+    g_texVtblHooked = 1;
 }
 
 static int __stdcall VBLock_Hook(void *pVB,
@@ -881,20 +975,14 @@ RELAY_THUNK(Relay_19, 19)
 RELAY_THUNK(Relay_20, 20)
 RELAY_THUNK(Relay_21, 21)
 RELAY_THUNK(Relay_22, 22)
-RELAY_THUNK(Relay_23, 23)
 RELAY_THUNK(Relay_24, 24)
 RELAY_THUNK(Relay_25, 25)
 RELAY_THUNK(Relay_27, 27)
 RELAY_THUNK(Relay_28, 28)
 RELAY_THUNK(Relay_29, 29)
-RELAY_THUNK(Relay_30, 30)
-RELAY_THUNK(Relay_31, 31)
 RELAY_THUNK(Relay_32, 32)
 RELAY_THUNK(Relay_33, 33)
-RELAY_THUNK(Relay_34, 34)
-RELAY_THUNK(Relay_35, 35)
 RELAY_THUNK(Relay_36, 36)
-RELAY_THUNK(Relay_37, 37)
 RELAY_THUNK(Relay_38, 38)
 RELAY_THUNK(Relay_39, 39)
 RELAY_THUNK(Relay_40, 40)
@@ -978,6 +1066,20 @@ RELAY_THUNK(Relay_118, 118)
 
 /* ---- Intercepted methods ---- */
 
+/* 23: CreateTexture — hook vtable of first Remix texture */
+static int __stdcall WD_CreateTexture(WrappedDevice *self,
+    unsigned int width, unsigned int height, unsigned int levels,
+    unsigned int usage, unsigned int format, unsigned int pool,
+    void **ppTexture, void *pSharedHandle)
+{
+    typedef int (__stdcall *FN)(void*, unsigned int, unsigned int, unsigned int,
+                                unsigned int, unsigned int, unsigned int, void**, void*);
+    int hr = ((FN)RealVtbl(self)[SLOT_CreateTexture])(
+        self->pReal, width, height, levels, usage, format, pool, ppTexture, pSharedHandle);
+    if (hr == 0 && ppTexture && *ppTexture) tex_hook_vtable(*ppTexture);
+    return hr;
+}
+
 /* 26: CreateVertexBuffer — hook vtable of first Remix VB */
 static int __stdcall WD_CreateVertexBuffer(WrappedDevice *self,
     unsigned int length, unsigned int usage, unsigned int fvf, unsigned int pool,
@@ -988,6 +1090,60 @@ static int __stdcall WD_CreateVertexBuffer(WrappedDevice *self,
     int hr = ((FN)RealVtbl(self)[SLOT_CreateVertexBuffer])(
         self->pReal, length, usage, fvf, pool, ppVB, pSharedHandle);
     if (hr == 0 && ppVB && *ppVB) vb_hook_vtable(*ppVB);
+    return hr;
+}
+
+/* 30: UpdateSurface — invalidate cached hash of destination texture */
+static int __stdcall WD_UpdateSurface(WrappedDevice *self,
+    void *pSrcSurface, const void *pSrcRect, void *pDstSurface, const void *pDestPoint)
+{
+    typedef int (__stdcall *FN)(void*, void*, const void*, void*, const void*);
+    int hr = ((FN)RealVtbl(self)[SLOT_UpdateSurface])(
+        self->pReal, pSrcSurface, pSrcRect, pDstSurface, pDestPoint);
+    if (hr >= 0) invalidate_surface_texture_hash(pDstSurface);
+    return hr;
+}
+
+/* 31: UpdateTexture — invalidate cached hash of destination texture */
+static int __stdcall WD_UpdateTexture(WrappedDevice *self,
+    void *pSrcTexture, void *pDstTexture)
+{
+    typedef int (__stdcall *FN)(void*, void*, void*);
+    int hr = ((FN)RealVtbl(self)[SLOT_UpdateTexture])(self->pReal, pSrcTexture, pDstTexture);
+    if (hr >= 0) invalidate_texture_hash(pDstTexture);
+    return hr;
+}
+
+/* 34: StretchRect — invalidate cached hash of destination texture */
+static int __stdcall WD_StretchRect(WrappedDevice *self,
+    void *pSrcSurface, const void *pSrcRect, void *pDstSurface,
+    const void *pDstRect, unsigned int filter)
+{
+    typedef int (__stdcall *FN)(void*, void*, const void*, void*, const void*, unsigned int);
+    int hr = ((FN)RealVtbl(self)[SLOT_StretchRect])(
+        self->pReal, pSrcSurface, pSrcRect, pDstSurface, pDstRect, filter);
+    if (hr >= 0) invalidate_surface_texture_hash(pDstSurface);
+    return hr;
+}
+
+/* 35: ColorFill — invalidate cached hash of destination texture */
+static int __stdcall WD_ColorFill(WrappedDevice *self,
+    void *pSurface, const void *pRect, unsigned int color)
+{
+    typedef int (__stdcall *FN)(void*, void*, const void*, unsigned int);
+    int hr = ((FN)RealVtbl(self)[SLOT_ColorFill])(self->pReal, pSurface, pRect, color);
+    if (hr >= 0) invalidate_surface_texture_hash(pSurface);
+    return hr;
+}
+
+/* 37: SetRenderTarget — invalidate cached hash when rendering into a texture */
+static int __stdcall WD_SetRenderTarget(WrappedDevice *self,
+    unsigned int renderTargetIndex, void *pRenderTarget)
+{
+    typedef int (__stdcall *FN)(void*, unsigned int, void*);
+    int hr = ((FN)RealVtbl(self)[SLOT_SetRenderTarget])(
+        self->pReal, renderTargetIndex, pRenderTarget);
+    if (hr >= 0) invalidate_surface_texture_hash(pRenderTarget);
     return hr;
 }
 
@@ -1067,7 +1223,7 @@ static int __stdcall WD_Reset(WrappedDevice *self, void *pPresentParams) {
     self->usesFVF = self->alphaBlendEnabled = 0;
     self->destBlend = 1; /* D3DBLEND_ZERO */
     g_curStream0VB = NULL;
-    ++g_textureHashFrame;
+    ++g_textureHashEpoch;
     hr = ((FN)RealVtbl(self)[SLOT_Reset])(self->pReal, pPresentParams);
     return hr;
 }
@@ -1079,7 +1235,6 @@ static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, 
 
     hr = ((FN)RealVtbl(self)[SLOT_Present])(self->pReal, a, b, c, d);
     reload_remix_tag_config();
-    ++g_textureHashFrame;
 
     self->mvDirty = 0;
     self->hasAppliedWorld = 0;
@@ -1120,15 +1275,27 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
         return hr;
     }
 
-    /* Keep synthetic-WORLD deduplication coherent with game WORLD writes. */
+    /* Keep synthetic-WORLD deduplication coherent with game WORLD writes.
+     * Inside g_mvWorldTransformActive (Toshi FFP shaders that pass ModelView
+     * as D3DTS_WORLD with identity VIEW), decompose World = MV * inv(View). */
     if (state >= 256 && state < 512) {
-        int hr = ((FN)RealVtbl(self)[SLOT_SetTransform])(
-            self->pReal, state, pMatrix);
+        float decomposed[16];
+        float *submitMatrix = pMatrix;
+        if (state == D3DTS_WORLD && pMatrix && g_mvWorldTransformActive && self->hasRealView) {
+            mat4_multiply(decomposed, pMatrix, self->invViewMatrix);
+            decomposed[3] = 0.0f; decomposed[7] = 0.0f;
+            decomposed[11] = 0.0f; decomposed[15] = 1.0f;
+            submitMatrix = decomposed;
+        }
+        hr = ((FN)RealVtbl(self)[SLOT_SetTransform])(
+            self->pReal, state, submitMatrix);
         if (hr == 0) {
             self->gameWorldSet = 1;
-            if (state == D3DTS_WORLD && pMatrix) {
-                memcpy(self->appliedWorld, pMatrix, sizeof(self->appliedWorld));
+            if (state == D3DTS_WORLD && submitMatrix) {
+                memcpy(self->appliedWorld, submitMatrix, sizeof(self->appliedWorld));
                 self->hasAppliedWorld = 1;
+                if (g_mvWorldTransformActive)
+                    self->mvDirty = 0;
             }
         }
         return hr;
@@ -1225,8 +1392,10 @@ static int __stdcall WD_DrawPrimitive(WrappedDevice *self,
     typedef int (__stdcall *FN)(void*, unsigned int, unsigned int, unsigned int);
     int hr;
 
-    if (!applyMvPath(self))
-        applyCentroidOrMvpPath(self);
+    if (!g_mvWorldTransformActive) {
+        if (!applyMvPath(self))
+            applyCentroidOrMvpPath(self);
+    }
     if (g_terrainRenderActive) {
         if (!g_loggedTerrainScope) {
             log_str("Terrain render scope observed\r\n");
@@ -1259,8 +1428,10 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
     unsigned __int64 textureHash;
     float particlePreviousWorld[16];
 
-    if (!applyMvPath(self))
-        applyCentroidOrMvpPath(self);
+    if (!g_mvWorldTransformActive) {
+        if (!applyMvPath(self))
+            applyCentroidOrMvpPath(self);
+    }
 
     if (g_terrainRenderActive) {
         if (!g_loggedTerrainScope) {
@@ -1340,21 +1511,21 @@ static void *const s_device_vtbl[DEVICE_VTABLE_SIZE] = {
     (void*)Relay_20, /* 20 */
     (void*)Relay_21, /* 21 */
     (void*)Relay_22, /* 22 */
-    (void*)Relay_23, /* 23 */
+    (void*)WD_CreateTexture, /* 23 */
     (void*)Relay_24, /* 24 */
     (void*)Relay_25, /* 25 */
     (void*)WD_CreateVertexBuffer, /* 26 */
     (void*)Relay_27, /* 27 */
     (void*)Relay_28, /* 28 */
     (void*)Relay_29, /* 29 */
-    (void*)Relay_30, /* 30 */
-    (void*)Relay_31, /* 31 */
+    (void*)WD_UpdateSurface, /* 30 */
+    (void*)WD_UpdateTexture, /* 31 */
     (void*)Relay_32, /* 32 */
     (void*)Relay_33, /* 33 */
-    (void*)Relay_34, /* 34 */
-    (void*)Relay_35, /* 35 */
+    (void*)WD_StretchRect, /* 34 */
+    (void*)WD_ColorFill, /* 35 */
     (void*)Relay_36, /* 36 */
-    (void*)Relay_37, /* 37 */
+    (void*)WD_SetRenderTarget, /* 37 */
     (void*)Relay_38, /* 38 */
     (void*)Relay_39, /* 39 */
     (void*)Relay_40, /* 40 */

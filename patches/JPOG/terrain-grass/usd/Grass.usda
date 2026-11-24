@@ -1,0 +1,204 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+
+def Xform "RootNode"
+{
+    def Scope "TerrainGrass"
+    {
+        custom int remix:terrainGrass:schemaVersion = 1
+        custom bool remix:terrainGrass:enabled = 1
+        custom bool remix:terrainGrass:hideVanillaGrass = 1
+        custom bool remix:terrainGrass:flipUp = 1
+        custom bool remix:terrainGrass:useTerrainBlendRules = 0
+        custom float remix:terrainGrass:worldSize = 1024
+        custom float2 remix:terrainGrass:worldOrigin = (0, 0)
+        custom float remix:terrainGrass:minElevation = 0.68
+        custom float remix:terrainGrass:maxSlopeDegrees = 40
+        custom float remix:terrainGrass:sinkDepth = 0.08
+        custom float remix:terrainGrass:normalAlign = 0.65
+        custom float remix:terrainGrass:borderShrinkWidth = 6.5
+        custom float remix:terrainGrass:minScale = 0.75
+        custom float remix:terrainGrass:maxScale = 1.40
+        custom float remix:terrainGrass:transitionWidth = 28
+        custom float remix:terrainGrass:coverageThreshold = 0.75
+
+        custom float remix:terrainGrass:nearSpacing = 3.10
+        custom float remix:terrainGrass:nearRadius = 335
+        custom float remix:terrainGrass:nearScale = 2.15
+        custom rel remix:terrainGrass:nearPrototypes = [
+            </RootNode/TerrainGrass/Prototypes/Mid_A>,
+            </RootNode/TerrainGrass/Prototypes/Mid_B>,
+            </RootNode/TerrainGrass/Prototypes/Mid_A2>,
+            </RootNode/TerrainGrass/Prototypes/Mid_B2>,
+            </RootNode/TerrainGrass/Prototypes/Mid_A3>,
+            </RootNode/TerrainGrass/Prototypes/Mid_C_BrownTips>
+        ]
+
+        custom float remix:terrainGrass:midSpacing = 3.10
+        custom float remix:terrainGrass:midRadius = 335
+        custom float remix:terrainGrass:midScale = 2.15
+        custom rel remix:terrainGrass:midPrototypes = [
+            </RootNode/TerrainGrass/Prototypes/Mid_A>,
+            </RootNode/TerrainGrass/Prototypes/Mid_B>,
+            </RootNode/TerrainGrass/Prototypes/Mid_A2>,
+            </RootNode/TerrainGrass/Prototypes/Mid_B2>,
+            </RootNode/TerrainGrass/Prototypes/Mid_A3>,
+            </RootNode/TerrainGrass/Prototypes/Mid_C_BrownTips>
+        ]
+
+        custom float remix:terrainGrass:farSpacing = 5.20
+        custom float remix:terrainGrass:farRadius = 1024
+        custom float remix:terrainGrass:farScale = 2.05
+        custom rel remix:terrainGrass:farPrototypes = [
+            </RootNode/TerrainGrass/Prototypes/Far_A>,
+            </RootNode/TerrainGrass/Prototypes/Far_B>,
+            </RootNode/TerrainGrass/Prototypes/Far_A2>,
+            </RootNode/TerrainGrass/Prototypes/Far_B2>,
+            </RootNode/TerrainGrass/Prototypes/Far_A3>,
+            </RootNode/TerrainGrass/Prototypes/Far_C_BrownTips>
+        ]
+
+        def Material "ImperataGrassMaterial"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TerrainGrass/ImperataGrassMaterial/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/Imperata_Leaf_Albedo.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/Imperata_Leaf_Normal_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.72
+                asset inputs:reflectionroughness_texture = @./textures/Imperata_Leaf_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+
+        def Material "ImperataGrassMaterial_BrownTips"
+        {
+            token outputs:mdl:surface.connect = </RootNode/TerrainGrass/ImperataGrassMaterial_BrownTips/Shader.outputs:out>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @AperturePBR_Opacity.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "AperturePBR_Opacity"
+                int inputs:alpha_test_type = 7
+                bool inputs:blend_enabled = 0
+                color3f inputs:diffuse_color_constant = (1, 1, 1)
+                asset inputs:diffuse_texture = @./textures/Imperata_Leaf_Albedo_BrownTips.a.rtex.dds@
+                float inputs:metallic_constant = 0
+                asset inputs:normalmap_texture = @./textures/Imperata_Leaf_Normal_OTH_Normal.n.rtex.dds@
+                float inputs:opacity_constant = 1
+                float inputs:reflection_roughness_constant = 0.72
+                asset inputs:reflectionroughness_texture = @./textures/Imperata_Leaf_Roughness.r.rtex.dds@
+                bool inputs:use_legacy_alpha_state = 0
+                token outputs:out
+            }
+        }
+
+        def Scope "Prototypes" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            rel material:binding = </RootNode/TerrainGrass/ImperataGrassMaterial>
+
+            def Xform "Near_A" (
+                prepend references = @./meshes/GrassCluster_Near_A.usda@
+            )
+            {
+            }
+
+            def Xform "Near_B" (
+                prepend references = @./meshes/GrassCluster_Near_B.usda@
+            )
+            {
+            }
+
+            def Xform "Mid_A" (
+                prepend references = @./meshes/GrassCluster_Mid_A.usda@
+            )
+            {
+            }
+
+            def Xform "Mid_B" (
+                prepend references = @./meshes/GrassCluster_Mid_B.usda@
+            )
+            {
+            }
+
+            def Xform "Mid_A2" (
+                prepend references = @./meshes/GrassCluster_Mid_A.usda@
+            )
+            {
+            }
+
+            def Xform "Mid_B2" (
+                prepend references = @./meshes/GrassCluster_Mid_B.usda@
+            )
+            {
+            }
+
+            def Xform "Mid_A3" (
+                prepend references = @./meshes/GrassCluster_Mid_A.usda@
+            )
+            {
+            }
+
+            def Xform "Mid_C_BrownTips" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+                prepend references = @./meshes/GrassCluster_Mid_A.usda@
+            )
+            {
+                rel material:binding = </RootNode/TerrainGrass/ImperataGrassMaterial_BrownTips>
+            }
+
+            def Xform "Far_A" (
+                prepend references = @./meshes/GrassCluster_Far_A.usda@
+            )
+            {
+            }
+
+            def Xform "Far_B" (
+                prepend references = @./meshes/GrassCluster_Far_B.usda@
+            )
+            {
+            }
+
+            def Xform "Far_A2" (
+                prepend references = @./meshes/GrassCluster_Far_A.usda@
+            )
+            {
+            }
+
+            def Xform "Far_B2" (
+                prepend references = @./meshes/GrassCluster_Far_B.usda@
+            )
+            {
+            }
+
+            def Xform "Far_A3" (
+                prepend references = @./meshes/GrassCluster_Far_A.usda@
+            )
+            {
+            }
+
+            def Xform "Far_C_BrownTips" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+                prepend references = @./meshes/GrassCluster_Far_A.usda@
+            )
+            {
+                rel material:binding = </RootNode/TerrainGrass/ImperataGrassMaterial_BrownTips>
+            }
+        }
+    }
+}

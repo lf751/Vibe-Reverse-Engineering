@@ -1,0 +1,14 @@
+#usda 1.0
+(
+    customLayerData = {
+        string lightspeed_game_name = "TRenderD3DInterface"
+        string lightspeed_layer_type = "replacement"
+        string lightspeed_mod_name = "JPOG_TerrainGrass"
+        string lightspeed_mod_version = "1.0.0"
+    }
+    subLayers = [
+        @./Grass.usda@
+    ]
+    timeCodesPerSecond = 24
+    upAxis = "Y"
+)

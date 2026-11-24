@@ -54,11 +54,21 @@ void * __cdecl memcpy(void *dst, const void *src, unsigned int n) {
 #define WEATHER_UPDATE_RVA       0x1F7B80
 #define WEATHER_OFF_ACTIVE       0x4C
 #define TERRAIN_RENDER_RVA       0x5790
+#define TERRAIN_COMPUTE_LOD_RVA  0x7470
+#define TERRAIN_LOD_COUNTER_RVA  0x123C4
+#define SYSSHADER_FLUSH_RVA      0x19B0
+#define SYSSHADER_RENDER_RVA     0x22D0
+#define SYSSHADER_CAP_HIGHEND_RVA 0x27D0
+#define SYSSHADER_CAP_SCATTER_RVA 0x2830
+#define SYSSHADER_OFF_HIGHEND    0x3C
+#define SYSSHADER_OFF_SCATTER    0x3D
 #define CAMERA_MIN_TRANSLATION2  2500.0f
 
 typedef int (__stdcall *FnSetTransform)(void*, int, void*);
 typedef int (__fastcall *FnWeatherUpdate)(void*, void*, float);
 typedef void (__fastcall *FnTerrainRender)(void*, void*, void*);
+typedef void (__fastcall *FnSysShaderFlush)(void*, void*);
+typedef void (__fastcall *FnSysShaderRender)(void*, void*, void*);
 typedef void (__fastcall *FnDestroyRenderContext)(void*, void*);
 
 /* ====================================================================
@@ -70,9 +80,15 @@ static FnDestroyRenderContext g_originalDestroyRenderContext = NULL;
 static BYTE *g_contextDestroyTrampoline = NULL;
 static FnWeatherUpdate g_originalWeatherUpdate = NULL;
 static FnTerrainRender g_originalTerrainRender = NULL;
+static FnSysShaderFlush g_originalSysShaderFlush = NULL;
+static FnSysShaderRender g_originalSysShaderRender = NULL;
 static BYTE *g_weatherTrampoline = NULL;
 static BYTE *g_terrainTrampoline = NULL;
+static BYTE *g_sysShaderFlushTrampoline = NULL;
+static BYTE *g_sysShaderRenderTrampoline = NULL;
 static volatile int *g_terrainRenderActive = NULL;
+static volatile int *g_mvWorldTransformActive = NULL;
+static volatile unsigned int *g_terrainLodCounter = NULL;
 static remixapi_Interface g_remix = { 0 };
 static int g_lastWeatherIndex = -1;
 
@@ -148,6 +164,43 @@ static void __fastcall Hook_TerrainRender(void *thisPtr, void *edx_unused, void 
     g_originalTerrainRender(thisPtr, NULL, packet);
     if (g_terrainRenderActive)
         *g_terrainRenderActive = wasActive;
+}
+
+static void __fastcall Hook_SysShaderFlush(void *thisPtr, void *edx_unused) {
+    int wasActive = *g_mvWorldTransformActive;
+    (void)edx_unused;
+
+    /* Enforce FFP mode even if Validate() ran before capability patches installed. */
+    *((BYTE *)thisPtr + SYSSHADER_OFF_HIGHEND) = 0;
+    *((BYTE *)thisPtr + SYSSHADER_OFF_SCATTER) = 0;
+    *g_mvWorldTransformActive = 1;
+    g_originalSysShaderFlush(thisPtr, NULL);
+    *g_mvWorldTransformActive = wasActive;
+}
+
+static void __fastcall Hook_SysShaderRender(void *thisPtr, void *edx_unused, void *packet) {
+    int wasActive = *g_mvWorldTransformActive;
+    (void)edx_unused;
+
+    *g_mvWorldTransformActive = 1;
+    g_originalSysShaderRender(thisPtr, NULL, packet);
+    *g_mvWorldTransformActive = wasActive;
+}
+
+/* Lock every terrain section to LOD 0 so tiles stay single full-tile draws
+ * instead of splitting/merging into 4 stitch quadrants during camera movement. */
+static signed char __fastcall Hook_TerrainComputeLOD(void *thisPtr, void *edx_unused,
+    void *camPos, signed char *outMinLOD)
+{
+    unsigned int *flags;
+    (void)edx_unused;
+    (void)camPos;
+
+    flags = (unsigned int *)((char *)thisPtr + 0x18);
+    *flags = (*flags & 0x000003FCu) | *g_terrainLodCounter;
+    if (outMinLOD)
+        *outMinLOD = 0;
+    return 0;
 }
 
 static void __fastcall Hook_SetRenderMatrices(void *thisPtr, void *edx_unused) {
@@ -330,6 +383,113 @@ static int InstallTerrainTagHook(HMODULE hMod) {
     return InstallTerrainRenderHook(hMod);
 }
 
+static int InstallTerrainLodHook(HMODULE hMod) {
+    static const BYTE expectedPrologue[6] = { 0x56, 0x55, 0x53, 0x83, 0xEC, 0x30 };
+    BYTE patch[6];
+    BYTE *target;
+    int rel;
+
+    if (!MatchModuleBytes(hMod, TERRAIN_COMPUTE_LOD_RVA, expectedPrologue, 6)) {
+        OutputDebugStringA("JPOG ASI: unsupported TTerrainInterface ComputeLOD signature; LOD lock skipped.\n");
+        return 0;
+    }
+    g_terrainLodCounter = (volatile unsigned int *)GetProcAddress(
+        hMod, "?sm_ui32Counter@TTerrainSection@Toshi@@2IA");
+    if (!g_terrainLodCounter)
+        g_terrainLodCounter = (volatile unsigned int *)((BYTE *)hMod + TERRAIN_LOD_COUNTER_RVA);
+
+    target = (BYTE *)hMod + TERRAIN_COMPUTE_LOD_RVA;
+    patch[0] = 0xE9;
+    rel = (int)((BYTE *)Hook_TerrainComputeLOD - target - 5);
+    memcpy(patch + 1, &rel, 4);
+    patch[5] = 0x90;
+    return PatchBytes(target, patch, 6);
+}
+
+static int InstallTrampoline10(BYTE *target, void *hook, BYTE **outTrampoline, void **outOriginal) {
+    BYTE patch[10];
+    BYTE *trampoline;
+    int rel;
+    int i;
+
+    trampoline = (BYTE *)VirtualAlloc(NULL, 15,
+        MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!trampoline)
+        return 0;
+
+    memcpy(trampoline, target, 10);
+    trampoline[10] = 0xE9;
+    rel = (int)((target + 10) - (trampoline + 15));
+    memcpy(trampoline + 11, &rel, 4);
+    FlushInstructionCache(GetCurrentProcess(), trampoline, 15);
+
+    /* Publish the trampoline before redirecting target so the render thread
+     * can never invoke the hook while the original pointer is still NULL. */
+    *outTrampoline = trampoline;
+    *outOriginal = (void *)trampoline;
+    MemoryBarrier();
+
+    patch[0] = 0xE9;
+    rel = (int)((BYTE *)hook - target - 5);
+    memcpy(patch + 1, &rel, 4);
+    for (i = 5; i < 10; i++)
+        patch[i] = 0x90;
+    if (!PatchBytes(target, patch, 10)) {
+        *outOriginal = NULL;
+        *outTrampoline = NULL;
+        VirtualFree(trampoline, 0, MEM_RELEASE);
+        return 0;
+    }
+    return 1;
+}
+
+/* Switch TSysShaderD3D (trees, buildings, fences, props) to its built-in
+ * FVF 0x142 fixed-function path and signal the proxy to decompose its
+ * ModelView D3DTS_WORLD matrices into world space. */
+static int InstallSysShaderFfpHooks(HMODULE hMod) {
+    static const BYTE flushPrologue[10] = {
+        0x57, 0x56, 0x55, 0x53, 0x81, 0xEC, 0x84, 0x00, 0x00, 0x00
+    };
+    static const BYTE renderPrologue[10] = {
+        0x57, 0x56, 0x55, 0x53, 0x81, 0xEC, 0xF4, 0x00, 0x00, 0x00
+    };
+    static const BYTE capPrologue[6] = {
+        0x81, 0xEC, 0xD4, 0x00, 0x00, 0x00
+    };
+    static const BYTE retZero[3] = { 0x33, 0xC0, 0xC3 };
+    HMODULE hProxy = GetModuleHandleA("d3d9.dll");
+
+    if (!hProxy)
+        return 0;
+    g_mvWorldTransformActive = (volatile int *)GetProcAddress(
+        hProxy, "g_mvWorldTransformActive");
+    if (!g_mvWorldTransformActive) {
+        OutputDebugStringA("JPOG ASI: proxy lacks g_mvWorldTransformActive; TSysShader FFP skipped.\n");
+        return 1;
+    }
+    if (!MatchModuleBytes(hMod, SYSSHADER_FLUSH_RVA, flushPrologue, 10) ||
+        !MatchModuleBytes(hMod, SYSSHADER_RENDER_RVA, renderPrologue, 10) ||
+        !MatchModuleBytes(hMod, SYSSHADER_CAP_HIGHEND_RVA, capPrologue, 6) ||
+        !MatchModuleBytes(hMod, SYSSHADER_CAP_SCATTER_RVA, capPrologue, 6)) {
+        OutputDebugStringA("JPOG ASI: unsupported TSysShaderD3D signatures; FFP switch skipped.\n");
+        return 1;
+    }
+
+    if (!InstallTrampoline10((BYTE *)hMod + SYSSHADER_RENDER_RVA,
+            (void *)Hook_SysShaderRender, &g_sysShaderRenderTrampoline,
+            (void **)&g_originalSysShaderRender))
+        return 1;
+
+    if (!InstallTrampoline10((BYTE *)hMod + SYSSHADER_FLUSH_RVA,
+            (void *)Hook_SysShaderFlush, &g_sysShaderFlushTrampoline,
+            (void **)&g_originalSysShaderFlush))
+        return 1;
+
+    PatchBytes((BYTE *)hMod + SYSSHADER_CAP_HIGHEND_RVA, retZero, 3);
+    PatchBytes((BYTE *)hMod + SYSSHADER_CAP_SCATTER_RVA, retZero, 3);
+    return 1;
+}
+
 /* ---- Install render hooks ---- */
 
 static int InstallRenderHooks(HMODULE hMod) {
@@ -386,7 +546,10 @@ static DWORD WINAPI InitThread(LPVOID param) {
     HMODULE hSimJp;
     HMODULE hRenderD3D = NULL;
     HMODULE hTerrainShader = NULL;
+    HMODULE hTerrainIface = NULL;
+    HMODULE hSysShader = NULL;
     int renderAttempted = 0, terrainDone = 0, waterResetDone = 0;
+    int terrainLodAttempted = 0, sysShaderAttempted = 0;
     int i;
 
     (void)param;
@@ -402,6 +565,18 @@ static DWORD WINAPI InitThread(LPVOID param) {
                 renderAttempted = 1;
             }
         }
+        if (!terrainLodAttempted) {
+            hTerrainIface = GetModuleHandleA("TTerrainInterface.dll");
+            if (hTerrainIface) {
+                InstallTerrainLodHook(hTerrainIface);
+                terrainLodAttempted = 1;
+            }
+        }
+        if (!sysShaderAttempted) {
+            hSysShader = GetModuleHandleA("TSysShaderD3D.dll");
+            if (hSysShader)
+                sysShaderAttempted = InstallSysShaderFfpHooks(hSysShader);
+        }
         if (!terrainDone || !waterResetDone) {
             hTerrainShader = GetModuleHandleA("TTerrainShaderD3D.dll");
             if (hTerrainShader) {
@@ -411,7 +586,8 @@ static DWORD WINAPI InitThread(LPVOID param) {
                     waterResetDone = InstallTerrainWaterResetHook(hTerrainShader);
             }
         }
-        if (renderAttempted && terrainDone && waterResetDone)
+        if (renderAttempted && terrainLodAttempted && sysShaderAttempted &&
+            terrainDone && waterResetDone)
             return 0;
         Sleep(100);
     }

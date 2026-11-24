@@ -11,9 +11,13 @@ zero. Short or partial uploads invalidate the sample. Shader classification read
 the live shader's GetFunction data when its binding changes; it has no creation
 count limit or stale pointer table. The bridge serves GetFunction locally.
 
-Texture hash cache entries are also resource-owned, and are valid for one frame.
-This avoids fixed-slot collisions without caching stale generated terrain content
-across frames. Particle hashing is skipped when no particle tags are configured.
+Texture hash cache entries are also resource-owned, and persist across frames
+until the texture is mutated or the device resets. Non-read-only texture and
+surface locks, UpdateTexture, UpdateSurface, StretchRect, ColorFill and
+SetRenderTarget invalidate the destination texture's cached hash, and Reset
+advances the cache epoch. This avoids per-frame blocking GetTextureHash bridge
+round trips while keeping generated terrain content coherent on edits and save
+transitions. Particle hashing is skipped when no particle tags are configured.
 Auto-tagged terrain hashes use a growable process-lifetime deduplication set.
 The proxy sends `session:rtx.terrainTextures` through AddTextureHash: the matching
 runtime merges the hash into its non-persistent Derived layer. Authored config
