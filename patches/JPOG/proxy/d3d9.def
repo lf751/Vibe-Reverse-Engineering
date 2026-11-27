@@ -3,3 +3,4 @@ EXPORTS
     Direct3DCreate9 @1
     g_terrainRenderActive DATA
     g_mvWorldTransformActive DATA
+    g_grassFlushState DATA

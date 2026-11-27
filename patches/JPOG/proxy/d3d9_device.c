@@ -64,11 +64,7 @@ typedef HRESULT (__stdcall *PFN_SetOuterDevice)(void *inner, void *outerDevice, 
 #define D3DTS_PROJECTION 3
 #define D3DTS_WORLD      256
 
-#define D3DRS_DESTBLEND             20
-#define D3DRS_ALPHABLENDENABLE      27
 #define D3DLOCK_READONLY            0x00000010u
-
-#define PARTICLE_VERTEX_SHADER_HASH 0x72F91594u
 
 /* ---- Device vtable slot indices ---- */
 enum {
@@ -143,6 +139,7 @@ typedef struct WrappedDevice {
     int   gameWorldSet;
 
     void *texture0;
+    void *texture1;
 
     unsigned int stream0Stride;
     unsigned int stream0Offset;
@@ -151,39 +148,11 @@ typedef struct WrappedDevice {
     int usesFVF;
     void *vertexShader;
     void *pixelShader;
-    unsigned int alphaBlendEnabled;
-    unsigned int destBlend;
-    unsigned int currentVertexShaderHash;
-    void *particleDeclaration;
+    void *skinDeclaration;
 } WrappedDevice;
 
 static __inline void** RealVtbl(WrappedDevice *self) {
     return *(void***)(self->pReal);
-}
-
-static unsigned int hash_bytes(const void *data, unsigned int size) {
-    const unsigned char *bytes = (const unsigned char *)data;
-    unsigned int hash = 2166136261u;
-    while (size--) {
-        hash ^= *bytes++;
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
-static unsigned int get_shader_hash(void *shader) {
-    typedef int (__stdcall *GetFunction)(void*, void*, unsigned int*);
-    unsigned int size = 0, hash = 0;
-    void *code;
-    GetFunction get;
-    if (!shader) return 0;
-    get = (GetFunction)(*(void***)shader)[4];
-    if (get(shader, NULL, &size) < 0 || !size) return 0;
-    code = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!code) return 0;
-    if (get(shader, code, &size) >= 0) hash = hash_bytes(code, size);
-    HeapFree(GetProcessHeap(), 0, code);
-    return hash;
 }
 
 typedef struct VertexElement9 {
@@ -195,21 +164,24 @@ typedef struct VertexElement9 {
     unsigned char usageIndex;
 } VertexElement9;
 
-static int ensure_particle_declaration(WrappedDevice *self) {
+/* TSkinShaderD3D's 40-byte vertex layout stores blend weights/indices at +24/+28,
+ * not DIFFUSE/SPECULAR. Binding POS/NORM/UV omits those bytes so FFP draws never
+ * feed weight/index data as vertex colors into Remix. */
+static int ensure_skin_declaration(WrappedDevice *self) {
     typedef int (__stdcall *FN)(void*, const VertexElement9*, void**);
     static const VertexElement9 elements[] = {
-        { 0, 0,  2, 0,  0, 0 },
-        { 0, 12, 4, 0, 10, 0 },
-        { 0, 16, 1, 0,  5, 0 },
+        { 0, 0,  2, 0, 0, 0 },
+        { 0, 12, 2, 0, 3, 0 },
+        { 0, 32, 1, 0, 5, 0 },
         { 0xFF, 0, 17, 0, 0, 0 }
     };
 
-    if (self->particleDeclaration)
+    if (self->skinDeclaration)
         return 1;
     if (((FN)RealVtbl(self)[86])(self->pReal, elements,
-        &self->particleDeclaration) != 0)
+        &self->skinDeclaration) != 0)
         return 0;
-    log_str("Particle COLOR0 declaration created\r\n");
+    log_str("Skin POS/NORM/UV declaration created\r\n");
     return 1;
 }
 
@@ -349,8 +321,160 @@ static void *g_curStream0VB;
 /* Set by the ASI while TTerrainShaderD3D renders a terrain packet. */
 __declspec(dllexport) volatile int g_terrainRenderActive = 0;
 
-/* Set by the ASI while an FFP shader submits ModelView (World*View) via D3DTS_WORLD. */
+/* Bitflags set by the ASI while an FFP shader submits ModelView (World*View)
+ * via D3DTS_WORLD: bit 0 (1) = TSysShaderD3D, bit 1 (2) = TSkinShaderD3D,
+ * bit 2 (4) = main camera pass (stabilize World into g_staticWorldCache),
+ * bit 3 (8) = TSpriteShaderD3D 3D pass (decompose without static-world snap). */
 __declspec(dllexport) volatile int g_mvWorldTransformActive = 0;
+
+/* Cleared on Present/Reset, set when a real non-identity D3DTS_VIEW is accepted. */
+__declspec(dllexport) volatile int g_viewSyncedThisFrame = 0;
+
+/* Spatial cache that snaps MV*inv(View) float32 round-trip jitter back to each
+ * object's canonical World matrix so Remix's exact-position matcher hits.
+ * POS_EPS (0.005) absorbs ~500-1000 unit translation round-trip noise (~0.0005);
+ * ROT_EPS (5e-5, ~0.003 deg) absorbs [-1,1] rotation noise (~1e-6) without
+ * quantizing gentle idle tree sway. When translation matches a cached anchor
+ * but rotation moves (swaying tree), only translation snaps so the root stays
+ * bit-exact while rotation passes through smoothly. */
+#define STATIC_WORLD_BUCKETS     8192u
+#define STATIC_WORLD_WAY         4u
+#define STATIC_WORLD_INV_CELL    50.0f   /* 1 / 0.02 world units */
+#define STATIC_WORLD_HALF_CELL   0.01f
+#define STATIC_WORLD_POS_EPS     0.005f
+#define STATIC_WORLD_ROT_EPS     0.00005f
+#define STATIC_WORLD_SWAY_EPS    0.05f
+
+typedef struct StaticWorldEntry {
+    int cx, cy, cz;
+    unsigned int lastFrame;
+    unsigned char used;
+    float mat[16];
+} StaticWorldEntry;
+
+static StaticWorldEntry g_staticWorldCache[STATIC_WORLD_BUCKETS * STATIC_WORLD_WAY];
+static unsigned int g_staticWorldFrame = 1u;
+
+static float abs_f(float v) {
+    return v < 0.0f ? -v : v;
+}
+
+static int fast_floor_int(float x) {
+    int i = (int)x;
+    return (x < (float)i) ? (i - 1) : i;
+}
+
+static unsigned int hash_cell(int cx, int cy, int cz) {
+    unsigned int h = (unsigned int)cx * 73856093u;
+    h ^= (unsigned int)cy * 19349663u;
+    h ^= (unsigned int)cz * 83492791u;
+    h ^= h >> 16;
+    return h & (STATIC_WORLD_BUCKETS - 1u);
+}
+
+static int rot3x3_within(const float *a, const float *b, float eps) {
+    return abs_f(a[0]  - b[0])  < eps &&
+           abs_f(a[1]  - b[1])  < eps &&
+           abs_f(a[2]  - b[2])  < eps &&
+           abs_f(a[4]  - b[4])  < eps &&
+           abs_f(a[5]  - b[5])  < eps &&
+           abs_f(a[6]  - b[6])  < eps &&
+           abs_f(a[8]  - b[8])  < eps &&
+           abs_f(a[9]  - b[9])  < eps &&
+           abs_f(a[10] - b[10]) < eps;
+}
+
+static void stabilize_static_world_matrix(float w[16]) {
+    float tx = w[12], ty = w[13], tz = w[14];
+    int bx, by, bz, ox, oy, oz;
+    int cx, cy, cz;
+    unsigned int bucket, i, evictIdx;
+    unsigned int oldestAge;
+    StaticWorldEntry *posMatch = NULL;
+    StaticWorldEntry *swayMatch = NULL;
+
+    if (!(tx > -1.0e6f && tx < 1.0e6f &&
+          ty > -1.0e6f && ty < 1.0e6f &&
+          tz > -1.0e6f && tz < 1.0e6f))
+        return;
+
+    bx = fast_floor_int((tx - STATIC_WORLD_HALF_CELL) * STATIC_WORLD_INV_CELL);
+    by = fast_floor_int((ty - STATIC_WORLD_HALF_CELL) * STATIC_WORLD_INV_CELL);
+    bz = fast_floor_int((tz - STATIC_WORLD_HALF_CELL) * STATIC_WORLD_INV_CELL);
+
+    for (ox = 0; ox <= 1; ox++) {
+        for (oy = 0; oy <= 1; oy++) {
+            for (oz = 0; oz <= 1; oz++) {
+                int qx = bx + ox, qy = by + oy, qz = bz + oz;
+                StaticWorldEntry *base = &g_staticWorldCache[hash_cell(qx, qy, qz) * STATIC_WORLD_WAY];
+                for (i = 0; i < STATIC_WORLD_WAY; i++) {
+                    StaticWorldEntry *e = &base[i];
+                    if (!e->used || e->cx != qx || e->cy != qy || e->cz != qz)
+                        continue;
+                    if (abs_f(tx - e->mat[12]) < STATIC_WORLD_POS_EPS &&
+                        abs_f(ty - e->mat[13]) < STATIC_WORLD_POS_EPS &&
+                        abs_f(tz - e->mat[14]) < STATIC_WORLD_POS_EPS) {
+                        if (rot3x3_within(w, e->mat, STATIC_WORLD_ROT_EPS)) {
+                            e->lastFrame = g_staticWorldFrame;
+                            memcpy(w, e->mat, 16 * sizeof(float));
+                            return;
+                        }
+                        if (!posMatch)
+                            posMatch = e;
+                        if (!swayMatch && rot3x3_within(w, e->mat, STATIC_WORLD_SWAY_EPS))
+                            swayMatch = e;
+                    }
+                }
+            }
+        }
+    }
+
+    if (swayMatch) {
+        w[12] = swayMatch->mat[12];
+        w[13] = swayMatch->mat[13];
+        w[14] = swayMatch->mat[14];
+        swayMatch->lastFrame = g_staticWorldFrame;
+        memcpy(swayMatch->mat, w, 16 * sizeof(float));
+        return;
+    }
+
+    if (posMatch) {
+        w[12] = posMatch->mat[12];
+        w[13] = posMatch->mat[13];
+        w[14] = posMatch->mat[14];
+    }
+
+    cx = fast_floor_int(w[12] * STATIC_WORLD_INV_CELL);
+    cy = fast_floor_int(w[13] * STATIC_WORLD_INV_CELL);
+    cz = fast_floor_int(w[14] * STATIC_WORLD_INV_CELL);
+    bucket = hash_cell(cx, cy, cz) * STATIC_WORLD_WAY;
+    evictIdx = 0;
+    oldestAge = 0;
+    for (i = 0; i < STATIC_WORLD_WAY; i++) {
+        StaticWorldEntry *e = &g_staticWorldCache[bucket + i];
+        if (!e->used) {
+            evictIdx = i;
+            break;
+        }
+        if ((g_staticWorldFrame - e->lastFrame) >= oldestAge) {
+            oldestAge = g_staticWorldFrame - e->lastFrame;
+            evictIdx = i;
+        }
+    }
+    {
+        StaticWorldEntry *dst = &g_staticWorldCache[bucket + evictIdx];
+        dst->cx = cx;
+        dst->cy = cy;
+        dst->cz = cz;
+        dst->lastFrame = g_staticWorldFrame;
+        dst->used = 1;
+        memcpy(dst->mat, w, 16 * sizeof(float));
+    }
+}
+
+/* Managed by the ASI around TGrassShaderHAL::Flush: 0=inactive, 1=awaiting
+ * first grass draw (to feed Remix's grass coverage texture), 2=done for flush. */
+__declspec(dllexport) volatile int g_grassFlushState = 0;
 
 #define REMIX_TAG_HASH_MAX 256
 typedef struct { unsigned __int64 hash; unsigned __int64 epoch; } TextureHashCache;
@@ -360,11 +484,12 @@ static remixapi_Interface g_remix = { 0 };
 static unsigned __int64 *g_terrainHashes;
 static unsigned int g_terrainHashCapacity;
 static int g_terrainHashCount = 0;
-static unsigned __int64 g_particleTextureHashes[REMIX_TAG_HASH_MAX];
-static unsigned int g_particleTextureHashCount = 0;
+static unsigned __int64 g_grassCoverageHashes[REMIX_TAG_HASH_MAX];
+static unsigned int g_grassCoverageHashCount = 0;
 static FILETIME g_remixTagConfigWriteTime = { 0, 0 };
 static int g_remixTagConfigLoaded = 0;
 static int g_loggedTerrainScope = 0;
+static int g_loggedGrassCoverageLatch = 0;
 static int g_loggedRemixInitFailure = 0;
 static int g_loggedTextureHashFailure = 0;
 static int g_loggedTextureHashZero = 0;
@@ -599,7 +724,7 @@ static void reload_remix_tag_config(void) {
     DWORD size;
     DWORD bytesRead;
     char *data;
-    unsigned int particleCount;
+    unsigned int grassCoverageCount;
 
     DWORD now = GetTickCount();
     if ((LONG)(now - g_nextRemixTagConfigPoll) < 0)
@@ -633,13 +758,15 @@ static void reload_remix_tag_config(void) {
     }
     CloseHandle(file);
 
-    parse_tag_option(data, size, "rtx.particleTextures", 20,
-        g_particleTextureHashes, &particleCount);
-    g_particleTextureHashCount = particleCount;
+    parse_tag_option(data, size,
+        "rtx.legacyMaterial.worldSpaceSecondaryOpacityTextures",
+        sizeof("rtx.legacyMaterial.worldSpaceSecondaryOpacityTextures") - 1,
+        g_grassCoverageHashes, &grassCoverageCount);
+    g_grassCoverageHashCount = grassCoverageCount;
     g_remixTagConfigWriteTime = attributes.ftLastWriteTime;
     g_remixTagConfigLoaded = 1;
     HeapFree(GetProcessHeap(), 0, data);
-    log_hex("Reloaded particle texture tags=", particleCount);
+    log_hex("Reloaded grass coverage tags=", grassCoverageCount);
 }
 
 static int get_texture_hash(void *texture, unsigned __int64 *hash) {
@@ -919,9 +1046,9 @@ static unsigned long __stdcall WD_Release(WrappedDevice *self) {
     typedef unsigned long (__stdcall *FN)(void*);
     unsigned long rc;
     const int finalRelease = InterlockedDecrement((LONG*)&self->refCount) == 0;
-    if (finalRelease && self->particleDeclaration) {
-        ((FN)(*(void***)self->particleDeclaration)[2])(self->particleDeclaration);
-        self->particleDeclaration = NULL;
+    if (finalRelease && self->skinDeclaration) {
+        ((FN)(*(void***)self->skinDeclaration)[2])(self->skinDeclaration);
+        self->skinDeclaration = NULL;
     }
     if (finalRelease && self->setOuterDevice) {
         // The bridge borrows these pointers. Clear them while the inner device is still alive.
@@ -1089,7 +1216,8 @@ static int __stdcall WD_CreateVertexBuffer(WrappedDevice *self,
                                 unsigned int,void**,void*);
     int hr = ((FN)RealVtbl(self)[SLOT_CreateVertexBuffer])(
         self->pReal, length, usage, fvf, pool, ppVB, pSharedHandle);
-    if (hr == 0 && ppVB && *ppVB) vb_hook_vtable(*ppVB);
+    if (hr == 0 && ppVB && *ppVB)
+        vb_hook_vtable(*ppVB);
     return hr;
 }
 
@@ -1162,18 +1290,6 @@ static int __stdcall WD_SetStreamSource(WrappedDevice *self,
     return hr;
 }
 
-static int __stdcall WD_SetRenderState(WrappedDevice *self,
-    unsigned int state, unsigned int value)
-{
-    typedef int (__stdcall *FN)(void*, unsigned int, unsigned int);
-    int hr = ((FN)RealVtbl(self)[SLOT_SetRenderState])(self->pReal, state, value);
-    if (hr >= 0) {
-        if (state == D3DRS_ALPHABLENDENABLE) self->alphaBlendEnabled = value;
-        if (state == D3DRS_DESTBLEND) self->destBlend = value;
-    }
-    return hr;
-}
-
 static int __stdcall WD_SetVertexDeclaration(WrappedDevice *self, void *declaration) {
     typedef int (__stdcall *FN)(void*, void*);
     int hr = ((FN)RealVtbl(self)[SLOT_SetVertexDeclaration])(self->pReal, declaration);
@@ -1186,7 +1302,19 @@ static int __stdcall WD_SetVertexDeclaration(WrappedDevice *self, void *declarat
 
 static int __stdcall WD_SetFVF(WrappedDevice *self, unsigned int fvf) {
     typedef int (__stdcall *FN)(void*, unsigned int);
-    int hr = ((FN)RealVtbl(self)[SLOT_SetFVF])(self->pReal, fvf);
+    typedef int (__stdcall *FN_SetDecl)(void*, void*);
+    int hr;
+    if ((g_mvWorldTransformActive & 2) && fvf == 0x1D2u && ensure_skin_declaration(self)) {
+        hr = ((FN_SetDecl)RealVtbl(self)[SLOT_SetVertexDeclaration])(
+            self->pReal, self->skinDeclaration);
+        if (hr >= 0) {
+            self->vertexDeclaration = self->skinDeclaration;
+            self->currentFVF = fvf;
+            self->usesFVF = 0;
+        }
+        return hr;
+    }
+    hr = ((FN)RealVtbl(self)[SLOT_SetFVF])(self->pReal, fvf);
     if (hr >= 0) { self->currentFVF = fvf; self->usesFVF = 1; }
     return hr;
 }
@@ -1194,10 +1322,7 @@ static int __stdcall WD_SetFVF(WrappedDevice *self, unsigned int fvf) {
 static int __stdcall WD_SetVertexShader(WrappedDevice *self, void *shader) {
     typedef int (__stdcall *FN)(void*, void*);
     int hr = ((FN)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, shader);
-    if (hr >= 0 && self->vertexShader != shader) {
-        self->vertexShader = shader;
-        self->currentVertexShaderHash = get_shader_hash(shader);
-    }
+    if (hr >= 0) self->vertexShader = shader;
     return hr;
 }
 
@@ -1217,13 +1342,15 @@ static int __stdcall WD_Reset(WrappedDevice *self, void *pPresentParams) {
     self->mvpValidRegisters = self->mvValidRegisters = 0;
     self->invProjDirty = 1;
     self->hasAppliedWorld = self->gameWorldSet = 0;
-    self->texture0 = self->vertexShader = self->pixelShader = NULL;
+    self->texture0 = self->texture1 = self->vertexShader = self->pixelShader = NULL;
     self->vertexDeclaration = NULL;
-    self->currentVertexShaderHash = self->currentFVF = self->stream0Stride = self->stream0Offset = 0;
-    self->usesFVF = self->alphaBlendEnabled = 0;
-    self->destBlend = 1; /* D3DBLEND_ZERO */
+    self->currentFVF = self->stream0Stride = self->stream0Offset = 0;
+    self->usesFVF = 0;
     g_curStream0VB = NULL;
     ++g_textureHashEpoch;
+    memset(g_staticWorldCache, 0, sizeof(g_staticWorldCache));
+    g_staticWorldFrame = 1u;
+    g_viewSyncedThisFrame = 0;
     hr = ((FN)RealVtbl(self)[SLOT_Reset])(self->pReal, pPresentParams);
     return hr;
 }
@@ -1235,6 +1362,8 @@ static int __stdcall WD_Present(WrappedDevice *self, void *a, void *b, void *c, 
 
     hr = ((FN)RealVtbl(self)[SLOT_Present])(self->pReal, a, b, c, d);
     reload_remix_tag_config();
+    ++g_staticWorldFrame;
+    g_viewSyncedThisFrame = 0;
 
     self->mvDirty = 0;
     self->hasAppliedWorld = 0;
@@ -1255,6 +1384,11 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
         if (mat4_isIdentity(pMatrix))
             return 0;
 
+        if (self->hasRealView && mat4_equals(self->viewMatrix, pMatrix)) {
+            g_viewSyncedThisFrame = 1;
+            return 0;
+        }
+
         hr = ((FN)RealVtbl(self)[SLOT_SetTransform])(self->pReal, state, pMatrix);
         if (hr < 0) return hr;
 
@@ -1269,6 +1403,7 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
                 memcpy(self->viewMatrix, pMatrix, 16 * sizeof(float));
                 mat4_invOrthogonal(self->invViewMatrix, self->viewMatrix);
                 self->hasRealView = 1;
+                g_viewSyncedThisFrame = 1;
             }
         }
 
@@ -1285,6 +1420,8 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
             mat4_multiply(decomposed, pMatrix, self->invViewMatrix);
             decomposed[3] = 0.0f; decomposed[7] = 0.0f;
             decomposed[11] = 0.0f; decomposed[15] = 1.0f;
+            if (g_mvWorldTransformActive & 4)
+                stabilize_static_world_matrix(decomposed);
             submitMatrix = decomposed;
         }
         hr = ((FN)RealVtbl(self)[SLOT_SetTransform])(
@@ -1312,11 +1449,14 @@ static int __stdcall WD_SetTransform(WrappedDevice *self, unsigned int state, fl
     return hr;
 }
 
-/* 65: SetTexture — retain the active albedo texture for terrain tagging. */
+/* 65: SetTexture — retain stage 0/1 textures for terrain tagging and grass coverage gating. */
 static int __stdcall WD_SetTexture(WrappedDevice *self, unsigned int stage, void *texture) {
     typedef int (__stdcall *FN)(void*, unsigned int, void*);
     int hr = ((FN)RealVtbl(self)[SLOT_SetTexture])(self->pReal, stage, texture);
-    if (hr >= 0 && stage == 0) self->texture0 = texture;
+    if (hr >= 0) {
+        if (stage == 0) self->texture0 = texture;
+        else if (stage == 1) self->texture1 = texture;
+    }
     return hr;
 }
 
@@ -1390,12 +1530,20 @@ static int __stdcall WD_DrawPrimitive(WrappedDevice *self,
     unsigned int pt, unsigned int sv, unsigned int pc)
 {
     typedef int (__stdcall *FN)(void*, unsigned int, unsigned int, unsigned int);
+    typedef int (__stdcall *FN_SetDeclaration)(void*, void*);
     int hr;
 
-    if (!g_mvWorldTransformActive) {
-        if (!applyMvPath(self))
-            applyCentroidOrMvpPath(self);
+    if (!g_mvWorldTransformActive && !applyMvPath(self))
+        applyCentroidOrMvpPath(self);
+    if ((g_mvWorldTransformActive & 2) && self->usesFVF && self->currentFVF == 0x1D2u &&
+        self->stream0Stride == 40u && !self->vertexShader && ensure_skin_declaration(self)) {
+        if (((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
+            self->pReal, self->skinDeclaration) >= 0) {
+            self->vertexDeclaration = self->skinDeclaration;
+            self->usesFVF = 0;
+        }
     }
+
     if (g_terrainRenderActive) {
         if (!g_loggedTerrainScope) {
             log_str("Terrain render scope observed\r\n");
@@ -1416,21 +1564,22 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
     typedef int (__stdcall *FN)(void*, unsigned int, int, unsigned int,
                                 unsigned int, unsigned int, unsigned int);
     typedef int (__stdcall *FN_SetDeclaration)(void*, void*);
-    typedef int (__stdcall *FN_SetFVF)(void*, unsigned int);
-    typedef int (__stdcall *FN_SetShader)(void*, void*);
-    typedef int (__stdcall *FN_SetTransform)(void*, unsigned int, float*);
-    typedef int (__stdcall *FN_GetTransform)(void*, unsigned int, float*);
-    typedef int (__stdcall *FN_SetRenderState)(void*, unsigned int, unsigned int);
     int hr;
-    int particleDeclarationBound = 0;
-    int particleWorldSaved = 0;
-    int isParticleTexture = 0;
     unsigned __int64 textureHash;
-    float particlePreviousWorld[16];
 
-    if (!g_mvWorldTransformActive) {
-        if (!applyMvPath(self))
-            applyCentroidOrMvpPath(self);
+    if (g_grassFlushState >= 2)
+        return 0;
+
+    if (!g_mvWorldTransformActive && !applyMvPath(self))
+        applyCentroidOrMvpPath(self);
+
+    if ((g_mvWorldTransformActive & 2) && self->usesFVF && self->currentFVF == 0x1D2u &&
+        self->stream0Stride == 40u && !self->vertexShader && ensure_skin_declaration(self)) {
+        if (((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
+            self->pReal, self->skinDeclaration) >= 0) {
+            self->vertexDeclaration = self->skinDeclaration;
+            self->usesFVF = 0;
+        }
     }
 
     if (g_terrainRenderActive) {
@@ -1441,45 +1590,16 @@ static int __stdcall WD_DrawIndexedPrimitive(WrappedDevice *self,
         tag_terrain_texture(self->texture0);
     }
 
-    if (g_particleTextureHashCount && self->currentVertexShaderHash == PARTICLE_VERTEX_SHADER_HASH &&
-        self->alphaBlendEnabled && self->stream0Stride == 24 &&
-        !self->pixelShader && get_texture_hash(self->texture0, &textureHash)) {
-        isParticleTexture = texture_hash_is_tagged(textureHash,
-            g_particleTextureHashes, g_particleTextureHashCount);
-    }
-
-    if (isParticleTexture && ensure_particle_declaration(self)) {
-        ((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
-            self->pReal, self->particleDeclaration);
-        ((FN_SetShader)RealVtbl(self)[SLOT_SetVertexShader])(self->pReal, NULL);
-        if (((FN_GetTransform)RealVtbl(self)[SLOT_GetTransform])(
-            self->pReal, D3DTS_WORLD, particlePreviousWorld) == 0) {
-            ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(
-                self->pReal, D3DTS_WORLD, (float*)s_identity);
-            particleWorldSaved = 1;
-        }
-        ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
-            self->pReal, D3DRS_DESTBLEND, 2);
-        particleDeclarationBound = 1;
-    }
-
     hr = ((FN)RealVtbl(self)[SLOT_DrawIndexedPrimitive])(self->pReal,
         pt, bvi, mi, nv, si, pc);
-    if (particleDeclarationBound) {
-        ((FN_SetRenderState)RealVtbl(self)[SLOT_SetRenderState])(
-            self->pReal, D3DRS_DESTBLEND, self->destBlend);
-        if (particleWorldSaved) {
-            ((FN_SetTransform)RealVtbl(self)[SLOT_SetTransform])(
-                self->pReal, D3DTS_WORLD, particlePreviousWorld);
-        }
-        ((FN_SetShader)RealVtbl(self)[SLOT_SetVertexShader])(
-            self->pReal, self->vertexShader);
-        if (self->usesFVF) {
-            ((FN_SetFVF)RealVtbl(self)[SLOT_SetFVF])(
-                self->pReal, self->currentFVF);
-        } else {
-            ((FN_SetDeclaration)RealVtbl(self)[SLOT_SetVertexDeclaration])(
-                self->pReal, self->vertexDeclaration);
+    if (g_grassFlushState == 1 && hr >= 0 && g_grassCoverageHashCount &&
+        self->texture0 && self->texture1 &&
+        get_texture_hash(self->texture0, &textureHash) &&
+        texture_hash_is_tagged(textureHash, g_grassCoverageHashes, g_grassCoverageHashCount)) {
+        g_grassFlushState = 2;
+        if (!g_loggedGrassCoverageLatch) {
+            log_str("Grass coverage draw latched\r\n");
+            g_loggedGrassCoverageLatch = 1;
         }
     }
     return hr;
@@ -1545,7 +1665,7 @@ static void *const s_device_vtbl[DEVICE_VTABLE_SIZE] = {
     (void*)Relay_54, /* 54 */
     (void*)Relay_55, /* 55 */
     (void*)Relay_56, /* 56 */
-    (void*)WD_SetRenderState, /* 57 */
+    (void*)Relay_57, /* 57 */
     (void*)Relay_58, /* 58 */
     (void*)Relay_59, /* 59 */
     (void*)Relay_60, /* 60 */
@@ -1638,7 +1758,6 @@ WrappedDevice* WrappedDevice_Create(void *pRealDevice, void *pOuterDirect3D) {
     w->invProjDirty = 1;
     w->gameWorldSet = 0;
     w->texture0 = NULL;
-    w->destBlend = 1;
 
     for (i = 0; i < 16; i++) {
         float v = (i % 5 == 0) ? 1.0f : 0.0f;

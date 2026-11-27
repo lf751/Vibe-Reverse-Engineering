@@ -52,6 +52,7 @@ static int tags;
 static int hash_queries;
 static float last_world[16];
 static int world_sets;
+static int draw_count;
 static int __stdcall record_transform(void *d, unsigned int state, float *m) {
     (void)d;
     if (state == D3DTS_WORLD && m) { memcpy(last_world, m, sizeof(last_world)); world_sets++; }
@@ -59,7 +60,7 @@ static int __stdcall record_transform(void *d, unsigned int state, float *m) {
 }
 static int __stdcall draw_indexed_ok(void *d, unsigned int pt, int bvi, unsigned int mi,
     unsigned int nv, unsigned int si, unsigned int pc) {
-    (void)d;(void)pt;(void)bvi;(void)mi;(void)nv;(void)si;(void)pc; return 0;
+    (void)d;(void)pt;(void)bvi;(void)mi;(void)nv;(void)si;(void)pc; draw_count++; return 0;
 }
 static int mat4_near(const float *a, const float *b) {
     int i;
@@ -83,9 +84,9 @@ void main(void) {
     unsigned __int64 h=0;
     device.pReal=&inner;deviceTable[16]=reset;deviceTable[17]=present_ok;deviceTable[31]=update_texture_ok;deviceTable[92]=set_shader;deviceTable[65]=fail_texture;
     device.hasMVP=device.hasRealView=device.hasProjection=1;device.texture0=(void*)1;
-    device.vertexShader=(void*)2;device.pixelShader=(void*)3;device.currentVertexShaderHash=9;
+    device.vertexShader=(void*)2;device.pixelShader=(void*)3;
     check(WD_Reset(&device,NULL)==0,"Reset failed\n");
-    check(!device.hasMVP&&!device.hasRealView&&!device.hasProjection&&!device.texture0&&!device.vertexShader&&!device.pixelShader&&!device.currentVertexShaderHash,"Stale reset state\n");
+    check(!device.hasMVP&&!device.hasRealView&&!device.hasProjection&&!device.texture0&&!device.vertexShader&&!device.pixelShader,"Stale reset state\n");
     WD_SetTexture(&device,0,(void*)1);check(!device.texture0,"Failed setter changed cache\n");
     deviceTable[94]=constants;
     WD_SetVertexShaderConstantF(&device,0,row,1);
@@ -93,7 +94,7 @@ void main(void) {
     for(i=1;i<4;i++)WD_SetVertexShaderConstantF(&device,i,row,1);
     check(device.hasMVP,"Complete matrix writes were not accepted\n");
     shaderTable[4]=shader_code;
-    for(i=0;i<300;i++){WD_SetVertexShader(&device,&shader);check(device.currentVertexShaderHash!=0,"Shader tracking exhausted\n");WD_SetVertexShader(&device,NULL);}
+    for(i=0;i<300;i++){WD_SetVertexShader(&device,&shader);check(device.vertexShader==&shader,"Shader tracking failed\n");WD_SetVertexShader(&device,NULL);}
     resource.vtbl=resourceTable;resourceTable[2]=release_noop;resourceTable[4]=put;resourceTable[5]=get;resourceTable[6]=clear;
     surface.vtbl=surfaceTable;surface.parent=&textures[0];surfaceTable[11]=get_container;
     g_origVBLock=lock;g_origVBUnlock=unlock;
@@ -152,6 +153,28 @@ void main(void) {
         g_mvWorldTransformActive = 0;
         check(WD_DrawIndexedPrimitive(&device, 4, 0, 0, 3, 0, 1) == 0, "Unscoped draw failed\n");
         check(mat4_near(last_world, s_identity), "Unscoped draw did not reset World to identity\n");
+
+        /* Verify single-draw grass skip latch requires tagged stage-0 + non-null stage-1 coverage texture. */
+        draw_count = 0;
+        g_grassCoverageHashes[0] = (unsigned int)&textures[1];
+        g_grassCoverageHashCount = 1;
+        g_grassFlushState = 1;
+        device.texture0 = &textures[0];
+        device.texture1 = &textures[2];
+        check(WD_DrawIndexedPrimitive(&device, 4, 0, 0, 3, 0, 1) == 0, "Untagged grass draw failed\n");
+        check(draw_count == 1 && g_grassFlushState == 1, "Untagged texture should not latch grass skip\n");
+        device.texture0 = &textures[1];
+        device.texture1 = NULL;
+        check(WD_DrawIndexedPrimitive(&device, 4, 0, 0, 3, 0, 1) == 0, "No-stage1 grass draw failed\n");
+        check(draw_count == 2 && g_grassFlushState == 1, "Missing stage-1 coverage texture should not latch grass skip\n");
+        device.texture1 = &textures[2];
+        check(WD_DrawIndexedPrimitive(&device, 4, 0, 0, 3, 0, 1) == 0, "Tagged coverage grass draw failed\n");
+        check(draw_count == 3 && g_grassFlushState == 2, "Tagged coverage grass draw did not latch state to 2\n");
+        check(WD_DrawIndexedPrimitive(&device, 4, 0, 0, 3, 0, 1) == 0, "Skipped grass draw failed\n");
+        check(draw_count == 3, "Subsequent grass draw was not skipped\n");
+        g_grassFlushState = 0;
+        check(WD_DrawIndexedPrimitive(&device, 4, 0, 0, 3, 0, 1) == 0, "Post-grass draw failed\n");
+        check(draw_count == 4, "Post-grass draw did not execute\n");
     }
     ExitProcess(0);
 }

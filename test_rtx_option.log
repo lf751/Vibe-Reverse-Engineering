@@ -1,0 +1,29 @@
+[14:45:33.451] info:  Initializing RtxOption system layers...
+[14:45:33.451] info:  Attempting to parse option layer: dxvk.conf...
+[14:45:33.451] info:  No config file found at: dxvk.conf
+[14:45:33.451] info:  Did not find app config for executable: D:\Unity\dxvk-remix_numos\_Comp64Release\tests\rtx\unit\test_rtx_option.exe
+[14:45:33.451] info:  Attempting to parse option layer: rtx.conf...
+[14:45:33.451] info:  No config file found at: rtx.conf
+[14:45:33.451] info:  Attempting to parse option layer: user.conf...
+[14:45:33.451] info:  No config file found at: user.conf
+[14:45:33.451] info:  RtxOption system layer initialization complete.
+[14:45:33.451] info:  Geometry generation hash rule:
+[14:45:33.451] info:  	positions
+[14:45:33.451] info:  	indices
+[14:45:33.451] info:  	texcoords
+[14:45:33.451] info:  	geometrydescriptor
+[14:45:33.451] info:  	vertexlayout
+[14:45:33.451] info:  	vertexshader
+[14:45:33.451] info:  Geometry asset hash rule:
+[14:45:33.451] info:  	positions
+[14:45:33.451] info:  	indices
+[14:45:33.451] info:  	geometrydescriptor
+[14:45:33.451] info:  [RTX Neural Radiance Cache] Selected Ultra preset mode.
+[14:45:33.451] info:  [RTX SHARC] Selected High preset mode.
+[14:45:33.454] info:  Serializing config file: test_rtx_option_temp.conf
+[14:45:33.454] info:  Attempting to parse option layer: test_rtx_option_temp.conf...
+[14:45:33.458] info:  Found config file: test_rtx_option_temp.conf
+[14:45:33.458] info:  Parsed config file.
+[14:45:33.459] info:  Attempting to parse option layer: test_rtx_option_scalar_promotion.conf...
+[14:45:33.460] info:  Found config file: test_rtx_option_scalar_promotion.conf
+[14:45:33.460] info:  Parsed config file.
